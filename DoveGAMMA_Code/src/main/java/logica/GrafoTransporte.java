@@ -1,10 +1,9 @@
-package org.example.logica;
+package logica;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.PriorityQueue;
 import java.util.List;
-import java.util.Map;
 
 public class GrafoTransporte {
     private HashMap<String, Parada> mapaParadas;

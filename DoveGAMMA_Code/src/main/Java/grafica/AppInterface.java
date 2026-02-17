@@ -1,4 +1,4 @@
-package org.example.grafica;
+package grafica;
 
 public class AppInterface {
 }

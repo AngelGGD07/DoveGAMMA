@@ -8,6 +8,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import logica.GrafoTransporte;
+
+import java.util.List;
 
 public class MainApp extends Application {
 

@@ -1,5 +1,7 @@
 // PanelVisualizacion.java - Visualizador de grafo con flechas y efectos
-import javafx.animation.FadeTransition;
+package grafica;
+
+
 import javafx.animation.ScaleTransition;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;

@@ -1,4 +1,6 @@
 // MainApp.java - Aplicación principal con tu paleta de colores
+package grafica;
+
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -83,23 +85,15 @@ public class MainApp extends Application {
                     double x = Double.parseDouble(txtX.getText());
                     double y = Double.parseDouble(txtY.getText());
 
-                    // Llamar al backend a través del adaptador
-                    InterfazGrafo backend = AdaptadorVisual.getInstancia().getBackend();
-                    if (backend != null) {
-                        boolean exito = backend.agregarParada(id, nombre, x, y);
-                        if (exito) {
-                            AdaptadorVisual.getInstancia().notificarNuevaParada(id, nombre, x, y);
-                            actualizarComboBoxes(id, nombre);
-                            limpiarCampos(txtId, txtNombre, txtX, txtY);
-                            mostrarMensaje("✅ Parada agregada: " + nombre);
-                        } else {
-                            mostrarError("ID ya existe o error en backend");
-                        }
-                    } else {
-                        // Modo demo: solo visual
-                        panelVisual.agregarParadaVisual(id, nombre, x, y);
+                    // LLAMAMOS AL ADAPTADOR (Que traduce hacia la lógica de tu compañero)
+                    boolean exito = AdaptadorVisual.getInstancia().agregarParada(id, nombre, x, y);
+
+                    if (exito) {
                         actualizarComboBoxes(id, nombre);
                         limpiarCampos(txtId, txtNombre, txtX, txtY);
+                        mostrarMensaje("✅ Parada agregada: " + nombre);
+                    } else {
+                        mostrarError("Backend no conectado");
                     }
                 } catch (NumberFormatException ex) {
                     mostrarError("Coordenadas deben ser números");

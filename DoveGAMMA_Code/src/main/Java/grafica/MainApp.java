@@ -153,7 +153,7 @@ public class MainApp extends Application {
                 double tiempo = Double.parseDouble(txtTiempo.getText());
                 double distancia = Double.parseDouble(txtDistancia.getText());
 
-                InterfazGrafo backend = AdaptadorVisual.getInstancia().getBackend();
+                GrafoTransporte backend = AdaptadorVisual.getInstancia().getBackend();
                 if (backend != null) {
                     boolean exito = backend.agregarRuta(origen, destino, tiempo, distancia);
                     if (exito) {
@@ -235,7 +235,7 @@ public class MainApp extends Application {
             String fin = cbCalcFin.getValue().split(" - ")[0];
             String criterio = rbTiempo.isSelected() ? "tiempo" : "distancia";
 
-            InterfazGrafo backend = AdaptadorVisual.getInstancia().getBackend();
+            GrafoTransporte backend = AdaptadorVisual.getInstancia().getBackend();
             if (backend != null) {
                 // Llamar al Dijkstra del backend
                 List<String> ruta = backend.calcularRutaOptima(inicio, fin, criterio);

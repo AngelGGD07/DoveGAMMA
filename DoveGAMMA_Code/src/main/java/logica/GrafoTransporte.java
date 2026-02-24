@@ -1,10 +1,9 @@
-package org.example.logica;
+package logica;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.PriorityQueue;
 import java.util.List;
-import java.util.Map;
 
 public class GrafoTransporte {
     private HashMap<String, Parada> mapaParadas;
@@ -31,7 +30,21 @@ public class GrafoTransporte {
     }
 
     public void eliminarParada(String idParada) {
-        // ojo aqui: si borras parada, tambien borra las rutas que llegan a ella
+        if(mapaParadas.containsKey(idParada)){
+
+            mapaParadas.remove(idParada);
+            listasAdyacencia.remove(idParada);
+            for(List<Ruta> rutasDeOtraParada: listasAdyacencia.values()){
+                rutasDeOtraParada.removeIf(ruta -> ruta.getIdDestino().equals(idParada));
+            }
+        }
+    }
+    public void eliminarRuta(String idOrigen, String idDestino){
+        if(listasAdyacencia.containsKey(idOrigen)){
+            List<Ruta> rutasDelOrigen = listasAdyacencia.get(idOrigen);
+
+            rutasDelOrigen.removeIf(ruta -> ruta.getIdDestino().equals(idDestino));
+        }
     }
 
     // dentro de la clase GrafoTransporte
@@ -63,6 +76,11 @@ public class GrafoTransporte {
 class DatoCamino implements Comparable<DatoCamino> {
     String idParada;
     double pesoAcumulado;
+
+    public DatoCamino(String idParada, double pesoAcumulado) {
+        this.idParada = idParada;
+        this.pesoAcumulado = pesoAcumulado;
+    }
 
     // constructor
 

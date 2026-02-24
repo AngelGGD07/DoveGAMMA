@@ -1,4 +1,4 @@
-package org.example.logica;
+package logica;
 
 import java.util.List;
 

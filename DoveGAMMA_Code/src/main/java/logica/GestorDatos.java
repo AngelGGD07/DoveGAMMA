@@ -1,4 +1,4 @@
-package org.example.logica;
+package logica;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;

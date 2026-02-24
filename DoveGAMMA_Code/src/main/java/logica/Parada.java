@@ -1,4 +1,4 @@
-package org.example.logica;
+package logica;
 
 public class Parada {
     private String codigo;

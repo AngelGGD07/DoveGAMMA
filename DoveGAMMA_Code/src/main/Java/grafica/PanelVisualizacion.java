@@ -85,7 +85,7 @@ public class PanelVisualizacion extends Pane {
         idLabel.toFront();
     }
 
-    public void agregarRutaVisual(String idOrigen, String idDestino, double tiempo, double distancia) {
+    public void agregarRutaVisual(String idOrigen, String idDestino, double tiempo, double distancia, double costo) {
         NodoVisual origen = nodos.get(idOrigen);
         NodoVisual destino = nodos.get(idDestino);
 
@@ -132,15 +132,15 @@ public class PanelVisualizacion extends Pane {
         double midX = (startX + endX) / 2;
         double midY = (startY + endY) / 2;
 
-        Text pesoLabel = new Text(midX - 30, midY - 10,
-                String.format("⏱%.0f | 📏%.1f", tiempo, distancia));
+        Text pesoLabel = new Text(midX - 40, midY - 10,
+                String.format("⏱%.0f | 📏%.1f | $%.2f", tiempo, distancia, costo));
         pesoLabel.setFill(Color.web(lightBeige));
         pesoLabel.setFont(Font.font("Consolas", 11));
         pesoLabel.setStyle("-fx-background-color: " + darkPurple + "; -fx-padding: 2px;");
 
         // Fondo para el texto (rectángulo semitransparente)
         javafx.scene.shape.Rectangle bg = new javafx.scene.shape.Rectangle(
-                midX - 35, midY - 25, 70, 20
+                midX - 45, midY - 25, 90, 20
         );
         bg.setFill(Color.web(darkPurple, 0.8));
         bg.setArcWidth(5);
@@ -218,7 +218,8 @@ public class PanelVisualizacion extends Pane {
             String idDestino = (String) destino.getClass().getMethod("getId").invoke(destino);
             double tiempo = (Double) ruta.getClass().getMethod("getTiempo").invoke(ruta);
             double distancia = (Double) ruta.getClass().getMethod("getDistancia").invoke(ruta);
-            agregarRutaVisual(idOrigen, idDestino, tiempo, distancia);
+            double costo = (Double) ruta.getClass().getMethod("getCosto").invoke(ruta);
+            agregarRutaVisual(idOrigen, idDestino, tiempo, distancia, costo);
         } catch (Exception e) {
             System.err.println("Error al procesar ruta: " + e.getMessage());
         }

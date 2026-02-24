@@ -2,6 +2,7 @@
 package grafica;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -78,9 +79,9 @@ public class MainApp extends Application {
         TextField txtX = crearCampoTexto("Coordenada X (0-800)");
         TextField txtY = crearCampoTexto("Coordenada Y (0-600)");
 
-        Button btnAgregar = crearBoton("➕ Agregar Parada", TERRACOTA);
+        Button btnAgregar = crearBoton("➕ Agregar Parada");
 
-        btnAgregar.setOnAction(e -> {
+        btnAgregar.setOnAction(event -> {
             if (validarCampos(txtId, txtNombre, txtX, txtY)) {
                 try {
                     String id = txtId.getText().trim();
@@ -133,10 +134,11 @@ public class MainApp extends Application {
 
         TextField txtTiempo = crearCampoTexto("Tiempo en minutos");
         TextField txtDistancia = crearCampoTexto("Distancia en km");
+        TextField txtCosto = crearCampoTexto("Costo en pesos");
 
-        Button btnCrear = crearBoton("🔗 Crear Ruta", TERRACOTA);
+        Button btnCrear = crearBoton("🔗 Crear Ruta");
 
-        btnCrear.setOnAction(e -> {
+        btnCrear.setOnAction(event -> {
             if (cbOrigen.getValue() == null || cbDestino.getValue() == null) {
                 mostrarError("Seleccione origen y destino");
                 return;
@@ -145,8 +147,8 @@ public class MainApp extends Application {
                 mostrarError("Origen y destino deben ser diferentes");
                 return;
             }
-            if (txtTiempo.getText().isEmpty() || txtDistancia.getText().isEmpty()) {
-                mostrarError("Complete tiempo y distancia");
+            if (txtTiempo.getText().isEmpty() || txtDistancia.getText().isEmpty() || txtCosto.getText().isEmpty()) {
+                mostrarError("Complete tiempo, distancia y costo");
                 return;
             }
 
@@ -155,18 +157,17 @@ public class MainApp extends Application {
                 String destino = cbDestino.getValue().split(" - ")[0];
                 double tiempo = Double.parseDouble(txtTiempo.getText());
                 double distancia = Double.parseDouble(txtDistancia.getText());
+                double costo = Double.parseDouble(txtCosto.getText());
 
                 GrafoTransporte backend = AdaptadorVisual.getInstancia().getBackend();
                 if (backend != null) {
-                    boolean exito = backend.agregarRuta(origen, destino, tiempo, distancia);
-                    if (exito) {
-                        AdaptadorVisual.getInstancia().notificarNuevaRuta(origen, destino, tiempo, distancia);
-                        limpiarCampos(txtTiempo, txtDistancia);
-                        mostrarMensaje("✅ Ruta creada");
-                    }
+                    backend.agregarRuta(origen, destino, tiempo, costo, distancia);
+                    AdaptadorVisual.getInstancia().notificarNuevaRuta(origen, destino, tiempo, distancia, costo);
+                    limpiarCampos(txtTiempo, txtDistancia, txtCosto);
+                    mostrarMensaje("✅ Ruta creada");
                 } else {
-                    panelVisual.agregarRutaVisual(origen, destino, tiempo, distancia);
-                    limpiarCampos(txtTiempo, txtDistancia);
+                    panelVisual.agregarRutaVisual(origen, destino, tiempo, distancia, costo);
+                    limpiarCampos(txtTiempo, txtDistancia, txtCosto);
                 }
             } catch (Exception ex) {
                 mostrarError("Valores numéricos inválidos");
@@ -178,6 +179,7 @@ public class MainApp extends Application {
                 crearLabel("Destino:"), cbDestino,
                 crearLabel("Tiempo (min):"), txtTiempo,
                 crearLabel("Distancia (km):"), txtDistancia,
+                crearLabel("Costo ($):"), txtCosto,
                 btnCrear
         );
 
@@ -213,7 +215,7 @@ public class MainApp extends Application {
         rbTiempo.setStyle("-fx-text-fill: " + LIGHT_BEIGE + ";");
         rbDistancia.setStyle("-fx-text-fill: " + LIGHT_BEIGE + ";");
 
-        Button btnCalcular = crearBoton("🧮 Calcular Mejor Ruta", TERRACOTA);
+        Button btnCalcular = crearBoton("🧮 Calcular Mejor Ruta");
 
         txtResultado = new TextArea();
         txtResultado.setEditable(false);
@@ -228,37 +230,14 @@ public class MainApp extends Application {
                         "-fx-border-width: 2px;"
         );
 
-        btnCalcular.setOnAction(e -> {
+        btnCalcular.setOnAction(event -> {
             if (cbCalcInicio.getValue() == null || cbCalcFin.getValue() == null) {
                 mostrarError("Seleccione inicio y fin");
                 return;
             }
 
-            String inicio = cbCalcInicio.getValue().split(" - ")[0];
-            String fin = cbCalcFin.getValue().split(" - ")[0];
-            String criterio = rbTiempo.isSelected() ? "tiempo" : "distancia";
-
             GrafoTransporte backend = AdaptadorVisual.getInstancia().getBackend();
-            if (backend != null) {
-                // Llamar al Dijkstra del backend
-                List<String> ruta = backend.calcularRutaOptima(inicio, fin, criterio);
-                if (ruta == null || ruta.isEmpty()) {
-                    txtResultado.setText("❌ No existe ruta entre los puntos seleccionados");
-                } else {
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("🎯 Ruta óptima por ").append(criterio.toUpperCase()).append(":\n\n");
-                    sb.append("📍 Inicio: ").append(cbCalcInicio.getValue()).append("\n");
-                    for (int i = 1; i < ruta.size() - 1; i++) {
-                        sb.append("   ↓ ").append(ruta.get(i)).append("\n");
-                    }
-                    sb.append("🏁 Fin: ").append(cbCalcFin.getValue()).append("\n\n");
-                    sb.append("Total de paradas: ").append(ruta.size());
-                    txtResultado.setText(sb.toString());
-
-                    // Resaltar ruta en el visualizador
-                    panelVisual.resaltarRuta(ruta);
-                }
-            } else {
+            if (backend == null) {
                 txtResultado.setText("⚠️ Backend no conectado. Modo visual únicamente.");
             }
         });
@@ -294,10 +273,10 @@ public class MainApp extends Application {
         return lbl;
     }
 
-    private Button crearBoton(String texto, String color) {
+    private Button crearBoton(String texto) {
         Button btn = new Button(texto);
         btn.setStyle(
-                "-fx-background-color: " + color + ";" +
+                "-fx-background-color: " + TERRACOTA + ";" +
                         "-fx-text-fill: " + LIGHT_BEIGE + ";" +
                         "-fx-font-weight: bold;" +
                         "-fx-padding: 10 20;" +
@@ -316,7 +295,7 @@ public class MainApp extends Application {
         ));
 
         btn.setOnMouseExited(e -> btn.setStyle(
-                "-fx-background-color: " + color + ";" +
+                "-fx-background-color: " + TERRACOTA + ";" +
                         "-fx-text-fill: " + LIGHT_BEIGE + ";" +
                         "-fx-font-weight: bold;" +
                         "-fx-padding: 10 20;" +
@@ -370,7 +349,7 @@ public class MainApp extends Application {
         txtResultado.setText(msg);
     }
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
         launch(args);
     }
 }

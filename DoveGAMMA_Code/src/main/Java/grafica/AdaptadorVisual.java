@@ -36,9 +36,9 @@ public class AdaptadorVisual {
         return backend;
     }
 
-    public void notificarNuevaRuta(String idOrigen, String idDestino, double tiempo, double distancia) {
+    public void notificarNuevaRuta(String idOrigen, String idDestino, double tiempo, double distancia, double costo) {
         if (panelVisual != null) {
-            Platform.runLater(() -> panelVisual.agregarRutaVisual(idOrigen, idDestino, tiempo, distancia));
+            Platform.runLater(() -> panelVisual.agregarRutaVisual(idOrigen, idDestino, tiempo, distancia, costo));
         }
     }
 
@@ -64,26 +64,18 @@ public class AdaptadorVisual {
     }
 
     // --- ADAPTACIÓN A SU LÓGICA DE RUTAS ---
-    public boolean agregarRuta(String origen, String destino, double tiempo, double distancia) {
+    public boolean agregarRuta(String origen, String destino, double tiempo, double distancia, double costo) {
         if (backend != null) {
             // Su método pide: idOrigen, idDestino, tiempo, costo, dist
-            // Le pasamos 0.0 en costo por defecto para no afectar lo que él hizo
-            backend.agregarRuta(origen, destino, tiempo, 0.0, distancia);
+            backend.agregarRuta(origen, destino, tiempo, costo, distancia);
 
             if (panelVisual != null) {
-                Platform.runLater(() -> panelVisual.agregarRutaVisual(origen, destino, tiempo, distancia));
+                Platform.runLater(() -> panelVisual.agregarRutaVisual(origen, destino, tiempo, distancia, costo));
             }
             return true;
         }
         return false;
     }
 
-    // --- PUENTE PARA EL DIJKSTRA ---
-    public List<String> calcularRutaOptima(String inicio, String fin, String criterio) {
-        if (backend != null) {
-            // Llamamos al método del backend (ajustado según la lógica del compañero)
-            return backend.obtenerRutaDijkstra(inicio, fin, criterio);
-        }
-        return null;
-    }
+
 }

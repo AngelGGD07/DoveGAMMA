@@ -2,6 +2,7 @@
 package grafica;
 
 
+import javafx.animation.FadeTransition;
 import javafx.animation.ScaleTransition;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;

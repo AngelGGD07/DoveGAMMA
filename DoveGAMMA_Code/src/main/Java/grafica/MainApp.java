@@ -1,4 +1,4 @@
-// MainApp.java - Aplicación principal con tu paleta de colores
+// MainApp.java
 package grafica;
 
 import javafx.application.Application;
@@ -8,348 +8,541 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import logica.GrafoTransporte;
 
-import java.util.List;
-
 public class MainApp extends Application {
 
-    // Tu paleta de colores exacta
-    public static final String DARK_PURPLE = "#1a0a2e";
-    public static final String MID_PURPLE = "#4a1a5e";
-    public static final String TERRACOTA = "#a65d48";
-    public static final String BEIGE = "#d4a574";
-    public static final String LIGHT_BEIGE = "#e8c9a8";
+    // Paleta de colores
+    public static final String DARK_PURPLE  = "#1a0a2e";
+    public static final String MID_PURPLE   = "#4a1a5e";
+    public static final String TERRACOTA    = "#a65d48";
+    public static final String BEIGE        = "#d4a574";
+    public static final String LIGHT_BEIGE  = "#e8c9a8";
+    public static final String ERROR_RED    = "#c0392b";
+    public static final String OK_GREEN     = "#27ae60";
 
     private PanelVisualizacion panelVisual;
-    private ComboBox<String> cbOrigen, cbDestino, cbCalcInicio, cbCalcFin;
+
+    // Solo DOS combos — se comparten en toda la app
+    private ComboBox<String> cbOrigen  = new ComboBox<>();
+    private ComboBox<String> cbDestino = new ComboBox<>();
+
+    // Para mostrar el resultado del cálculo
     private TextArea txtResultado;
+
+    // Status bar abajo del todo
+    private Label lblStatus;
 
     @Override
     public void start(Stage primaryStage) {
         BorderPane root = new BorderPane();
         root.setStyle("-fx-background-color: " + DARK_PURPLE + ";");
 
-        // Panel Izquierdo: Creación
-        VBox panelCreacion = crearPanelCreacion();
-        root.setLeft(panelCreacion);
+        root.setTop(crearHeader());
+        root.setLeft(crearPanelIzquierdo());
+        root.setCenter(crearCentro());
+        root.setBottom(crearStatusBar());
 
-        // Panel Centro: Visualización
-        panelVisual = new PanelVisualizacion();
-        root.setCenter(panelVisual);
-
-        // Panel Abajo: Control de Rutas
-        HBox panelControl = crearPanelControl();
-        root.setBottom(panelControl);
-
-        // Conectar adaptador
         AdaptadorVisual.getInstancia().setPanelVisual(panelVisual);
 
         Scene scene = new Scene(root, 1400, 900);
-        primaryStage.setTitle("DoveGAMMA - Sistema de Rutas");
+        primaryStage.setTitle("DoveGAMMA — Sistema de Gestión de Rutas");
+        primaryStage.setMinWidth(900);
+        primaryStage.setMinHeight(600);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
 
-    private VBox crearPanelCreacion() {
-        VBox panel = new VBox(15);
-        panel.setPadding(new Insets(20));
-        panel.setPrefWidth(320);
-        panel.setStyle("-fx-background-color: " + MID_PURPLE + ";");
+    // ─── HEADER ───────────────────────────────────────────────────────────────
+    private HBox crearHeader() {
+        HBox header = new HBox(14);
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setPadding(new Insets(14, 24, 14, 24));
+        header.setStyle(
+                "-fx-background-color: linear-gradient(to right, #0d0520, " + MID_PURPLE + ");" +
+                        "-fx-border-color: " + TERRACOTA + ";" +
+                        "-fx-border-width: 0 0 2 0;"
+        );
 
-        Label lblTitulo = new Label("🚌 Panel de Creación");
-        lblTitulo.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: " + LIGHT_BEIGE + ";");
+        Label emoji = new Label("🕊");
+        emoji.setStyle("-fx-font-size: 26px;");
 
-        // Formulario Parada
-        TitledPane tpParada = crearFormularioParada();
-        TitledPane tpRuta = crearFormularioRuta();
+        VBox textos = new VBox(2);
+        Label titulo = new Label("DoveGAMMA");
+        titulo.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: " + BEIGE + ";");
+        Label subtitulo = new Label("Sistema de Gestión de Rutas de Transporte");
+        subtitulo.setStyle("-fx-font-size: 11px; -fx-text-fill: #9a7a5a;");
+        textos.getChildren().addAll(titulo, subtitulo);
 
-        panel.getChildren().addAll(lblTitulo, tpParada, tpRuta);
-        return panel;
+        // Spacer para empujar botones a la derecha
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button btnLimpiar = crearBotonChico("↺  Limpiar grafo");
+        btnLimpiar.setOnAction(e -> {
+            panelVisual.limpiarTodo();
+            cbOrigen.getItems().clear();
+            cbDestino.getItems().clear();
+            setStatus("Grafo limpiado.", false);
+        });
+
+        header.getChildren().addAll(emoji, textos, spacer, btnLimpiar);
+        return header;
     }
 
-    private TitledPane crearFormularioParada() {
-        VBox content = new VBox(10);
-        content.setPadding(new Insets(15));
-        content.setStyle("-fx-background-color: " + DARK_PURPLE + ";");
+    // ─── PANEL IZQUIERDO ──────────────────────────────────────────────────────
+    private ScrollPane crearPanelIzquierdo() {
+        VBox contenido = new VBox(16);
+        contenido.setPadding(new Insets(18));
+        contenido.setPrefWidth(300);
+        contenido.setStyle("-fx-background-color: " + MID_PURPLE + ";");
 
-        TextField txtId = crearCampoTexto("ID único (ej: P001)");
-        TextField txtNombre = crearCampoTexto("Nombre de parada");
-        TextField txtX = crearCampoTexto("Coordenada X (0-800)");
-        TextField txtY = crearCampoTexto("Coordenada Y (0-600)");
+        Label lblTitulo = new Label("Panel de Control");
+        lblTitulo.setStyle(
+                "-fx-font-size: 16px; -fx-font-weight: bold; " +
+                        "-fx-text-fill: " + LIGHT_BEIGE + ";"
+        );
 
-        Button btnAgregar = crearBoton("➕ Agregar Parada");
+        Separator sep = new Separator();
+        sep.setStyle("-fx-background-color: " + TERRACOTA + ";");
 
-        btnAgregar.setOnAction(event -> {
-            if (validarCampos(txtId, txtNombre, txtX, txtY)) {
-                try {
-                    String id = txtId.getText().trim();
-                    String nombre = txtNombre.getText().trim();
-                    double x = Double.parseDouble(txtX.getText());
-                    double y = Double.parseDouble(txtY.getText());
+        contenido.getChildren().addAll(
+                lblTitulo, sep,
+                crearSeccionParada(),
+                crearSeparadorSeccion(),
+                crearSeccionRuta(),
+                crearSeparadorSeccion(),
+                crearSeccionCalcular()
+        );
 
-                    // LLAMAMOS AL ADAPTADOR (Que traduce hacia la lógica de tu compañero)
-                    boolean exito = AdaptadorVisual.getInstancia().agregarParada(id, nombre, x, y);
+        ScrollPane scroll = new ScrollPane(contenido);
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setStyle(
+                "-fx-background-color: " + MID_PURPLE + ";" +
+                        "-fx-background: " + MID_PURPLE + ";"
+        );
+        return scroll;
+    }
 
-                    if (exito) {
-                        actualizarComboBoxes(id, nombre);
-                        limpiarCampos(txtId, txtNombre, txtX, txtY);
-                        mostrarMensaje("✅ Parada agregada: " + nombre);
-                    } else {
-                        mostrarError("Backend no conectado");
-                    }
-                } catch (NumberFormatException ex) {
-                    mostrarError("Coordenadas deben ser números");
+    private VBox crearSeccionParada() {
+        VBox seccion = new VBox(8);
+
+        Label lblSec = crearLabelSeccion("📍 Nueva Parada");
+
+        TextField txtId     = crearCampo("ID único  (ej: P001)");
+        TextField txtNombre = crearCampo("Nombre de la parada");
+        TextField txtX      = crearCampo("Coordenada X  (0 – 860)");
+        TextField txtY      = crearCampo("Coordenada Y  (0 – 600)");
+
+        // label de error inline — empieza invisible
+        Label lblError = crearLabelError();
+
+        Button btnAgregar = crearBoton("➕  Agregar Parada");
+        btnAgregar.setMaxWidth(Double.MAX_VALUE);
+
+        btnAgregar.setOnAction(e -> {
+            lblError.setText("");
+            if (!validarNoVacios(txtId, txtNombre, txtX, txtY)) {
+                lblError.setText("⚠  Todos los campos son obligatorios.");
+                return;
+            }
+            try {
+                String id     = txtId.getText().trim();
+                String nombre = txtNombre.getText().trim();
+                double x      = Double.parseDouble(txtX.getText().trim());
+                double y      = Double.parseDouble(txtY.getText().trim());
+
+                boolean ok = AdaptadorVisual.getInstancia().agregarParada(id, nombre, x, y);
+                if (ok) {
+                    String item = id + " - " + nombre;
+                    cbOrigen.getItems().add(item);
+                    cbDestino.getItems().add(item);
+                    limpiar(txtId, txtNombre, txtX, txtY);
+                    setStatus("✔  Parada agregada: " + nombre, false);
+                } else {
+                    lblError.setText("⚠  Backend no conectado.");
                 }
+            } catch (NumberFormatException ex) {
+                lblError.setText("⚠  X e Y deben ser números.");
             }
         });
 
-        content.getChildren().addAll(
+        seccion.getChildren().addAll(
+                lblSec,
                 crearLabel("ID:"), txtId,
                 crearLabel("Nombre:"), txtNombre,
-                crearLabel("Coordenada X:"), txtX,
-                crearLabel("Coordenada Y:"), txtY,
-                btnAgregar
+                crearLabel("Pos. X:"), txtX,
+                crearLabel("Pos. Y:"), txtY,
+                lblError, btnAgregar
         );
-
-        TitledPane tp = new TitledPane("📍 Nueva Parada", content);
-        tp.setExpanded(true);
-        tp.setStyle("-fx-text-fill: " + DARK_PURPLE + ";");
-        return tp;
+        return seccion;
     }
 
-    private TitledPane crearFormularioRuta() {
-        VBox content = new VBox(10);
-        content.setPadding(new Insets(15));
-        content.setStyle("-fx-background-color: " + DARK_PURPLE + ";");
+    private VBox crearSeccionRuta() {
+        VBox seccion = new VBox(8);
 
-        cbOrigen = new ComboBox<>();
-        cbOrigen.setPromptText("Seleccionar origen");
-        estilizarComboBox(cbOrigen);
+        Label lblSec = crearLabelSeccion("🛣  Nueva Ruta");
 
-        cbDestino = new ComboBox<>();
-        cbDestino.setPromptText("Seleccionar destino");
-        estilizarComboBox(cbDestino);
+        // Usamos los MISMOS combos que se comparten con Calcular
+        cbOrigen.setPromptText("Origen");
+        cbDestino.setPromptText("Destino");
+        estilizarCombo(cbOrigen);
+        estilizarCombo(cbDestino);
+        cbOrigen.setMaxWidth(Double.MAX_VALUE);
+        cbDestino.setMaxWidth(Double.MAX_VALUE);
 
-        TextField txtTiempo = crearCampoTexto("Tiempo en minutos");
-        TextField txtDistancia = crearCampoTexto("Distancia en km");
-        TextField txtCosto = crearCampoTexto("Costo en pesos");
+        TextField txtTiempo    = crearCampo("Tiempo (minutos)");
+        TextField txtDistancia = crearCampo("Distancia (km)");
+        TextField txtCosto     = crearCampo("Costo (RD$)");
 
-        Button btnCrear = crearBoton("🔗 Crear Ruta");
+        Label lblError = crearLabelError();
 
-        btnCrear.setOnAction(event -> {
+        Button btnCrear = crearBoton("🔗  Crear Ruta");
+        btnCrear.setMaxWidth(Double.MAX_VALUE);
+
+        btnCrear.setOnAction(e -> {
+            lblError.setText("");
+
             if (cbOrigen.getValue() == null || cbDestino.getValue() == null) {
-                mostrarError("Seleccione origen y destino");
+                lblError.setText("⚠  Selecciona origen y destino.");
                 return;
             }
             if (cbOrigen.getValue().equals(cbDestino.getValue())) {
-                mostrarError("Origen y destino deben ser diferentes");
+                lblError.setText("⚠  Origen y destino distintos.");
                 return;
             }
-            if (txtTiempo.getText().isEmpty() || txtDistancia.getText().isEmpty() || txtCosto.getText().isEmpty()) {
-                mostrarError("Complete tiempo, distancia y costo");
+            if (!validarNoVacios(txtTiempo, txtDistancia, txtCosto)) {
+                lblError.setText("⚠  Completa tiempo, distancia y costo.");
                 return;
             }
 
             try {
-                String origen = cbOrigen.getValue().split(" - ")[0]; // Extraer ID
-                String destino = cbDestino.getValue().split(" - ")[0];
-                double tiempo = Double.parseDouble(txtTiempo.getText());
-                double distancia = Double.parseDouble(txtDistancia.getText());
-                double costo = Double.parseDouble(txtCosto.getText());
+                String origen   = cbOrigen.getValue().split(" - ")[0];
+                String destino  = cbDestino.getValue().split(" - ")[0];
+                double tiempo   = Double.parseDouble(txtTiempo.getText().trim());
+                double distancia = Double.parseDouble(txtDistancia.getText().trim());
+                double costo    = Double.parseDouble(txtCosto.getText().trim());
 
-                GrafoTransporte backend = AdaptadorVisual.getInstancia().getBackend();
-                if (backend != null) {
-                    backend.agregarRuta(origen, destino, tiempo, costo, distancia);
-                    AdaptadorVisual.getInstancia().notificarNuevaRuta(origen, destino, tiempo, distancia, costo);
-                    limpiarCampos(txtTiempo, txtDistancia, txtCosto);
-                    mostrarMensaje("✅ Ruta creada");
-                } else {
-                    panelVisual.agregarRutaVisual(origen, destino, tiempo, distancia, costo);
-                    limpiarCampos(txtTiempo, txtDistancia, txtCosto);
-                }
-            } catch (Exception ex) {
-                mostrarError("Valores numéricos inválidos");
+                AdaptadorVisual.getInstancia().agregarRuta(origen, destino, tiempo, distancia, costo);
+                limpiar(txtTiempo, txtDistancia, txtCosto);
+                setStatus("✔  Ruta creada: " + origen + " → " + destino, false);
+
+            } catch (NumberFormatException ex) {
+                lblError.setText("⚠  Tiempo, distancia y costo deben ser números.");
             }
         });
 
-        content.getChildren().addAll(
+        seccion.getChildren().addAll(
+                lblSec,
                 crearLabel("Origen:"), cbOrigen,
                 crearLabel("Destino:"), cbDestino,
                 crearLabel("Tiempo (min):"), txtTiempo,
                 crearLabel("Distancia (km):"), txtDistancia,
-                crearLabel("Costo ($):"), txtCosto,
-                btnCrear
+                crearLabel("Costo (RD$):"), txtCosto,
+                lblError, btnCrear
         );
-
-        TitledPane tp = new TitledPane("🛣️ Nueva Ruta", content);
-        tp.setExpanded(true);
-        tp.setStyle("-fx-text-fill: " + DARK_PURPLE + ";");
-        return tp;
+        return seccion;
     }
 
-    private HBox crearPanelControl() {
-        HBox panel = new HBox(20);
-        panel.setPadding(new Insets(20));
-        panel.setAlignment(Pos.CENTER);
-        panel.setStyle("-fx-background-color: " + MID_PURPLE + ";");
+    private VBox crearSeccionCalcular() {
+        VBox seccion = new VBox(8);
 
-        VBox seleccion = new VBox(10);
-        seleccion.setAlignment(Pos.CENTER_LEFT);
+        Label lblSec = crearLabelSeccion("🧮 Calcular Ruta");
 
-        cbCalcInicio = new ComboBox<>();
-        cbCalcInicio.setPromptText("Inicio");
-        estilizarComboBox(cbCalcInicio);
+        // Reutilizamos cbOrigen y cbDestino — ya los tiene todo
+        // pero aquí necesitamos DISTINTOS para el cálculo, así que hacemos copias "alias"
+        ComboBox<String> cbInicio = new ComboBox<>();
+        ComboBox<String> cbFin    = new ComboBox<>();
+        cbInicio.setPromptText("Parada inicio");
+        cbFin.setPromptText("Parada fin");
+        estilizarCombo(cbInicio);
+        estilizarCombo(cbFin);
+        cbInicio.setMaxWidth(Double.MAX_VALUE);
+        cbFin.setMaxWidth(Double.MAX_VALUE);
 
-        cbCalcFin = new ComboBox<>();
-        cbCalcFin.setPromptText("Fin");
-        estilizarComboBox(cbCalcFin);
-
-        ToggleGroup criterioGroup = new ToggleGroup();
-        RadioButton rbTiempo = new RadioButton("⏱️ Menor Tiempo");
-        RadioButton rbDistancia = new RadioButton("📏 Menor Distancia");
-        rbTiempo.setToggleGroup(criterioGroup);
-        rbDistancia.setToggleGroup(criterioGroup);
-        rbTiempo.setSelected(true);
-        rbTiempo.setStyle("-fx-text-fill: " + LIGHT_BEIGE + ";");
-        rbDistancia.setStyle("-fx-text-fill: " + LIGHT_BEIGE + ";");
-
-        Button btnCalcular = crearBoton("🧮 Calcular Mejor Ruta");
-
-        txtResultado = new TextArea();
-        txtResultado.setEditable(false);
-        txtResultado.setPrefRowCount(5);
-        txtResultado.setPrefColumnCount(50);
-        txtResultado.setStyle(
-                "-fx-control-inner-background: " + DARK_PURPLE + ";" +
-                        "-fx-text-fill: " + LIGHT_BEIGE + ";" +
-                        "-fx-font-family: 'Consolas', monospace;" +
-                        "-fx-font-size: 13px;" +
-                        "-fx-border-color: " + BEIGE + ";" +
-                        "-fx-border-width: 2px;"
+        // Cuando se agregan paradas nuevas, también se llenan estos
+        cbOrigen.getItems().addListener(
+                (javafx.collections.ListChangeListener<String>) change -> {
+                    cbInicio.setItems(cbOrigen.getItems());
+                    cbFin.setItems(cbOrigen.getItems());
+                }
         );
 
-        btnCalcular.setOnAction(event -> {
-            if (cbCalcInicio.getValue() == null || cbCalcFin.getValue() == null) {
-                mostrarError("Seleccione inicio y fin");
+        ToggleGroup grupo = new ToggleGroup();
+        RadioButton rbTiempo     = crearRadio("⏱  Tiempo",      grupo, true);
+        RadioButton rbDistancia  = crearRadio("📏  Distancia",   grupo, false);
+        RadioButton rbCosto      = crearRadio("💰  Costo",       grupo, false);
+        RadioButton rbTransbordo = crearRadio("🔄  Transbordos", grupo, false);
+
+        HBox filaRadio1 = new HBox(10, rbTiempo, rbDistancia);
+        HBox filaRadio2 = new HBox(10, rbCosto, rbTransbordo);
+
+        Label lblError = crearLabelError();
+
+        Button btnCalc = crearBotonDestacado("CALCULAR  ▶");
+        btnCalc.setMaxWidth(Double.MAX_VALUE);
+
+        btnCalc.setOnAction(e -> {
+            lblError.setText("");
+            if (cbInicio.getValue() == null || cbFin.getValue() == null) {
+                lblError.setText("⚠  Selecciona inicio y fin.");
+                return;
+            }
+            if (cbInicio.getValue().equals(cbFin.getValue())) {
+                lblError.setText("⚠  Inicio y fin distintos.");
                 return;
             }
 
+            String idInicio = cbInicio.getValue().split(" - ")[0];
+            String idFin    = cbFin.getValue().split(" - ")[0];
+
             GrafoTransporte backend = AdaptadorVisual.getInstancia().getBackend();
             if (backend == null) {
-                txtResultado.setText("⚠️ Backend no conectado. Modo visual únicamente.");
+                txtResultado.setText("⚠  Backend no conectado.\nModo visual únicamente.");
+                return;
             }
+
+            // Tu compañero pone aquí el resultado
+            // Ejemplo de cómo mostrar la ruta cuando la lógica esté lista:
+            // List<String> ruta = backend.dijkstra(idInicio, idFin);
+            // panelVisual.resaltarRuta(ruta);
+            // txtResultado.setText( formatearResultado(ruta) );
+
+            setStatus("Calculando ruta: " + idInicio + " → " + idFin, false);
         });
 
-        seleccion.getChildren().addAll(
-                crearLabel("Inicio:"), cbCalcInicio,
-                crearLabel("Fin:"), cbCalcFin,
-                new HBox(15, rbTiempo, rbDistancia),
-                btnCalcular
+        seccion.getChildren().addAll(
+                lblSec,
+                crearLabel("Inicio:"), cbInicio,
+                crearLabel("Fin:"), cbFin,
+                crearLabel("Optimizar por:"),
+                filaRadio1, filaRadio2,
+                lblError, btnCalc
         );
-
-        panel.getChildren().addAll(seleccion, txtResultado);
-        return panel;
+        return seccion;
     }
 
-    // Métodos auxiliares de UI
-    private TextField crearCampoTexto(String prompt) {
+    // ─── CENTRO (grafo + resultado) ───────────────────────────────────────────
+    private BorderPane crearCentro() {
+        BorderPane centro = new BorderPane();
+
+        panelVisual = new PanelVisualizacion();
+        ScrollPane scrollGrafo = new ScrollPane(panelVisual);
+        scrollGrafo.setFitToWidth(true);
+        scrollGrafo.setFitToHeight(true);
+        scrollGrafo.setPannable(true);
+        scrollGrafo.setStyle(
+                "-fx-background-color: #0a0714;" +
+                        "-fx-background: #0a0714;"
+        );
+        centro.setCenter(scrollGrafo);
+
+        // Panel de resultado abajo del grafo
+        txtResultado = new TextArea();
+        txtResultado.setEditable(false);
+        txtResultado.setPrefRowCount(4);
+        txtResultado.setWrapText(true);
+        txtResultado.setPromptText("El resultado de la ruta calculada aparecerá aquí...");
+        txtResultado.setStyle(
+                "-fx-control-inner-background: #12082a;" +
+                        "-fx-text-fill: " + LIGHT_BEIGE + ";" +
+                        "-fx-prompt-text-fill: #5a4a6a;" +
+                        "-fx-font-family: 'Consolas', monospace;" +
+                        "-fx-font-size: 13px;" +
+                        "-fx-border-color: " + TERRACOTA + ";" +
+                        "-fx-border-width: 2 0 0 0;"
+        );
+        centro.setBottom(txtResultado);
+
+        return centro;
+    }
+
+    // ─── STATUS BAR ───────────────────────────────────────────────────────────
+    private HBox crearStatusBar() {
+        HBox bar = new HBox();
+        bar.setPadding(new Insets(6, 18, 6, 18));
+        bar.setStyle(
+                "-fx-background-color: #0a0714;" +
+                        "-fx-border-color: " + MID_PURPLE + ";" +
+                        "-fx-border-width: 1 0 0 0;"
+        );
+
+        lblStatus = new Label("Listo.");
+        lblStatus.setStyle("-fx-text-fill: #7a6a5a; -fx-font-size: 12px;");
+        bar.getChildren().add(lblStatus);
+        return bar;
+    }
+
+    // ─── HELPERS DE UI ────────────────────────────────────────────────────────
+    private TextField crearCampo(String prompt) {
         TextField tf = new TextField();
         tf.setPromptText(prompt);
         tf.setStyle(
-                "-fx-background-color: " + BEIGE + ";" +
-                        "-fx-text-fill: " + DARK_PURPLE + ";" +
-                        "-fx-prompt-text-fill: #666;" +
+                "-fx-background-color: #12082a;" +
+                        "-fx-text-fill: " + LIGHT_BEIGE + ";" +
+                        "-fx-prompt-text-fill: #5a4a6a;" +
                         "-fx-padding: 8px;" +
-                        "-fx-background-radius: 5px;"
+                        "-fx-background-radius: 5px;" +
+                        "-fx-border-color: #3a2050;" +
+                        "-fx-border-radius: 5px;"
         );
+        // Iluminar borde al enfocar
+        tf.focusedProperty().addListener((obs, old, focused) -> {
+            if (focused) {
+                tf.setStyle(tf.getStyle().replace("#3a2050", TERRACOTA));
+            } else {
+                tf.setStyle(tf.getStyle().replace(TERRACOTA, "#3a2050"));
+            }
+        });
         return tf;
     }
 
     private Label crearLabel(String texto) {
         Label lbl = new Label(texto);
-        lbl.setStyle("-fx-text-fill: " + LIGHT_BEIGE + "; -fx-font-weight: bold;");
+        lbl.setStyle("-fx-text-fill: #9a8a7a; -fx-font-size: 11px;");
         return lbl;
+    }
+
+    private Label crearLabelSeccion(String texto) {
+        Label lbl = new Label(texto);
+        lbl.setStyle(
+                "-fx-text-fill: " + BEIGE + ";" +
+                        "-fx-font-size: 14px;" +
+                        "-fx-font-weight: bold;"
+        );
+        return lbl;
+    }
+
+    private Label crearLabelError() {
+        Label lbl = new Label("");
+        lbl.setStyle("-fx-text-fill: #e74c3c; -fx-font-size: 11px;");
+        lbl.setWrapText(true);
+        return lbl;
+    }
+
+    private RadioButton crearRadio(String texto, ToggleGroup grupo, boolean seleccionado) {
+        RadioButton rb = new RadioButton(texto);
+        rb.setToggleGroup(grupo);
+        rb.setSelected(seleccionado);
+        rb.setStyle("-fx-text-fill: " + LIGHT_BEIGE + "; -fx-font-size: 12px;");
+        return rb;
     }
 
     private Button crearBoton(String texto) {
         Button btn = new Button(texto);
-        btn.setStyle(
+        String estiloBase =
                 "-fx-background-color: " + TERRACOTA + ";" +
                         "-fx-text-fill: " + LIGHT_BEIGE + ";" +
                         "-fx-font-weight: bold;" +
-                        "-fx-padding: 10 20;" +
-                        "-fx-background-radius: 8px;" +
-                        "-fx-cursor: hand;"
-        );
-
-        btn.setOnMouseEntered(e -> btn.setStyle(
+                        "-fx-padding: 9 16;" +
+                        "-fx-background-radius: 6px;" +
+                        "-fx-cursor: hand;";
+        String estiloHover =
                 "-fx-background-color: " + BEIGE + ";" +
                         "-fx-text-fill: " + DARK_PURPLE + ";" +
                         "-fx-font-weight: bold;" +
-                        "-fx-padding: 10 20;" +
-                        "-fx-background-radius: 8px;" +
+                        "-fx-padding: 9 16;" +
+                        "-fx-background-radius: 6px;" +
                         "-fx-cursor: hand;" +
-                        "-fx-effect: dropshadow(gaussian, " + BEIGE + ", 10, 0, 0, 0);"
-        ));
-
-        btn.setOnMouseExited(e -> btn.setStyle(
-                "-fx-background-color: " + TERRACOTA + ";" +
-                        "-fx-text-fill: " + LIGHT_BEIGE + ";" +
-                        "-fx-font-weight: bold;" +
-                        "-fx-padding: 10 20;" +
-                        "-fx-background-radius: 8px;" +
-                        "-fx-cursor: hand;"
-        ));
-
+                        "-fx-effect: dropshadow(gaussian, " + BEIGE + ", 8, 0, 0, 0);";
+        btn.setStyle(estiloBase);
+        btn.setOnMouseEntered(e -> btn.setStyle(estiloHover));
+        btn.setOnMouseExited(e -> btn.setStyle(estiloBase));
         return btn;
     }
 
-    private void estilizarComboBox(ComboBox<String> cb) {
+    // Botón grande especial para calcular
+    private Button crearBotonDestacado(String texto) {
+        Button btn = new Button(texto);
+        String estiloBase =
+                "-fx-background-color: linear-gradient(to right, " + MID_PURPLE + ", " + TERRACOTA + ");" +
+                        "-fx-text-fill: " + LIGHT_BEIGE + ";" +
+                        "-fx-font-size: 14px;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-padding: 12 16;" +
+                        "-fx-background-radius: 8px;" +
+                        "-fx-cursor: hand;";
+        String estiloHover =
+                "-fx-background-color: linear-gradient(to right, #6a2a7e, " + BEIGE + ");" +
+                        "-fx-text-fill: " + DARK_PURPLE + ";" +
+                        "-fx-font-size: 14px;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-padding: 12 16;" +
+                        "-fx-background-radius: 8px;" +
+                        "-fx-cursor: hand;" +
+                        "-fx-effect: dropshadow(gaussian, " + TERRACOTA + ", 12, 0, 0, 2);";
+        btn.setStyle(estiloBase);
+        btn.setOnMouseEntered(e -> btn.setStyle(estiloHover));
+        btn.setOnMouseExited(e -> btn.setStyle(estiloBase));
+        return btn;
+    }
+
+    // Botón pequeño para la barra de header
+    private Button crearBotonChico(String texto) {
+        Button btn = new Button(texto);
+        String base =
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: " + BEIGE + ";" +
+                        "-fx-font-size: 12px;" +
+                        "-fx-padding: 6 14;" +
+                        "-fx-background-radius: 6px;" +
+                        "-fx-border-color: " + TERRACOTA + ";" +
+                        "-fx-border-radius: 6px;" +
+                        "-fx-cursor: hand;";
+        String hover =
+                "-fx-background-color: " + TERRACOTA + ";" +
+                        "-fx-text-fill: " + LIGHT_BEIGE + ";" +
+                        "-fx-font-size: 12px;" +
+                        "-fx-padding: 6 14;" +
+                        "-fx-background-radius: 6px;" +
+                        "-fx-border-color: " + TERRACOTA + ";" +
+                        "-fx-border-radius: 6px;" +
+                        "-fx-cursor: hand;";
+        btn.setStyle(base);
+        btn.setOnMouseEntered(e -> btn.setStyle(hover));
+        btn.setOnMouseExited(e -> btn.setStyle(base));
+        return btn;
+    }
+
+    private Separator crearSeparadorSeccion() {
+        Separator s = new Separator();
+        s.setStyle("-fx-background-color: #3a2050; -fx-opacity: 0.5;");
+        return s;
+    }
+
+    private void estilizarCombo(ComboBox<String> cb) {
         cb.setStyle(
-                "-fx-background-color: " + BEIGE + ";" +
-                        "-fx-mark-color: " + DARK_PURPLE + ";"
+                "-fx-background-color: #12082a;" +
+                        "-fx-mark-color: " + BEIGE + ";" +
+                        "-fx-border-color: #3a2050;" +
+                        "-fx-border-radius: 5px;" +
+                        "-fx-background-radius: 5px;"
         );
     }
 
-    private void actualizarComboBoxes(String id, String nombre) {
-        String item = id + " - " + nombre;
-        Platform.runLater(() -> {
-            cbOrigen.getItems().add(item);
-            cbDestino.getItems().add(item);
-            cbCalcInicio.getItems().add(item);
-            cbCalcFin.getItems().add(item);
-        });
-    }
-
-    private boolean validarCampos(TextField... campos) {
+    private boolean validarNoVacios(TextField... campos) {
         for (TextField campo : campos) {
-            if (campo.getText().trim().isEmpty()) {
-                mostrarError("Todos los campos son obligatorios");
-                return false;
-            }
+            if (campo.getText().trim().isEmpty()) return false;
         }
         return true;
     }
 
-    private void limpiarCampos(TextField... campos) {
+    private void limpiar(TextField... campos) {
         for (TextField campo : campos) campo.clear();
     }
 
-    private void mostrarError(String msg) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error");
-        alert.setHeaderText(null);
-        alert.setContentText(msg);
-        alert.showAndWait();
+    // Actualiza la barra de estado de abajo
+    private void setStatus(String mensaje, boolean esError) {
+        String color = esError ? ERROR_RED : "#7a9a6a";
+        lblStatus.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 12px;");
+        lblStatus.setText(mensaje);
     }
 
-    private void mostrarMensaje(String msg) {
-        txtResultado.setText(msg);
-    }
-
-    static void main(String[] args) {
+    public static void main(String[] args) {
         launch(args);
     }
 }

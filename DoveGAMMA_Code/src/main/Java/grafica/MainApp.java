@@ -74,7 +74,7 @@ public class MainApp extends Application {
         Label titulo = new Label("DoveGAMMA");
         titulo.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: " + BEIGE + ";");
         Label subtitulo = new Label("Sistema de Gestión de Rutas de Transporte");
-        subtitulo.setStyle("-fx-font-size: 11px; -fx-text-fill: #9a7a5a;");
+        subtitulo.setStyle("-fx-font-size: 13px; -fx-text-fill: #9a7a5a;");
         textos.getChildren().addAll(titulo, subtitulo);
 
         // Spacer para empujar botones a la derecha
@@ -97,12 +97,12 @@ public class MainApp extends Application {
     private ScrollPane crearPanelIzquierdo() {
         VBox contenido = new VBox(16);
         contenido.setPadding(new Insets(18));
-        contenido.setPrefWidth(300);
+        contenido.setPrefWidth(340);
         contenido.setStyle("-fx-background-color: " + MID_PURPLE + ";");
 
         Label lblTitulo = new Label("Panel de Control");
         lblTitulo.setStyle(
-                "-fx-font-size: 16px; -fx-font-weight: bold; " +
+                "-fx-font-size: 18px; -fx-font-weight: bold; " +
                         "-fx-text-fill: " + LIGHT_BEIGE + ";"
         );
 
@@ -253,8 +253,6 @@ public class MainApp extends Application {
 
         Label lblSec = crearLabelSeccion("🧮 Calcular Ruta");
 
-        // Reutilizamos cbOrigen y cbDestino — ya los tiene todo
-        // pero aquí necesitamos DISTINTOS para el cálculo, así que hacemos copias "alias"
         ComboBox<String> cbInicio = new ComboBox<>();
         ComboBox<String> cbFin    = new ComboBox<>();
         cbInicio.setPromptText("Parada inicio");
@@ -264,7 +262,6 @@ public class MainApp extends Application {
         cbInicio.setMaxWidth(Double.MAX_VALUE);
         cbFin.setMaxWidth(Double.MAX_VALUE);
 
-        // Cuando se agregan paradas nuevas, también se llenan estos
         cbOrigen.getItems().addListener(
                 (javafx.collections.ListChangeListener<String>) change -> {
                     cbInicio.setItems(cbOrigen.getItems());
@@ -272,14 +269,20 @@ public class MainApp extends Application {
                 }
         );
 
-        ToggleGroup grupo = new ToggleGroup();
-        RadioButton rbTiempo     = crearRadio("⏱  Tiempo",      grupo, true);
-        RadioButton rbDistancia  = crearRadio("📏  Distancia",   grupo, false);
-        RadioButton rbCosto      = crearRadio("💰  Costo",       grupo, false);
-        RadioButton rbTransbordo = crearRadio("🔄  Transbordos", grupo, false);
+        // CheckBoxes — todos activados por defecto, combinables
+        CheckBox ckTiempo     = crearCheckBox("⏱  Menor tiempo");
+        CheckBox ckDistancia  = crearCheckBox("📏  Menor distancia");
+        CheckBox ckCosto      = crearCheckBox("💰  Menor costo");
+        CheckBox ckTransbordo = crearCheckBox("🔄  Menos transbordos");
 
-        HBox filaRadio1 = new HBox(10, rbTiempo, rbDistancia);
-        HBox filaRadio2 = new HBox(10, rbCosto, rbTransbordo);
+        VBox grupoChecks = new VBox(10, ckTiempo, ckDistancia, ckCosto, ckTransbordo);
+        grupoChecks.setPadding(new Insets(12));
+        grupoChecks.setStyle(
+                "-fx-background-color: #12082a;" +
+                        "-fx-background-radius: 6px;" +
+                        "-fx-border-color: #3a2050;" +
+                        "-fx-border-radius: 6px;"
+        );
 
         Label lblError = crearLabelError();
 
@@ -288,6 +291,7 @@ public class MainApp extends Application {
 
         btnCalc.setOnAction(e -> {
             lblError.setText("");
+
             if (cbInicio.getValue() == null || cbFin.getValue() == null) {
                 lblError.setText("⚠  Selecciona inicio y fin.");
                 return;
@@ -296,9 +300,22 @@ public class MainApp extends Application {
                 lblError.setText("⚠  Inicio y fin distintos.");
                 return;
             }
+            if (!ckTiempo.isSelected() && !ckDistancia.isSelected()
+                    && !ckCosto.isSelected() && !ckTransbordo.isSelected()) {
+                lblError.setText("⚠  Marca al menos un criterio.");
+                return;
+            }
 
             String idInicio = cbInicio.getValue().split(" - ")[0];
             String idFin    = cbFin.getValue().split(" - ")[0];
+
+            // Armar lista de criterios activos
+            StringBuilder criterios = new StringBuilder();
+            if (ckTiempo.isSelected())     criterios.append("tiempo, ");
+            if (ckDistancia.isSelected())  criterios.append("distancia, ");
+            if (ckCosto.isSelected())      criterios.append("costo, ");
+            if (ckTransbordo.isSelected()) criterios.append("transbordos, ");
+            String listaCriterios = criterios.toString().replaceAll(", $", "");
 
             GrafoTransporte backend = AdaptadorVisual.getInstancia().getBackend();
             if (backend == null) {
@@ -306,21 +323,25 @@ public class MainApp extends Application {
                 return;
             }
 
-            // Tu compañero pone aquí el resultado
-            // Ejemplo de cómo mostrar la ruta cuando la lógica esté lista:
-            // List<String> ruta = backend.dijkstra(idInicio, idFin);
-            // panelVisual.resaltarRuta(ruta);
-            // txtResultado.setText( formatearResultado(ruta) );
+            // Cuando la lógica esté lista, descomenta lo que aplique:
+            // if (ckTiempo.isSelected()) {
+            //     List<String> ruta = backend.dijkstra(idInicio, idFin, "tiempo");
+            //     panelVisual.resaltarRuta(ruta);
+            //     txtResultado.setText("Ruta (tiempo):\n" + ruta.toString());
+            // }
+            // if (ckDistancia.isSelected()) { ... }
+            // if (ckCosto.isSelected())     { ... }
+            // if (ckTransbordo.isSelected()){ ... }
 
-            setStatus("Calculando ruta: " + idInicio + " → " + idFin, false);
+            setStatus("Criterios: " + listaCriterios + " | " + idInicio + " → " + idFin, false);
         });
 
         seccion.getChildren().addAll(
                 lblSec,
                 crearLabel("Inicio:"), cbInicio,
                 crearLabel("Fin:"), cbFin,
-                crearLabel("Optimizar por:"),
-                filaRadio1, filaRadio2,
+                crearLabel("Optimizar por (puedes marcar varios):"),
+                grupoChecks,
                 lblError, btnCalc
         );
         return seccion;
@@ -352,7 +373,7 @@ public class MainApp extends Application {
                         "-fx-text-fill: " + LIGHT_BEIGE + ";" +
                         "-fx-prompt-text-fill: #5a4a6a;" +
                         "-fx-font-family: 'Consolas', monospace;" +
-                        "-fx-font-size: 13px;" +
+                        "-fx-font-size: 15px;" +
                         "-fx-border-color: " + TERRACOTA + ";" +
                         "-fx-border-width: 2 0 0 0;"
         );
@@ -372,7 +393,7 @@ public class MainApp extends Application {
         );
 
         lblStatus = new Label("Listo.");
-        lblStatus.setStyle("-fx-text-fill: #7a6a5a; -fx-font-size: 12px;");
+        lblStatus.setStyle("-fx-text-fill: #7a6a5a; -fx-font-size: 14px;");
         bar.getChildren().add(lblStatus);
         return bar;
     }
@@ -385,7 +406,8 @@ public class MainApp extends Application {
                 "-fx-background-color: #12082a;" +
                         "-fx-text-fill: " + LIGHT_BEIGE + ";" +
                         "-fx-prompt-text-fill: #5a4a6a;" +
-                        "-fx-padding: 8px;" +
+                        "-fx-font-size: 14px;" +
+                        "-fx-padding: 9px;" +
                         "-fx-background-radius: 5px;" +
                         "-fx-border-color: #3a2050;" +
                         "-fx-border-radius: 5px;"
@@ -403,7 +425,7 @@ public class MainApp extends Application {
 
     private Label crearLabel(String texto) {
         Label lbl = new Label(texto);
-        lbl.setStyle("-fx-text-fill: #9a8a7a; -fx-font-size: 11px;");
+        lbl.setStyle("-fx-text-fill: #9a8a7a; -fx-font-size: 13px;");
         return lbl;
     }
 
@@ -411,7 +433,7 @@ public class MainApp extends Application {
         Label lbl = new Label(texto);
         lbl.setStyle(
                 "-fx-text-fill: " + BEIGE + ";" +
-                        "-fx-font-size: 14px;" +
+                        "-fx-font-size: 16px;" +
                         "-fx-font-weight: bold;"
         );
         return lbl;
@@ -419,17 +441,16 @@ public class MainApp extends Application {
 
     private Label crearLabelError() {
         Label lbl = new Label("");
-        lbl.setStyle("-fx-text-fill: #e74c3c; -fx-font-size: 11px;");
+        lbl.setStyle("-fx-text-fill: #e74c3c; -fx-font-size: 13px;");
         lbl.setWrapText(true);
         return lbl;
     }
 
-    private RadioButton crearRadio(String texto, ToggleGroup grupo, boolean seleccionado) {
-        RadioButton rb = new RadioButton(texto);
-        rb.setToggleGroup(grupo);
-        rb.setSelected(seleccionado);
-        rb.setStyle("-fx-text-fill: " + LIGHT_BEIGE + "; -fx-font-size: 12px;");
-        return rb;
+    private CheckBox crearCheckBox(String texto) {
+        CheckBox cb = new CheckBox(texto);
+        cb.setSelected(true); // todos activados por defecto
+        cb.setStyle("-fx-text-fill: " + LIGHT_BEIGE + "; -fx-font-size: 14px;");
+        return cb;
     }
 
     private Button crearBoton(String texto) {
@@ -437,15 +458,17 @@ public class MainApp extends Application {
         String estiloBase =
                 "-fx-background-color: " + TERRACOTA + ";" +
                         "-fx-text-fill: " + LIGHT_BEIGE + ";" +
+                        "-fx-font-size: 14px;" +
                         "-fx-font-weight: bold;" +
-                        "-fx-padding: 9 16;" +
+                        "-fx-padding: 10 16;" +
                         "-fx-background-radius: 6px;" +
                         "-fx-cursor: hand;";
         String estiloHover =
                 "-fx-background-color: " + BEIGE + ";" +
                         "-fx-text-fill: " + DARK_PURPLE + ";" +
+                        "-fx-font-size: 14px;" +
                         "-fx-font-weight: bold;" +
-                        "-fx-padding: 9 16;" +
+                        "-fx-padding: 10 16;" +
                         "-fx-background-radius: 6px;" +
                         "-fx-cursor: hand;" +
                         "-fx-effect: dropshadow(gaussian, " + BEIGE + ", 8, 0, 0, 0);";
@@ -487,8 +510,8 @@ public class MainApp extends Application {
         String base =
                 "-fx-background-color: transparent;" +
                         "-fx-text-fill: " + BEIGE + ";" +
-                        "-fx-font-size: 12px;" +
-                        "-fx-padding: 6 14;" +
+                        "-fx-font-size: 14px;" +
+                        "-fx-padding: 7 16;" +
                         "-fx-background-radius: 6px;" +
                         "-fx-border-color: " + TERRACOTA + ";" +
                         "-fx-border-radius: 6px;" +
@@ -496,8 +519,8 @@ public class MainApp extends Application {
         String hover =
                 "-fx-background-color: " + TERRACOTA + ";" +
                         "-fx-text-fill: " + LIGHT_BEIGE + ";" +
-                        "-fx-font-size: 12px;" +
-                        "-fx-padding: 6 14;" +
+                        "-fx-font-size: 14px;" +
+                        "-fx-padding: 7 16;" +
                         "-fx-background-radius: 6px;" +
                         "-fx-border-color: " + TERRACOTA + ";" +
                         "-fx-border-radius: 6px;" +
@@ -538,7 +561,7 @@ public class MainApp extends Application {
     // Actualiza la barra de estado de abajo
     private void setStatus(String mensaje, boolean esError) {
         String color = esError ? ERROR_RED : "#7a9a6a";
-        lblStatus.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 12px;");
+        lblStatus.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 14px;");
         lblStatus.setText(mensaje);
     }
 

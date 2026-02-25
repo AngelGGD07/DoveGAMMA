@@ -1,258 +1,338 @@
-// PanelVisualizacion.java - Visualizador de grafo con flechas y efectos
+// PanelVisualizacion.java
 package grafica;
-
 
 import javafx.animation.FadeTransition;
 import javafx.animation.ScaleTransition;
+import javafx.animation.StrokeTransition;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.Line;
-import javafx.scene.shape.Polygon;
-import javafx.scene.text.Text;
+import javafx.scene.shape.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
 import javafx.util.Duration;
 
 import java.util.*;
 
 public class PanelVisualizacion extends Pane {
 
-    private Map<String, NodoVisual> nodos;
-    private List<LineaVisual> lineas;
-    private String darkPurple = "#1a0a2e";
-    private String terracota = "#a65d48";
-    private String beige = "#d4a574";
-    private String lightBeige = "#e8c9a8";
+    private Map<String, NodoVisual> nodos  = new HashMap<>();
+    private List<LineaVisual>       lineas = new ArrayList<>();
+
+    // Colores
+    private final Color cOscuro   = Color.web("#0a0714");
+    private final Color cMorado   = Color.web("#4a1a5e");
+    private final Color cTerra    = Color.web("#a65d48");
+    private final Color cBeige    = Color.web("#d4a574");
+    private final Color cClaro    = Color.web("#e8c9a8");
+    private final Color cResalte  = Color.web("#f0c040");  // amarillo para ruta calculada
+    private final Color cGridLine = Color.web("#1e1030");
+
+    // Para drag de nodos
+    private double dragOffsetX, dragOffsetY;
 
     public PanelVisualizacion() {
-        this.nodos = new HashMap<>();
-        this.lineas = new ArrayList<>();
-        setStyle("-fx-background-color: " + darkPurple + ";");
-        setPrefSize(900, 650);
+        setPrefSize(900, 630);
+        setStyle("-fx-background-color: #0a0714;");
+        dibujarGrid();
+    }
+
+    // Cuadrícula de fondo — le da profundidad al panel
+    private void dibujarGrid() {
+        int paso = 40;
+        for (int x = 0; x < 1400; x += paso) {
+            Line l = new Line(x, 0, x, 900);
+            l.setStroke(cGridLine);
+            l.setStrokeWidth(0.5);
+            getChildren().add(l);
+        }
+        for (int y = 0; y < 900; y += paso) {
+            Line l = new Line(0, y, 1400, y);
+            l.setStroke(cGridLine);
+            l.setStrokeWidth(0.5);
+            getChildren().add(l);
+        }
     }
 
     public void agregarParadaVisual(String id, String nombre, double x, double y) {
-        // Validar límites
-        x = Math.max(30, Math.min(x, getPrefWidth() - 30));
-        y = Math.max(30, Math.min(y, getPrefHeight() - 30));
+        // Mantener dentro del panel
+        x = Math.max(35, Math.min(x, getPrefWidth()  - 35));
+        y = Math.max(35, Math.min(y, getPrefHeight() - 35));
 
-        // Círculo principal
-        Circle circulo = new Circle(x, y, 20);
-        circulo.setFill(Color.web(terracota));
-        circulo.setStroke(Color.web(beige));
-        circulo.setStrokeWidth(3);
+        // Círculo
+        Circle circulo = new Circle(x, y, 22);
+        circulo.setFill(cTerra);
+        circulo.setStroke(cBeige);
+        circulo.setStrokeWidth(2.5);
+
+        // Nombre arriba
+        Text lblNombre = new Text(nombre);
+        lblNombre.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
+        lblNombre.setFill(cClaro);
+        // Centrar el texto sobre el círculo
+        posicionarTexto(lblNombre, x, y - 30);
+
+        // ID dentro del círculo
+        Text lblId = new Text(id.length() > 4 ? id.substring(0, 4) : id);
+        lblId.setFont(Font.font("Consolas", FontWeight.BOLD, 11));
+        lblId.setFill(cClaro);
+        posicionarTexto(lblId, x, y + 4);
 
         // Animación de entrada
-        ScaleTransition st = new ScaleTransition(Duration.millis(500), circulo);
-        st.setFromX(0);
-        st.setFromY(0);
-        st.setToX(1);
-        st.setToY(1);
+        circulo.setScaleX(0);
+        circulo.setScaleY(0);
+        ScaleTransition st = new ScaleTransition(Duration.millis(350), circulo);
+        st.setToX(1); st.setToY(1);
         st.play();
 
-        // Label con nombre
-        Text label = new Text(x - 25, y - 30, nombre);
-        label.setFill(Color.web(lightBeige));
-        label.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
-
-        // ID pequeño debajo
-        Text idLabel = new Text(x - 10, y + 35, id);
-        idLabel.setFill(Color.web(beige));
-        idLabel.setFont(Font.font("Consolas", 11));
-
-        // Efectos hover
+        // ── Hover ──
         circulo.setOnMouseEntered(e -> {
-            circulo.setFill(Color.web(beige));
-            circulo.setStroke(Color.web(terracota));
-            circulo.setRadius(25);
+            circulo.setFill(cBeige);
+            circulo.setRadius(26);
+            circulo.setEffect(new javafx.scene.effect.DropShadow(18, cTerra));
         });
-
         circulo.setOnMouseExited(e -> {
-            circulo.setFill(Color.web(terracota));
-            circulo.setStroke(Color.web(beige));
-            circulo.setRadius(20);
+            circulo.setFill(cTerra);
+            circulo.setRadius(22);
+            circulo.setEffect(null);
         });
 
-        NodoVisual nodo = new NodoVisual(id, circulo, label, idLabel, x, y);
+        // ── Drag ──
+        circulo.setOnMousePressed(e -> {
+            dragOffsetX = e.getX() - circulo.getCenterX();
+            dragOffsetY = e.getY() - circulo.getCenterY();
+            circulo.toFront();
+            lblNombre.toFront();
+            lblId.toFront();
+        });
+
+        circulo.setOnMouseDragged(e -> {
+            double nx = e.getX() - dragOffsetX;
+            double ny = e.getY() - dragOffsetY;
+
+            // límites
+            nx = Math.max(35, Math.min(nx, getPrefWidth()  - 35));
+            ny = Math.max(35, Math.min(ny, getPrefHeight() - 35));
+
+            circulo.setCenterX(nx);
+            circulo.setCenterY(ny);
+            posicionarTexto(lblNombre, nx, ny - 30);
+            posicionarTexto(lblId, nx, ny + 4);
+
+            // Redibujar las líneas conectadas
+            NodoVisual nodo = nodos.get(id);
+            if (nodo != null) {
+                nodo.x = nx;
+                nodo.y = ny;
+                redibPjarLineas(id);
+            }
+        });
+
+        NodoVisual nodo = new NodoVisual(id, nombre, circulo, lblNombre, lblId, x, y);
         nodos.put(id, nodo);
 
-        getChildren().addAll(circulo, label, idLabel);
-
-        // Traer al frente
-        circulo.toFront();
-        label.toFront();
-        idLabel.toFront();
+        getChildren().addAll(circulo, lblNombre, lblId);
     }
 
-    public void agregarRutaVisual(String idOrigen, String idDestino, double tiempo, double distancia, double costo) {
-        NodoVisual origen = nodos.get(idOrigen);
+    public void agregarRutaVisual(String idOrigen, String idDestino,
+                                  double tiempo, double distancia, double costo) {
+        NodoVisual origen  = nodos.get(idOrigen);
         NodoVisual destino = nodos.get(idDestino);
-
         if (origen == null || destino == null) return;
 
-        double x1 = origen.x;
-        double y1 = origen.y;
-        double x2 = destino.x;
-        double y2 = destino.y;
+        // Delegamos al método que también se llama cuando arrastran nodos
+        LineaVisual lv = construirLinea(origen, destino, tiempo, distancia, costo);
+        lineas.add(lv);
 
-        // Calcular ángulo para la flecha
+        // Animación de entrada de la línea
+        FadeTransition ft = new FadeTransition(Duration.millis(500), lv.linea);
+        ft.setFromValue(0); ft.setToValue(1);
+        ft.play();
+
+        subirNodosAlFrente();
+    }
+
+    // Construye y agrega al Pane todos los elementos gráficos de UNA línea
+    private LineaVisual construirLinea(NodoVisual origen, NodoVisual destino,
+                                       double tiempo, double distancia, double costo) {
+        double x1 = origen.x,  y1 = origen.y;
+        double x2 = destino.x, y2 = destino.y;
         double angulo = Math.atan2(y2 - y1, x2 - x1);
-        double radio = 25; // Radio del círculo + margen
+        double r = 24;
 
-        // Puntos de inicio y fin (en el borde de los círculos)
-        double startX = x1 + radio * Math.cos(angulo);
-        double startY = y1 + radio * Math.sin(angulo);
-        double endX = x2 - radio * Math.cos(angulo);
-        double endY = y2 - radio * Math.sin(angulo);
+        double startX = x1 + r * Math.cos(angulo);
+        double startY = y1 + r * Math.sin(angulo);
+        double endX   = x2 - r * Math.cos(angulo);
+        double endY   = y2 - r * Math.sin(angulo);
 
-        // Línea principal
         Line linea = new Line(startX, startY, endX, endY);
-        linea.setStroke(Color.web(beige));
-        linea.setStrokeWidth(3);
-        linea.setOpacity(0.8);
+        linea.setStroke(cBeige);
+        linea.setStrokeWidth(2.5);
+        linea.setOpacity(0.85);
 
-        // Flecha (triángulo)
-        double arrowLength = 15;
-        double arrowWidth = 10;
+        Polygon flecha = construirFlecha(endX, endY, angulo);
 
-        Polygon flecha = new Polygon();
-        flecha.getPoints().addAll(
-                endX, endY,
-                endX - arrowLength * Math.cos(angulo - Math.PI / 6),
-                endY - arrowLength * Math.sin(angulo - Math.PI / 6),
-                endX - arrowLength * Math.cos(angulo + Math.PI / 6),
-                endY - arrowLength * Math.sin(angulo + Math.PI / 6)
-        );
-        flecha.setFill(Color.web(terracota));
-        flecha.setStroke(Color.web(beige));
-        flecha.setStrokeWidth(2);
-
-        // Label con pesos
+        // Etiqueta con los pesos en el punto medio
         double midX = (startX + endX) / 2;
         double midY = (startY + endY) / 2;
 
-        Text pesoLabel = new Text(midX - 40, midY - 10,
-                String.format("⏱%.0f | 📏%.1f | $%.2f", tiempo, distancia, costo));
-        pesoLabel.setFill(Color.web(lightBeige));
-        pesoLabel.setFont(Font.font("Consolas", 11));
-        pesoLabel.setStyle("-fx-background-color: " + darkPurple + "; -fx-padding: 2px;");
+        // Fondo semitransparente para el texto
+        Rectangle bgTexto = new Rectangle(0, 0, 100, 18);
+        bgTexto.setFill(Color.web("#0a0714", 0.85));
+        bgTexto.setArcWidth(4); bgTexto.setArcHeight(4);
 
-        // Fondo para el texto (rectángulo semitransparente)
-        javafx.scene.shape.Rectangle bg = new javafx.scene.shape.Rectangle(
-                midX - 45, midY - 25, 90, 20
-        );
-        bg.setFill(Color.web(darkPurple, 0.8));
-        bg.setArcWidth(5);
-        bg.setArcHeight(5);
+        Text etiqueta = new Text(String.format("⏱%.0fm  📏%.1fkm  $%.0f", tiempo, distancia, costo));
+        etiqueta.setFont(Font.font("Consolas", 10));
+        etiqueta.setFill(cClaro);
 
-        LineaVisual lv = new LineaVisual(linea, flecha, origen, destino);
-        lineas.add(lv);
+        // Centrar etiqueta y su fondo
+        double anchoEtiq = etiqueta.getBoundsInLocal().getWidth() + 10;
+        bgTexto.setWidth(anchoEtiq);
+        bgTexto.setX(midX - anchoEtiq / 2);
+        bgTexto.setY(midY - 14);
+        posicionarTexto(etiqueta, midX, midY - 3);
 
-        getChildren().addAll(linea, flecha, bg, pesoLabel);
+        getChildren().addAll(linea, flecha, bgTexto, etiqueta);
 
-        // Animación de entrada
-        FadeTransition ft = new FadeTransition(Duration.millis(600), linea);
-        ft.setFromValue(0);
-        ft.setToValue(0.8);
-        ft.play();
-
-        // Traer nodos al frente
-        origen.circulo.toFront();
-        origen.label.toFront();
-        origen.idLabel.toFront();
-        destino.circulo.toFront();
-        destino.label.toFront();
-        destino.idLabel.toFront();
+        return new LineaVisual(linea, flecha, bgTexto, etiqueta, origen, destino, tiempo, distancia, costo);
     }
 
+    private Polygon construirFlecha(double endX, double endY, double angulo) {
+        double len = 13, ancho = 8;
+        Polygon flecha = new Polygon(
+                endX, endY,
+                endX - len * Math.cos(angulo - Math.PI / 6),
+                endY - len * Math.sin(angulo - Math.PI / 6),
+                endX - len * Math.cos(angulo + Math.PI / 6),
+                endY - len * Math.sin(angulo + Math.PI / 6)
+        );
+        flecha.setFill(cTerra);
+        flecha.setStroke(cBeige);
+        flecha.setStrokeWidth(1.5);
+        return flecha;
+    }
+
+    // Redibujar las líneas de un nodo cuando lo arrastran
+    private void redibPjarLineas(String idNodo) {
+        for (LineaVisual lv : lineas) {
+            if (!lv.origen.id.equals(idNodo) && !lv.destino.id.equals(idNodo)) continue;
+
+            double x1 = lv.origen.x,  y1 = lv.origen.y;
+            double x2 = lv.destino.x, y2 = lv.destino.y;
+            double angulo = Math.atan2(y2 - y1, x2 - x1);
+            double r = 24;
+
+            double startX = x1 + r * Math.cos(angulo);
+            double startY = y1 + r * Math.sin(angulo);
+            double endX   = x2 - r * Math.cos(angulo);
+            double endY   = y2 - r * Math.sin(angulo);
+
+            lv.linea.setStartX(startX); lv.linea.setStartY(startY);
+            lv.linea.setEndX(endX);     lv.linea.setEndY(endY);
+
+            // Reubicar flecha
+            lv.flecha.getPoints().setAll(
+                    endX, endY,
+                    endX - 13 * Math.cos(angulo - Math.PI / 6),
+                    endY - 13 * Math.sin(angulo - Math.PI / 6),
+                    endX - 13 * Math.cos(angulo + Math.PI / 6),
+                    endY - 13 * Math.sin(angulo + Math.PI / 6)
+            );
+
+            // Reubicar etiqueta
+            double midX = (startX + endX) / 2;
+            double midY = (startY + endY) / 2;
+            double w = lv.bgTexto.getWidth();
+            lv.bgTexto.setX(midX - w / 2);
+            lv.bgTexto.setY(midY - 14);
+            posicionarTexto(lv.etiqueta, midX, midY - 3);
+        }
+    }
+
+    // Resaltar la ruta que calculó Dijkstra
     public void resaltarRuta(List<String> idsParadas) {
-        // Resetear estilos
-        lineas.forEach(l -> {
-            l.linea.setStroke(Color.web(beige));
-            l.linea.setStrokeWidth(3);
-            l.linea.setOpacity(0.8);
+        // Reset todo
+        lineas.forEach(lv -> {
+            lv.linea.setStroke(cBeige);
+            lv.linea.setStrokeWidth(2.5);
+            lv.linea.setOpacity(0.4);  // atenuar las que no son
         });
 
-        // Resaltar líneas de la ruta
+        // Iluminar las que sí son parte de la ruta
         for (int i = 0; i < idsParadas.size() - 1; i++) {
             String id1 = idsParadas.get(i);
             String id2 = idsParadas.get(i + 1);
 
             lineas.stream()
-                    .filter(l -> l.origen.id.equals(id1) && l.destino.id.equals(id2))
-                    .forEach(l -> {
-                        l.linea.setStroke(Color.web("#00ff88")); // Verde neón
-                        l.linea.setStrokeWidth(5);
-                        l.linea.setOpacity(1);
+                    .filter(lv -> lv.origen.id.equals(id1) && lv.destino.id.equals(id2))
+                    .forEach(lv -> {
+                        lv.linea.setStroke(cResalte);
+                        lv.linea.setStrokeWidth(5);
+                        lv.linea.setOpacity(1);
 
-                        // Animación de pulso
-                        ScaleTransition st = new ScaleTransition(Duration.millis(1000), l.linea);
-                        st.setToX(1.2);
-                        st.setToY(1.2);
-                        st.setAutoReverse(true);
-                        st.setCycleCount(4);
-                        st.play();
+                        // Parpadeo suave con opacidad
+                        FadeTransition ft = new FadeTransition(Duration.millis(700), lv.linea);
+                        ft.setFromValue(1.0);
+                        ft.setToValue(0.4);
+                        ft.setAutoReverse(true);
+                        ft.setCycleCount(6);
+                        ft.play();
                     });
         }
     }
 
-    // Métodos para integración con backend mediante reflection
-    public void agregarParadaVisualDesdeObjeto(Object parada) {
-        try {
-            String id = (String) parada.getClass().getMethod("getId").invoke(parada);
-            String nombre = (String) parada.getClass().getMethod("getNombre").invoke(parada);
-            double x = (Double) parada.getClass().getMethod("getX").invoke(parada);
-            double y = (Double) parada.getClass().getMethod("getY").invoke(parada);
-            agregarParadaVisual(id, nombre, x, y);
-        } catch (Exception e) {
-            System.err.println("Error al procesar parada: " + e.getMessage());
-        }
+    // Borrar todo (se llama desde el botón "Limpiar grafo")
+    public void limpiarTodo() {
+        getChildren().clear();
+        nodos.clear();
+        lineas.clear();
+        dibujarGrid();  // volver a poner el grid
     }
 
-    public void agregarRutaVisualDesdeObjeto(Object ruta) {
-        try {
-            Object origen = ruta.getClass().getMethod("getOrigen").invoke(ruta);
-            Object destino = ruta.getClass().getMethod("getDestino").invoke(ruta);
-            String idOrigen = (String) origen.getClass().getMethod("getId").invoke(origen);
-            String idDestino = (String) destino.getClass().getMethod("getId").invoke(destino);
-            double tiempo = (Double) ruta.getClass().getMethod("getTiempo").invoke(ruta);
-            double distancia = (Double) ruta.getClass().getMethod("getDistancia").invoke(ruta);
-            double costo = (Double) ruta.getClass().getMethod("getCosto").invoke(ruta);
-            agregarRutaVisual(idOrigen, idDestino, tiempo, distancia, costo);
-        } catch (Exception e) {
-            System.err.println("Error al procesar ruta: " + e.getMessage());
-        }
+    // Centra el texto en una posición X,Y
+    private void posicionarTexto(Text t, double cx, double cy) {
+        t.setX(cx - t.getBoundsInLocal().getWidth() / 2);
+        t.setY(cy);
     }
+
+    private void subirNodosAlFrente() {
+        nodos.values().forEach(nv -> {
+            nv.circulo.toFront();
+            nv.lblNombre.toFront();
+            nv.lblId.toFront();
+        });
+    }
+
+    // ── Clases internas ──────────────────────────────────────────────────────
 
     private static class NodoVisual {
-        String id;
+        String id, nombre;
         Circle circulo;
-        Text label;
-        Text idLabel;
+        Text   lblNombre, lblId;
         double x, y;
 
-        NodoVisual(String id, Circle c, Text l, Text il, double x, double y) {
-            this.id = id;
-            this.circulo = c;
-            this.label = l;
-            this.idLabel = il;
-            this.x = x;
-            this.y = y;
+        NodoVisual(String id, String nombre, Circle c, Text ln, Text li, double x, double y) {
+            this.id = id; this.nombre = nombre;
+            this.circulo = c; this.lblNombre = ln; this.lblId = li;
+            this.x = x; this.y = y;
         }
     }
 
     private static class LineaVisual {
-        Line linea;
+        Line    linea;
         Polygon flecha;
-        NodoVisual origen;
-        NodoVisual destino;
+        Rectangle bgTexto;
+        Text    etiqueta;
+        NodoVisual origen, destino;
+        double  tiempo, distancia, costo;
 
-        LineaVisual(Line l, Polygon f, NodoVisual o, NodoVisual d) {
-            this.linea = l;
-            this.flecha = f;
-            this.origen = o;
-            this.destino = d;
+        LineaVisual(Line l, Polygon f, Rectangle bg, Text e,
+                    NodoVisual o, NodoVisual d,
+                    double tiempo, double distancia, double costo) {
+            this.linea = l; this.flecha = f;
+            this.bgTexto = bg; this.etiqueta = e;
+            this.origen = o; this.destino = d;
+            this.tiempo = tiempo; this.distancia = distancia; this.costo = costo;
         }
     }
 }

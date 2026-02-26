@@ -32,4 +32,6 @@ public class Ruta {
     public double getCosto() {
         return costo;
     }
+
+    public String getIdOrigen() { return idOrigen; }
 }

@@ -12,7 +12,7 @@ public class MainApp extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         // La barra diagonal "/" le dice que busque directamente en la raíz de la carpeta resources
-        FXMLLoader fxmlLoader = new FXMLLoader(MainApp.class.getResource("/main.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(MainApp.class.getResource("main.fxml"));
 
         Scene scene = new Scene(fxmlLoader.load(), 800, 600);
 

@@ -17,6 +17,9 @@ public class Parada {
         return nombre;
     }
 
+    public void setNombre(String nuevoNombre) {
+    }
+
     @Override
     public String toString() {
         return nombre + " (" + codigo + ")";

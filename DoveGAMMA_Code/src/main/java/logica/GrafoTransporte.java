@@ -54,6 +54,30 @@ public class GrafoTransporte {
         }
     }
 
+    // 1 - Modificar el nombre de una parada
+    public void modificarParada(String id, String nuevoNombre) {
+        if (mapaParadas.containsKey(id)) {
+            mapaParadas.get(id).setNombre(nuevoNombre); // necesita setter en Parada
+        }
+    }
+
+    // 2 - Modificar los pesos de una ruta (borra y vuelve a agregar)
+    public void modificarRuta(String idOrigen, String idDestino,
+                              double tiempo, double costo, double dist) {
+        eliminarRuta(idOrigen, idDestino);
+        agregarRuta(idOrigen, idDestino, tiempo, costo, dist);
+    }
+
+    // 3 - Devolver todas las rutas activas (pa' redibujar tras eliminar parada)
+    public List<Ruta> obtenerTodasLasRutas() {
+        List<Ruta> todas = new ArrayList<>();
+        for (List<Ruta> lista : listasAdyacencia.values()) {
+            todas.addAll(lista);
+        }
+        return todas;
+    }
+
+
     // dentro de la clase GrafoTransporte
     public List<String> calcularDijkstra(String idInicio, String idFinal, String criterio) {
         // criterio puede ser "tiempo" o "distancia"

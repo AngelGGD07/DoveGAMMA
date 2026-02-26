@@ -88,7 +88,10 @@ public class GrafoTransporte {
                 } else if (criterio.equalsIgnoreCase("distancia")) {
                     pesoArista = rutaVecina.getDistancia();
 
+                } else if (criterio.equalsIgnoreCase("transbordos")) {
+                pesoArista = 1.0;
                 }
+
                 double nuevaDistancia = distanciasMinimas.get(actual.idParada) + pesoArista;
 
                 if (nuevaDistancia < distanciasMinimas.get(rutaVecina.getIdDestino())) {

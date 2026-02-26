@@ -36,4 +36,8 @@ public class Viaje {
     public void setHorario(LocalDateTime horario) {
         this.horario = horario;
     }
+
+    public double calcularRecaudacionMaxima(){
+        return rutica.getCosto() * transporte.getCapacidad();
+    }
 }

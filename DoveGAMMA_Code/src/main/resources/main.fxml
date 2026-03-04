@@ -22,7 +22,9 @@
             <!-- LOGO -->
             <VBox alignment="CENTER" spacing="4"
                   style="-fx-padding: 24 10 20 10; -fx-background-color: #120d22;">
-                <Canvas fx:id="canvasLogo" width="100" height="70"/>
+                <ImageView fitWidth="90" fitHeight="90" preserveRatio="true">
+                    <image><Image url="@/icon.png"/></image>
+                </ImageView>
                 <Label text="DoveΓ"
                        style="-fx-font-family: 'Segoe UI'; -fx-font-size: 20; -fx-font-weight: BOLD;
                               -fx-text-fill: #d4a574; -fx-letter-spacing: 2;"/>
@@ -358,10 +360,10 @@
                                style="-fx-text-fill: #d4a574; -fx-font-weight: BOLD; -fx-font-size: 11;"/>
                         <TextArea fx:id="txtResultado" editable="false" wrapText="true"
                                   prefRowCount="6"
-                                  style="-fx-background-color: #160e28; -fx-text-fill: #e8c9a8;
-                                         -fx-font-family: 'Consolas'; -fx-font-size: 11;
-                                         -fx-border-color: #2a1040; -fx-border-radius: 6;
-                                         -fx-background-radius: 6;"/>
+                                  style="-fx-control-inner-background: #160e28; -fx-background-color: #160e28;
+                                         -fx-text-fill: #e8c9a8; -fx-font-family: 'Consolas';
+                                         -fx-font-size: 11; -fx-border-color: #2a1040;
+                                         -fx-border-radius: 6; -fx-background-radius: 6;"/>
                     </VBox>
                 </VBox>
 

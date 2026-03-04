@@ -3,11 +3,8 @@ package grafica;
 
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
 import logica.GrafoTransporte;
 
 import java.util.List;
@@ -15,7 +12,6 @@ import java.util.List;
 public class ControladorPrincipal {
 
     // Sidebar
-    @FXML private Canvas canvasLogo;
     @FXML private Button btnNavAgregar, btnNavModificar, btnNavEliminar, btnNavCalcular;
     @FXML private VBox   subMenuAgregar, subMenuModificar, subMenuEliminar;
 
@@ -54,23 +50,18 @@ public class ControladorPrincipal {
     // Contenedor del grafo
     @FXML private StackPane contenedorGrafo;
 
-    // Array con todos los forms para esconderlos fácil
     private VBox[] todosLosForms;
 
     // ── INITIALIZE ───────────────────────────────────────────────────────────
     @FXML
     public void initialize() {
-        // Arrancar backend
         GrafoTransporte grafo = new GrafoTransporte();
         PanelVisualizacion panelVisual = new PanelVisualizacion();
         AdaptadorVisual.getInstancia().setBackend(grafo);
         AdaptadorVisual.getInstancia().setPanelVisual(panelVisual);
 
-        // Meter el panel del grafo en el StackPane del FXML
         contenedorGrafo.getChildren().add(panelVisual);
         StackPane.setAlignment(panelVisual, javafx.geometry.Pos.TOP_LEFT);
-
-        // Hacer que el panel llene todo el contenedor
         panelVisual.prefWidthProperty().bind(contenedorGrafo.widthProperty());
         panelVisual.prefHeightProperty().bind(contenedorGrafo.heightProperty());
 
@@ -81,45 +72,16 @@ public class ControladorPrincipal {
                 formCalcular
         };
 
-        // Opciones del combo de criterio
         cmbCriterio.setItems(FXCollections.observableArrayList(
                 "tiempo", "distancia", "costo", "transbordos"
         ));
         cmbCriterio.getSelectionModel().selectFirst();
-
-        dibujarLogo();
     }
 
-    // ── LOGO EN CANVAS ────────────────────────────────────────────────────────
-    private void dibujarLogo() {
-        GraphicsContext gc = canvasLogo.getGraphicsContext2D();
-        double w = canvasLogo.getWidth();
-        double h = canvasLogo.getHeight();
-
-        gc.setFill(Color.web("#120d22"));
-        gc.fillRect(0, 0, w, h);
-
-        double[][] pts = {{20,15},{78,15},{50,45},{18,62},{82,62}};
-        int[][] con    = {{0,1},{0,2},{1,2},{2,3},{2,4},{3,4}};
-
-        gc.setStroke(Color.web("#a65d48"));
-        gc.setLineWidth(1.5);
-        for (int[] c : con)
-            gc.strokeLine(pts[c[0]][0], pts[c[0]][1], pts[c[1]][0], pts[c[1]][1]);
-
-        gc.setFill(Color.web("#d4a574"));
-        for (double[] p : pts)
-            gc.fillOval(p[0]-5, p[1]-5, 10, 10);
-
-        // nodo central resaltado
-        gc.setFill(Color.web("#e8c9a8"));
-        gc.fillOval(pts[2][0]-7, pts[2][1]-7, 14, 14);
-    }
-
-    // ── NAV: SUBMENÚS ─────────────────────────────────────────────────────────
-    @FXML private void mostrarPanelAgregar()  { toggleSub(subMenuAgregar);   activarBtn(btnNavAgregar);   }
-    @FXML private void mostrarPanelModificar(){ toggleSub(subMenuModificar);  activarBtn(btnNavModificar); }
-    @FXML private void mostrarPanelEliminar() { toggleSub(subMenuEliminar);   activarBtn(btnNavEliminar);  }
+    // ── NAV ───────────────────────────────────────────────────────────────────
+    @FXML private void mostrarPanelAgregar()  { toggleSub(subMenuAgregar);  activarBtn(btnNavAgregar);   }
+    @FXML private void mostrarPanelModificar(){ toggleSub(subMenuModificar); activarBtn(btnNavModificar); }
+    @FXML private void mostrarPanelEliminar() { toggleSub(subMenuEliminar);  activarBtn(btnNavEliminar);  }
 
     @FXML
     private void mostrarPanelCalcular() {
@@ -128,7 +90,6 @@ public class ControladorPrincipal {
         mostrarForm(formCalcular);
     }
 
-    // ── NAV: BOTONES DE FORMULARIOS ───────────────────────────────────────────
     @FXML private void mostrarFormAgregarParada() { mostrarForm(formAgregarParada); }
     @FXML private void mostrarFormAgregarRuta()   { mostrarForm(formAgregarRuta);   }
     @FXML private void mostrarFormModParada()     { mostrarForm(formModParada);     }
@@ -166,11 +127,11 @@ public class ControladorPrincipal {
 
     @FXML
     private void agregarRuta() {
-        String o = txtOrigenRuta.getText().trim();
-        String d = txtDestinoRuta.getText().trim();
-        String t = txtTiempoRuta.getText().trim();
+        String o  = txtOrigenRuta.getText().trim();
+        String d  = txtDestinoRuta.getText().trim();
+        String t  = txtTiempoRuta.getText().trim();
         String di = txtDistanciaRuta.getText().trim();
-        String c = txtCostoRuta.getText().trim();
+        String c  = txtCostoRuta.getText().trim();
 
         if (o.isEmpty() || d.isEmpty() || t.isEmpty() || di.isEmpty() || c.isEmpty()) {
             error("Todos los campos son obligatorios."); return;
@@ -199,11 +160,9 @@ public class ControladorPrincipal {
     private void modificarParada() {
         String id     = txtModIdParada.getText().trim();
         String nombre = txtModNombreParada.getText().trim();
-
         if (id.isEmpty() || nombre.isEmpty()) { error("Todos los campos son obligatorios."); return; }
 
-        boolean ok = AdaptadorVisual.getInstancia().modificarParada(id, nombre);
-        if (ok) {
+        if (AdaptadorVisual.getInstancia().modificarParada(id, nombre)) {
             limpiar(txtModIdParada, txtModNombreParada);
             exito("Parada actualizada: " + id);
         } else {
@@ -247,6 +206,8 @@ public class ControladorPrincipal {
 
         if (AdaptadorVisual.getInstancia().eliminarParada(id)) {
             txtDelIdParada.clear();
+            // Forzar redibujado inmediato directo, sin esperar Platform.runLater
+            AdaptadorVisual.getInstancia().redibujarAhora();
             exito("Parada eliminada: " + id);
         } else {
             error("Parada no encontrada: " + id);
@@ -261,6 +222,8 @@ public class ControladorPrincipal {
 
         if (AdaptadorVisual.getInstancia().eliminarRuta(o, d)) {
             limpiar(txtDelOrigenRuta, txtDelDestinoRuta);
+            // Forzar redibujado inmediato directo
+            AdaptadorVisual.getInstancia().redibujarAhora();
             exito("Ruta eliminada: " + o + " -> " + d);
         } else {
             error("No existe ruta de " + o + " a " + d + " en esa direccion.");
@@ -279,7 +242,6 @@ public class ControladorPrincipal {
         String resultado = AdaptadorVisual.getInstancia().calcularRuta(idI, idF, cri);
         txtResultado.setText(resultado);
 
-        // Resaltar ruta en el grafo
         List<String> camino = AdaptadorVisual.getInstancia().getBackend()
                 .calcularDijkstra(idI, idF, cri);
         if (!camino.isEmpty())
@@ -312,10 +274,10 @@ public class ControladorPrincipal {
         }
     }
 
-    private void mostrarForm(VBox formTarget) {
+    private void mostrarForm(VBox target) {
         for (VBox f : todosLosForms) { f.setVisible(false); f.setManaged(false); }
-        formTarget.setVisible(true);
-        formTarget.setManaged(true);
+        target.setVisible(true);
+        target.setManaged(true);
         ocultarMsg();
     }
 
@@ -342,6 +304,5 @@ public class ControladorPrincipal {
     }
 
     private void ocultarMsg() { lblMensaje.setVisible(false); lblMensaje.setManaged(false); }
-
     private void limpiar(TextField... campos) { for (TextField tf : campos) tf.clear(); }
 }

@@ -18,8 +18,7 @@ public class AdaptadorVisual {
     private HashMap<String, String>   nombresPorId        = new HashMap<>();
     private HashSet<String>           rutasExistentes     = new HashSet<>();
 
-    // Guarda los datos de cada ruta para poder redibujar el grafo
-    // clave: "origen|destino", valor: [tiempo, distancia, costo]
+    // Guarda datos de cada ruta para poder redibujar: clave "origen|destino", valor [tiempo, dist, costo]
     private HashMap<String, double[]> datosRutas = new HashMap<>();
 
     private AdaptadorVisual() {}
@@ -29,10 +28,10 @@ public class AdaptadorVisual {
         return instancia;
     }
 
-    public void setBackend(GrafoTransporte b)       { this.backend     = b; }
-    public void setPanelVisual(PanelVisualizacion p){ this.panelVisual  = p; }
-    public GrafoTransporte    getBackend()           { return backend;       }
-    public PanelVisualizacion getPanelVisual()       { return panelVisual;   }
+    public void setBackend(GrafoTransporte b)        { this.backend    = b; }
+    public void setPanelVisual(PanelVisualizacion p) { this.panelVisual = p; }
+    public GrafoTransporte    getBackend()            { return backend;      }
+    public PanelVisualizacion getPanelVisual()        { return panelVisual;  }
 
     public String getNombre(String id) {
         return nombresPorId.getOrDefault(id, id);
@@ -62,10 +61,9 @@ public class AdaptadorVisual {
         if (!nombresPorId.containsKey(origen) || !nombresPorId.containsKey(destino)) return false;
 
         backend.agregarRuta(origen, destino, tiempo, costo, distancia);
-
         String clave = origen + "|" + destino;
         rutasExistentes.add(clave);
-        datosRutas.put(clave, new double[]{tiempo, distancia, costo}); // guardar pa' redibujar
+        datosRutas.put(clave, new double[]{tiempo, distancia, costo});
 
         if (panelVisual != null)
             Platform.runLater(() -> panelVisual.agregarRutaVisual(origen, destino, tiempo, distancia, costo));
@@ -80,8 +78,7 @@ public class AdaptadorVisual {
             if (!e.getKey().equals(id) && e.getValue().equalsIgnoreCase(nuevoNombre)) return false;
 
         nombresPorId.put(id, nuevoNombre);
-        // Redibujar pa' que el label del nodo cambie
-        Platform.runLater(this::redibujarGrafo);
+        Platform.runLater(this::redibujarAhora);
         return true;
     }
 
@@ -92,8 +89,8 @@ public class AdaptadorVisual {
 
         backend.eliminarRuta(origen, destino);
         backend.agregarRuta(origen, destino, tiempo, costo, distancia);
-        datosRutas.put(clave, new double[]{tiempo, distancia, costo}); // actualizar datos
-        Platform.runLater(this::redibujarGrafo);
+        datosRutas.put(clave, new double[]{tiempo, distancia, costo});
+        Platform.runLater(this::redibujarAhora);
         return true;
     }
 
@@ -104,13 +101,10 @@ public class AdaptadorVisual {
         backend.eliminarParada(id);
         coordenadasVisuales.remove(id);
         nombresPorId.remove(id);
-
-        // Limpiar rutas que tocaban esa parada
         rutasExistentes.removeIf(r -> r.startsWith(id + "|") || r.endsWith("|" + id));
         datosRutas.keySet().removeIf(r -> r.startsWith(id + "|") || r.endsWith("|" + id));
-
-        Platform.runLater(this::redibujarGrafo); // redibujar sin la parada eliminada
         return true;
+        // El ControladorPrincipal llama redibujarAhora() justo después de este return
     }
 
     // ── ELIMINAR RUTA ─────────────────────────────────────────────────────────
@@ -122,27 +116,24 @@ public class AdaptadorVisual {
         backend.eliminarRuta(origen, destino);
         rutasExistentes.remove(clave);
         datosRutas.remove(clave);
-
-        Platform.runLater(this::redibujarGrafo); // redibujar sin la ruta eliminada
         return true;
+        // El ControladorPrincipal llama redibujarAhora() justo después de este return
     }
 
-    // ── REDIBUJAR GRAFO COMPLETO ──────────────────────────────────────────────
-    // Borra el panel y vuelve a poner todo lo que queda en los mapas
-    private void redibujarGrafo() {
+    // ── REDIBUJAR GRAFO — llamar desde el hilo FX directamente ────────────────
+    public void redibujarAhora() {
         if (panelVisual == null) return;
 
-        panelVisual.limpiarTodo();
+        panelVisual.limpiarTodo(); // borra todo y redibuja el grid
 
         // Primero los nodos
         for (String id : nombresPorId.keySet()) {
-            String nombre = nombresPorId.get(id);
-            double[] pos  = coordenadasVisuales.get(id);
+            double[] pos = coordenadasVisuales.get(id);
             if (pos != null)
-                panelVisual.agregarParadaVisual(id, nombre, pos[0], pos[1]);
+                panelVisual.agregarParadaVisual(id, nombresPorId.get(id), pos[0], pos[1]);
         }
 
-        // Luego las aristas
+        // Luego las rutas encima
         for (String clave : rutasExistentes) {
             String[] partes = clave.split("\\|");
             double[] datos  = datosRutas.get(clave);
@@ -158,7 +149,7 @@ public class AdaptadorVisual {
         List<String> camino = backend.calcularDijkstra(idInicio, idFin, criterio);
 
         if (camino.isEmpty())
-            return "X  No existe ruta entre " + getNombre(idInicio) + " y " + getNombre(idFin) + ".";
+            return "No existe ruta entre " + getNombre(idInicio) + " y " + getNombre(idFin) + ".";
 
         String titulo;
         switch (criterio.toLowerCase()) {

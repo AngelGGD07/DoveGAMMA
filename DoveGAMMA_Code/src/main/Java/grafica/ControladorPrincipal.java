@@ -1,250 +1,197 @@
 // ControladorPrincipal.java
 package grafica;
 
-import javafx.animation.FadeTransition;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.util.Duration;
 import logica.GrafoTransporte;
 
-import java.net.URL;
 import java.util.List;
-import java.util.ResourceBundle;
 
-public class ControladorPrincipal implements Initializable {
+public class ControladorPrincipal {
 
-    // ── campos del form AGREGAR ──
+    // Sidebar
+    @FXML private Canvas canvasLogo;
+    @FXML private Button btnNavAgregar, btnNavModificar, btnNavEliminar, btnNavCalcular;
+    @FXML private VBox   subMenuAgregar, subMenuModificar, subMenuEliminar;
+
+    // Formularios
+    @FXML private VBox formAgregarParada, formAgregarRuta;
+    @FXML private VBox formModParada,     formModRuta;
+    @FXML private VBox formElimParada,    formElimRuta;
+    @FXML private VBox formCalcular,      panelResultado;
+
+    // Agregar parada
     @FXML private TextField txtIdParada, txtNombreParada, txtXParada, txtYParada;
-    @FXML private TextField txtOrigenRuta, txtDestinoRuta, txtTiempoRuta, txtDistanciaRuta, txtCostoRuta;
 
-    // ── campos del form MODIFICAR ──
+    // Agregar ruta
+    @FXML private TextField txtOrigenRuta, txtDestinoRuta;
+    @FXML private TextField txtTiempoRuta, txtDistanciaRuta, txtCostoRuta;
+
+    // Modificar parada
     @FXML private TextField txtModIdParada, txtModNombreParada;
+
+    // Modificar ruta
     @FXML private TextField txtModOrigenRuta, txtModDestinoRuta;
     @FXML private TextField txtModTiempoRuta, txtModDistanciaRuta, txtModCostoRuta;
 
-    // ── campos del form ELIMINAR ──
+    // Eliminar
     @FXML private TextField txtDelIdParada;
     @FXML private TextField txtDelOrigenRuta, txtDelDestinoRuta;
 
-    // ── campos del form CALCULAR ──
-    @FXML private TextField txtCalcInicio, txtCalcFin;
+    // Calcular
+    @FXML private TextField        txtCalcInicio, txtCalcFin;
     @FXML private ComboBox<String> cmbCriterio;
-    @FXML private TextArea txtResultado;
-    @FXML private VBox panelResultado;
+    @FXML private TextArea         txtResultado;
 
-    // ── los paneles/forms (se muestran de uno en uno) ──
-    @FXML private VBox formAgregarParada, formAgregarRuta;
-    @FXML private VBox formModParada, formModRuta;
-    @FXML private VBox formElimParada, formElimRuta;
-    @FXML private VBox formCalcular;
-
-    // ── submenus del sidebar ──
-    @FXML private VBox subMenuAgregar, subMenuModificar, subMenuEliminar;
-
-    // ── botones del sidebar (para cambiar su color cuando están activos) ──
-    @FXML private Button btnNavAgregar, btnNavModificar, btnNavEliminar, btnNavCalcular;
-
-    // ── contenedor donde va el PanelVisualizacion ──
-    @FXML private javafx.scene.layout.StackPane contenedorGrafo;
-
-    // ── mensajes al usuario ──
+    // Toast de mensajes
     @FXML private Label lblMensaje;
 
-    // ── el logo ──
-    @FXML private Canvas canvasLogo;
+    // Contenedor del grafo
+    @FXML private StackPane contenedorGrafo;
 
-    private AdaptadorVisual adaptador;
+    // Array con todos los forms para esconderlos fácil
+    private VBox[] todosLosForms;
 
-    @Override
-    public void initialize(URL url, ResourceBundle rb) {
-        adaptador = AdaptadorVisual.getInstancia();
-        adaptador.setBackend(new GrafoTransporte());
+    // ── INITIALIZE ───────────────────────────────────────────────────────────
+    @FXML
+    public void initialize() {
+        // Arrancar backend
+        GrafoTransporte grafo = new GrafoTransporte();
+        PanelVisualizacion panelVisual = new PanelVisualizacion();
+        AdaptadorVisual.getInstancia().setBackend(grafo);
+        AdaptadorVisual.getInstancia().setPanelVisual(panelVisual);
 
-        // agrego el panel del grafo al contenedor
-        PanelVisualizacion panel = new PanelVisualizacion();
-        adaptador.setPanelVisual(panel);
-        contenedorGrafo.getChildren().add(panel);
+        // Meter el panel del grafo en el StackPane del FXML
+        contenedorGrafo.getChildren().add(panelVisual);
+        StackPane.setAlignment(panelVisual, javafx.geometry.Pos.TOP_LEFT);
 
-        // opciones del combo
-        cmbCriterio.getItems().addAll("tiempo", "distancia", "costo", "transbordos");
-        cmbCriterio.setValue("tiempo");
+        // Hacer que el panel llene todo el contenedor
+        panelVisual.prefWidthProperty().bind(contenedorGrafo.widthProperty());
+        panelVisual.prefHeightProperty().bind(contenedorGrafo.heightProperty());
 
-        // dibujo el logo
+        todosLosForms = new VBox[]{
+                formAgregarParada, formAgregarRuta,
+                formModParada,     formModRuta,
+                formElimParada,    formElimRuta,
+                formCalcular
+        };
+
+        // Opciones del combo de criterio
+        cmbCriterio.setItems(FXCollections.observableArrayList(
+                "tiempo", "distancia", "costo", "transbordos"
+        ));
+        cmbCriterio.getSelectionModel().selectFirst();
+
         dibujarLogo();
     }
 
-    // ── el logo: palomita + Gamma dibujados en canvas ──
+    // ── LOGO EN CANVAS ────────────────────────────────────────────────────────
     private void dibujarLogo() {
         GraphicsContext gc = canvasLogo.getGraphicsContext2D();
+        double w = canvasLogo.getWidth();
+        double h = canvasLogo.getHeight();
 
-        // fondo
         gc.setFill(Color.web("#120d22"));
-        gc.fillRect(0, 0, 100, 70);
+        gc.fillRect(0, 0, w, h);
 
-        // palomita simple con curvas
-        gc.setStroke(Color.web("#d4a574"));
-        gc.setLineWidth(2.5);
-        gc.beginPath();
-        // cuerpo
-        gc.moveTo(50, 45);
-        gc.bezierCurveTo(35, 35, 20, 28, 25, 20);
-        gc.bezierCurveTo(30, 12, 45, 22, 50, 32);
-        // ala derecha
-        gc.moveTo(50, 32);
-        gc.bezierCurveTo(55, 22, 70, 12, 75, 20);
-        gc.bezierCurveTo(80, 28, 65, 35, 50, 45);
-        // colita
-        gc.moveTo(50, 45);
-        gc.lineTo(42, 58);
-        gc.moveTo(50, 45);
-        gc.lineTo(58, 58);
-        gc.stroke();
+        double[][] pts = {{20,15},{78,15},{50,45},{18,62},{82,62}};
+        int[][] con    = {{0,1},{0,2},{1,2},{2,3},{2,4},{3,4}};
 
-        // cabecita
+        gc.setStroke(Color.web("#a65d48"));
+        gc.setLineWidth(1.5);
+        for (int[] c : con)
+            gc.strokeLine(pts[c[0]][0], pts[c[0]][1], pts[c[1]][0], pts[c[1]][1]);
+
         gc.setFill(Color.web("#d4a574"));
-        gc.fillOval(44, 17, 12, 12);
+        for (double[] p : pts)
+            gc.fillOval(p[0]-5, p[1]-5, 10, 10);
 
-        // Gamma (Γ) en color beige
-        gc.setFill(Color.web("#a65d48"));
-        gc.setFont(javafx.scene.text.Font.font("Segoe UI", javafx.scene.text.FontWeight.BOLD, 22));
-        gc.fillText("Γ", 40, 68);
+        // nodo central resaltado
+        gc.setFill(Color.web("#e8c9a8"));
+        gc.fillOval(pts[2][0]-7, pts[2][1]-7, 14, 14);
     }
 
-    // ══════════════════════ NAVEGACION DEL SIDEBAR ══════════════════════
-
-    // resetea el color de todos los botones del nav
-    private void resetarNav() {
-        String estiloBase = "-fx-background-color: #2a1a40; -fx-text-fill: #d4a574; " +
-                "-fx-font-size: 13; -fx-font-weight: BOLD; -fx-font-family: 'Segoe UI'; " +
-                "-fx-background-radius: 8; -fx-cursor: hand;";
-        btnNavAgregar.setStyle(estiloBase);
-        btnNavModificar.setStyle(estiloBase);
-        btnNavEliminar.setStyle(estiloBase);
-        btnNavCalcular.setStyle(estiloBase);
-
-        // esconder todos los submenús
-        ocultarSubMenu(subMenuAgregar);
-        ocultarSubMenu(subMenuModificar);
-        ocultarSubMenu(subMenuEliminar);
-
-        // esconder todos los forms
-        esconderTodosLosForms();
-    }
-
-    private String estiloNavActivo() {
-        return "-fx-background-color: #a65d48; -fx-text-fill: #e8c9a8; " +
-                "-fx-font-size: 13; -fx-font-weight: BOLD; -fx-font-family: 'Segoe UI'; " +
-                "-fx-background-radius: 8; -fx-cursor: hand;";
-    }
-
-    @FXML
-    private void mostrarPanelAgregar() {
-        resetarNav();
-        btnNavAgregar.setStyle(estiloNavActivo());
-        mostrarSubMenu(subMenuAgregar);
-        mostrarForm(formAgregarParada); // por defecto muestra parada
-    }
-
-    @FXML
-    private void mostrarPanelModificar() {
-        resetarNav();
-        btnNavModificar.setStyle(estiloNavActivo());
-        mostrarSubMenu(subMenuModificar);
-        mostrarForm(formModParada);
-    }
-
-    @FXML
-    private void mostrarPanelEliminar() {
-        resetarNav();
-        btnNavEliminar.setStyle(estiloNavActivo());
-        mostrarSubMenu(subMenuEliminar);
-        mostrarForm(formElimParada);
-    }
+    // ── NAV: SUBMENÚS ─────────────────────────────────────────────────────────
+    @FXML private void mostrarPanelAgregar()  { toggleSub(subMenuAgregar);   activarBtn(btnNavAgregar);   }
+    @FXML private void mostrarPanelModificar(){ toggleSub(subMenuModificar);  activarBtn(btnNavModificar); }
+    @FXML private void mostrarPanelEliminar() { toggleSub(subMenuEliminar);   activarBtn(btnNavEliminar);  }
 
     @FXML
     private void mostrarPanelCalcular() {
-        resetarNav();
-        btnNavCalcular.setStyle(estiloNavActivo());
+        cerrarSubMenus();
+        activarBtn(btnNavCalcular);
         mostrarForm(formCalcular);
     }
 
-    // sub-botones del menú agregar
+    // ── NAV: BOTONES DE FORMULARIOS ───────────────────────────────────────────
     @FXML private void mostrarFormAgregarParada() { mostrarForm(formAgregarParada); }
-    @FXML private void mostrarFormAgregarRuta()   { mostrarForm(formAgregarRuta); }
+    @FXML private void mostrarFormAgregarRuta()   { mostrarForm(formAgregarRuta);   }
+    @FXML private void mostrarFormModParada()     { mostrarForm(formModParada);     }
+    @FXML private void mostrarFormModRuta()       { mostrarForm(formModRuta);       }
+    @FXML private void mostrarFormElimParada()    { mostrarForm(formElimParada);    }
+    @FXML private void mostrarFormElimRuta()      { mostrarForm(formElimRuta);      }
 
-    // sub-botones del menú modificar
-    @FXML private void mostrarFormModParada() { mostrarForm(formModParada); }
-    @FXML private void mostrarFormModRuta()   { mostrarForm(formModRuta); }
-
-    // sub-botones del menú eliminar
-    @FXML private void mostrarFormElimParada() { mostrarForm(formElimParada); }
-    @FXML private void mostrarFormElimRuta()   { mostrarForm(formElimRuta); }
-
-    // ══════════════════════ ACCIONES ══════════════════════
-
+    // ── ACCIONES ──────────────────────────────────────────────────────────────
     @FXML
     private void agregarParada() {
         String id     = txtIdParada.getText().trim();
         String nombre = txtNombreParada.getText().trim();
-        String xTxt   = txtXParada.getText().trim();
-        String yTxt   = txtYParada.getText().trim();
+        String xStr   = txtXParada.getText().trim();
+        String yStr   = txtYParada.getText().trim();
 
-        if (id.isEmpty() || nombre.isEmpty() || xTxt.isEmpty() || yTxt.isEmpty()) {
-            mostrarMensaje("⚠  Llena todos los campos", false);
-            return;
+        if (id.isEmpty() || nombre.isEmpty() || xStr.isEmpty() || yStr.isEmpty()) {
+            error("Todos los campos son obligatorios."); return;
         }
-
-        double x, y;
         try {
-            x = Double.parseDouble(xTxt);
-            y = Double.parseDouble(yTxt);
+            boolean ok = AdaptadorVisual.getInstancia().agregarParada(
+                    id, nombre,
+                    Double.parseDouble(xStr),
+                    Double.parseDouble(yStr)
+            );
+            if (ok) {
+                limpiar(txtIdParada, txtNombreParada, txtXParada, txtYParada);
+                exito("Parada agregada: " + nombre);
+            } else {
+                error("Ya existe una parada con ese ID o ese nombre.");
+            }
         } catch (NumberFormatException e) {
-            mostrarMensaje("⚠  X e Y tienen que ser números", false);
-            return;
-        }
-
-        // el adaptador valida duplicados, devuelve false si ya existe
-        boolean ok = adaptador.agregarParada(id, nombre, x, y);
-        if (!ok) {
-            mostrarMensaje("⚠  Ese ID o nombre ya existe", false);
-        } else {
-            mostrarMensaje("✓  Parada '" + nombre + "' agregada", true);
-            limpiarCampos(txtIdParada, txtNombreParada, txtXParada, txtYParada);
+            error("X e Y deben ser numeros.");
         }
     }
 
     @FXML
     private void agregarRuta() {
-        String origen  = txtOrigenRuta.getText().trim();
-        String destino = txtDestinoRuta.getText().trim();
-        String tTxt    = txtTiempoRuta.getText().trim();
-        String dTxt    = txtDistanciaRuta.getText().trim();
-        String cTxt    = txtCostoRuta.getText().trim();
+        String o = txtOrigenRuta.getText().trim();
+        String d = txtDestinoRuta.getText().trim();
+        String t = txtTiempoRuta.getText().trim();
+        String di = txtDistanciaRuta.getText().trim();
+        String c = txtCostoRuta.getText().trim();
 
-        if (origen.isEmpty() || destino.isEmpty() || tTxt.isEmpty() || dTxt.isEmpty() || cTxt.isEmpty()) {
-            mostrarMensaje("⚠  Llena todos los campos", false);
-            return;
+        if (o.isEmpty() || d.isEmpty() || t.isEmpty() || di.isEmpty() || c.isEmpty()) {
+            error("Todos los campos son obligatorios."); return;
         }
+        if (o.equals(d)) { error("Origen y destino deben ser diferentes."); return; }
 
         try {
-            double tiempo    = Double.parseDouble(tTxt);
-            double distancia = Double.parseDouble(dTxt);
-            double costo     = Double.parseDouble(cTxt);
-
-            boolean ok = adaptador.agregarRuta(origen, destino, tiempo, distancia, costo);
-            if (!ok) {
-                mostrarMensaje("⚠  Una de esas paradas no existe", false);
+            boolean ok = AdaptadorVisual.getInstancia().agregarRuta(
+                    o, d,
+                    Double.parseDouble(t),
+                    Double.parseDouble(di),
+                    Double.parseDouble(c)
+            );
+            if (ok) {
+                limpiar(txtOrigenRuta, txtDestinoRuta, txtTiempoRuta, txtDistanciaRuta, txtCostoRuta);
+                exito("Ruta creada: " + o + " -> " + d);
             } else {
-                mostrarMensaje("✓  Ruta " + origen + " → " + destino + " agregada", true);
-                limpiarCampos(txtOrigenRuta, txtDestinoRuta, txtTiempoRuta, txtDistanciaRuta, txtCostoRuta);
+                error("Paradas no encontradas. Agrega las paradas primero.");
             }
         } catch (NumberFormatException e) {
-            mostrarMensaje("⚠  Tiempo, distancia y costo deben ser números", false);
+            error("Tiempo, distancia y costo deben ser numeros.");
         }
     }
 
@@ -253,181 +200,148 @@ public class ControladorPrincipal implements Initializable {
         String id     = txtModIdParada.getText().trim();
         String nombre = txtModNombreParada.getText().trim();
 
-        if (id.isEmpty() || nombre.isEmpty()) {
-            mostrarMensaje("⚠  Llena el ID y el nuevo nombre", false);
-            return;
-        }
+        if (id.isEmpty() || nombre.isEmpty()) { error("Todos los campos son obligatorios."); return; }
 
-        // OJO al socio: agregar modificarParada(id, nombre) en GrafoTransporte y en AdaptadorVisual
-        boolean ok = adaptador.modificarParada(id, nombre);
-        if (!ok) {
-            mostrarMensaje("⚠  No existe esa parada", false);
+        boolean ok = AdaptadorVisual.getInstancia().modificarParada(id, nombre);
+        if (ok) {
+            limpiar(txtModIdParada, txtModNombreParada);
+            exito("Parada actualizada: " + id);
         } else {
-            mostrarMensaje("✓  Parada actualizada", true);
-            limpiarCampos(txtModIdParada, txtModNombreParada);
+            error("Parada no encontrada o el nuevo nombre ya existe.");
         }
     }
 
     @FXML
     private void modificarRuta() {
-        String origen  = txtModOrigenRuta.getText().trim();
-        String destino = txtModDestinoRuta.getText().trim();
-        String tTxt    = txtModTiempoRuta.getText().trim();
-        String dTxt    = txtModDistanciaRuta.getText().trim();
-        String cTxt    = txtModCostoRuta.getText().trim();
+        String o  = txtModOrigenRuta.getText().trim();
+        String d  = txtModDestinoRuta.getText().trim();
+        String t  = txtModTiempoRuta.getText().trim();
+        String di = txtModDistanciaRuta.getText().trim();
+        String c  = txtModCostoRuta.getText().trim();
 
-        if (origen.isEmpty() || destino.isEmpty() || tTxt.isEmpty() || dTxt.isEmpty() || cTxt.isEmpty()) {
-            mostrarMensaje("⚠  Llena todos los campos", false);
-            return;
+        if (o.isEmpty() || d.isEmpty() || t.isEmpty() || di.isEmpty() || c.isEmpty()) {
+            error("Todos los campos son obligatorios."); return;
         }
-
         try {
-            double tiempo    = Double.parseDouble(tTxt);
-            double distancia = Double.parseDouble(dTxt);
-            double costo     = Double.parseDouble(cTxt);
-
-            // OJO al socio: agregar modificarRuta() en GrafoTransporte y AdaptadorVisual
-            boolean ok = adaptador.modificarRuta(origen, destino, tiempo, distancia, costo);
-            if (!ok) {
-                mostrarMensaje("⚠  Esa ruta no existe", false);
+            boolean ok = AdaptadorVisual.getInstancia().modificarRuta(
+                    o, d,
+                    Double.parseDouble(t),
+                    Double.parseDouble(di),
+                    Double.parseDouble(c)
+            );
+            if (ok) {
+                limpiar(txtModOrigenRuta, txtModDestinoRuta, txtModTiempoRuta, txtModDistanciaRuta, txtModCostoRuta);
+                exito("Ruta actualizada: " + o + " -> " + d);
             } else {
-                mostrarMensaje("✓  Ruta actualizada", true);
-                limpiarCampos(txtModOrigenRuta, txtModDestinoRuta, txtModTiempoRuta, txtModDistanciaRuta, txtModCostoRuta);
+                error("Ruta no encontrada. Verifica IDs y la direccion.");
             }
         } catch (NumberFormatException e) {
-            mostrarMensaje("⚠  Tiempo, distancia y costo deben ser números", false);
+            error("Tiempo, distancia y costo deben ser numeros.");
         }
     }
 
     @FXML
     private void eliminarParada() {
         String id = txtDelIdParada.getText().trim();
-        if (id.isEmpty()) {
-            mostrarMensaje("⚠  Escribe el ID", false);
-            return;
-        }
+        if (id.isEmpty()) { error("Escribe el ID de la parada."); return; }
 
-        // esto solo elimina la parada, NO las rutas visualmente que tienen otro origen
-        boolean ok = adaptador.eliminarParada(id);
-        if (!ok) {
-            mostrarMensaje("⚠  No existe esa parada", false);
+        if (AdaptadorVisual.getInstancia().eliminarParada(id)) {
+            txtDelIdParada.clear();
+            exito("Parada eliminada: " + id);
         } else {
-            // redibujamos todo el grafo (la forma más simple)
-            adaptador.redibujarGrafoCompleto();
-            mostrarMensaje("✓  Parada eliminada", true);
-            limpiarCampos(txtDelIdParada);
+            error("Parada no encontrada: " + id);
         }
     }
 
     @FXML
     private void eliminarRuta() {
-        String origen  = txtDelOrigenRuta.getText().trim();
-        String destino = txtDelDestinoRuta.getText().trim();
+        String o = txtDelOrigenRuta.getText().trim();
+        String d = txtDelDestinoRuta.getText().trim();
+        if (o.isEmpty() || d.isEmpty()) { error("Escribe ID de origen y destino."); return; }
 
-        if (origen.isEmpty() || destino.isEmpty()) {
-            mostrarMensaje("⚠  Escribe origen y destino", false);
-            return;
-        }
-
-        // SOLO elimina la ruta, las paradas quedan intactas
-        boolean ok = adaptador.eliminarRuta(origen, destino);
-        if (!ok) {
-            mostrarMensaje("⚠  Esa ruta no existe", false);
+        if (AdaptadorVisual.getInstancia().eliminarRuta(o, d)) {
+            limpiar(txtDelOrigenRuta, txtDelDestinoRuta);
+            exito("Ruta eliminada: " + o + " -> " + d);
         } else {
-            mostrarMensaje("✓  Ruta eliminada (paradas intactas)", true);
-            limpiarCampos(txtDelOrigenRuta, txtDelDestinoRuta);
+            error("No existe ruta de " + o + " a " + d + " en esa direccion.");
         }
     }
 
     @FXML
     private void calcularRuta() {
-        String inicio  = txtCalcInicio.getText().trim();
-        String fin     = txtCalcFin.getText().trim();
-        String criterio = cmbCriterio.getValue();
+        String idI = txtCalcInicio.getText().trim();
+        String idF = txtCalcFin.getText().trim();
+        String cri = cmbCriterio.getValue();
 
-        if (inicio.isEmpty() || fin.isEmpty()) {
-            mostrarMensaje("⚠  Escribe inicio y destino", false);
-            return;
-        }
+        if (idI.isEmpty() || idF.isEmpty()) { error("Escribe el ID de inicio y fin."); return; }
+        if (idI.equals(idF)) { error("Inicio y fin deben ser diferentes."); return; }
 
-        String resultado = adaptador.calcularRuta(inicio, fin, criterio);
+        String resultado = AdaptadorVisual.getInstancia().calcularRuta(idI, idF, cri);
         txtResultado.setText(resultado);
 
-        // mostrar el panel del resultado
+        // Resaltar ruta en el grafo
+        List<String> camino = AdaptadorVisual.getInstancia().getBackend()
+                .calcularDijkstra(idI, idF, cri);
+        if (!camino.isEmpty())
+            AdaptadorVisual.getInstancia().getPanelVisual().resaltarRuta(camino);
+
         panelResultado.setVisible(true);
         panelResultado.setManaged(true);
-
-        // resaltar en el grafo
-        List<String> camino = adaptador.getBackend().calcularDijkstra(inicio, fin, criterio);
-        if (!camino.isEmpty()) {
-            adaptador.getPanelVisual().resaltarRuta(camino);
-        }
+        ocultarMsg();
     }
 
     @FXML
     private void limpiarTodo() {
-        adaptador.limpiarTodo();
-        mostrarMensaje("✓  Grafo limpiado", true);
+        AdaptadorVisual.getInstancia().limpiarTodo();
+        txtResultado.clear();
+        panelResultado.setVisible(false);
+        panelResultado.setManaged(false);
+        exito("Grafo limpiado.");
     }
 
-    // ══════════════════════ HELPERS ══════════════════════
+    // ── HELPERS NAV ───────────────────────────────────────────────────────────
+    private void toggleSub(VBox sub) {
+        boolean abierto = sub.isVisible();
+        cerrarSubMenus();
+        if (!abierto) { sub.setVisible(true); sub.setManaged(true); }
+    }
 
-    private void esconderTodosLosForms() {
-        VBox[] todos = {
-                formAgregarParada, formAgregarRuta,
-                formModParada, formModRuta,
-                formElimParada, formElimRuta,
-                formCalcular
-        };
-        for (VBox f : todos) {
-            f.setVisible(false);
-            f.setManaged(false);
+    private void cerrarSubMenus() {
+        for (VBox s : new VBox[]{subMenuAgregar, subMenuModificar, subMenuEliminar}) {
+            s.setVisible(false); s.setManaged(false);
         }
-        lblMensaje.setVisible(false);
-        lblMensaje.setManaged(false);
     }
 
-    private void mostrarForm(VBox form) {
-        esconderTodosLosForms();
-        form.setVisible(true);
-        form.setManaged(true);
+    private void mostrarForm(VBox formTarget) {
+        for (VBox f : todosLosForms) { f.setVisible(false); f.setManaged(false); }
+        formTarget.setVisible(true);
+        formTarget.setManaged(true);
+        ocultarMsg();
     }
 
-    private void mostrarSubMenu(VBox sub) {
-        sub.setVisible(true);
-        sub.setManaged(true);
+    private void activarBtn(Button activo) {
+        String BASE   = "-fx-background-color: #2a1a40; -fx-text-fill: #d4a574; -fx-font-size: 13; -fx-font-weight: BOLD; -fx-font-family: 'Segoe UI'; -fx-background-radius: 8; -fx-cursor: hand;";
+        String ACTIVO = "-fx-background-color: #a65d48; -fx-text-fill: #e8c9a8; -fx-font-size: 13; -fx-font-weight: BOLD; -fx-font-family: 'Segoe UI'; -fx-background-radius: 8; -fx-cursor: hand;";
+        for (Button b : new Button[]{btnNavAgregar, btnNavModificar, btnNavEliminar, btnNavCalcular})
+            b.setStyle(b == activo ? ACTIVO : BASE);
     }
 
-    private void ocultarSubMenu(VBox sub) {
-        sub.setVisible(false);
-        sub.setManaged(false);
-    }
-
-    // muestra el mensaje con un pequeño fade
-    private void mostrarMensaje(String texto, boolean esExito) {
-        lblMensaje.setText(texto);
-        String color = esExito ? "#1a3a1a" : "#3a1a0a";
-        lblMensaje.setStyle(
-                "-fx-text-fill: #e8c9a8; -fx-background-color: " + color + "; " +
-                        "-fx-background-radius: 6; -fx-padding: 8; " +
-                        "-fx-font-size: 11; -fx-font-family: 'Segoe UI';"
-        );
+    // ── HELPERS MENSAJES ──────────────────────────────────────────────────────
+    private void exito(String msg) {
+        lblMensaje.setText("✔  " + msg);
+        lblMensaje.setStyle("-fx-text-fill: #7acc7a; -fx-background-color: #0a2a0a; -fx-background-radius: 6; -fx-padding: 8; -fx-font-size: 11; -fx-font-family: 'Segoe UI';");
         lblMensaje.setVisible(true);
         lblMensaje.setManaged(true);
-
-        // fade out después de 3 segundos
-        FadeTransition ft = new FadeTransition(Duration.seconds(3), lblMensaje);
-        ft.setDelay(Duration.seconds(2));
-        ft.setFromValue(1.0);
-        ft.setToValue(0.0);
-        ft.setOnFinished(e -> {
-            lblMensaje.setVisible(false);
-            lblMensaje.setManaged(false);
-        });
-        ft.play();
     }
 
-    private void limpiarCampos(TextField... campos) {
-        for (TextField c : campos) c.clear();
+    private void error(String msg) {
+        lblMensaje.setText("⚠  " + msg);
+        lblMensaje.setStyle("-fx-text-fill: #e07070; -fx-background-color: #2a0a0a; -fx-background-radius: 6; -fx-padding: 8; -fx-font-size: 11; -fx-font-family: 'Segoe UI';");
+        lblMensaje.setVisible(true);
+        lblMensaje.setManaged(true);
     }
+
+    private void ocultarMsg() { lblMensaje.setVisible(false); lblMensaje.setManaged(false); }
+
+    private void limpiar(TextField... campos) { for (TextField tf : campos) tf.clear(); }
 }

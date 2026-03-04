@@ -24,7 +24,7 @@
             <!-- LOGO -->
             <VBox alignment="CENTER" spacing="4"
                   style="-fx-padding: 24 10 20 10; -fx-background-color: #120d22;">
-                <ImageView fitWidth="90" fitHeight="90" preserveRatio="true">
+                <ImageView fitWidth="312" fitHeight="312" preserveRatio="true">
                     <image><Image url="@/icon.png"/></image>
                 </ImageView>
                 <Label text="DoveΓ"

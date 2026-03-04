@@ -20,8 +20,8 @@ public class MainApp extends Application {
         stage.getIcons().add(icono);
 
         stage.setTitle("DoveGAMMA - Sistema de Gestión de Rutas");
-        stage.setMinWidth(900);
-        stage.setMinHeight(600);
+        stage.setMinWidth(1280);
+        stage.setMinHeight(729);
         stage.setScene(scene);
         stage.show();
     }

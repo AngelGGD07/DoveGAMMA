@@ -13,6 +13,7 @@ public class AdaptadorVisual {
     private static AdaptadorVisual instancia;
     private GrafoTransporte    backend;
     private PanelVisualizacion panelVisual;
+    private logica.GestorDB gestorDB;
 
     private HashMap<String, double[]> coordenadasVisuales = new HashMap<>();
     private HashMap<String, String>   nombresPorId        = new HashMap<>();
@@ -21,7 +22,9 @@ public class AdaptadorVisual {
     // Guarda datos de cada ruta para poder redibujar: clave "origen|destino", valor [tiempo, dist, costo]
     private HashMap<String, double[]> datosRutas = new HashMap<>();
 
-    private AdaptadorVisual() {}
+    private AdaptadorVisual() {
+        gestorDB = new logica.GestorDB();
+    }
 
     public static AdaptadorVisual getInstancia() {
         if (instancia == null) instancia = new AdaptadorVisual();
@@ -33,9 +36,6 @@ public class AdaptadorVisual {
     public GrafoTransporte    getBackend()            { return backend;      }
     public PanelVisualizacion getPanelVisual()        { return panelVisual;  }
 
-    public String getNombre(String id) {
-        return nombresPorId.getOrDefault(id, id);
-    }
 
     // ── AGREGAR PARADA ────────────────────────────────────────────────────────
     public boolean agregarParada(String id, String nombre, double x, double y) {
@@ -52,6 +52,7 @@ public class AdaptadorVisual {
 
         if (panelVisual != null)
             Platform.runLater(() -> panelVisual.agregarParadaVisual(id, nombre, x, y));
+        gestorDB.guardarParada(id, nombre, x, y);
         return true;
     }
 
@@ -67,6 +68,7 @@ public class AdaptadorVisual {
 
         if (panelVisual != null)
             Platform.runLater(() -> panelVisual.agregarRutaVisual(origen, destino, tiempo, distancia, costo));
+        gestorDB.guardarRuta(origen, destino, tiempo, distancia, costo);
         return true;
     }
 
@@ -103,6 +105,7 @@ public class AdaptadorVisual {
         nombresPorId.remove(id);
         rutasExistentes.removeIf(r -> r.startsWith(id + "|") || r.endsWith("|" + id));
         datosRutas.keySet().removeIf(r -> r.startsWith(id + "|") || r.endsWith("|" + id));
+        gestorDB.eliminarParada(id);
         return true;
         // El ControladorPrincipal llama redibujarAhora() justo después de este return
     }
@@ -116,6 +119,7 @@ public class AdaptadorVisual {
         backend.eliminarRuta(origen, destino);
         rutasExistentes.remove(clave);
         datosRutas.remove(clave);
+        gestorDB.eliminarRuta(origen, destino);
         return true;
         // El ControladorPrincipal llama redibujarAhora() justo después de este return
     }
@@ -180,4 +184,9 @@ public class AdaptadorVisual {
         if (panelVisual != null) panelVisual.limpiarTodo();
         backend = new GrafoTransporte();
     }
+
+    public String getNombre(String id) {
+        return nombresPorId.getOrDefault(id, id);
+    }
+    public logica.GestorDB getGestorDB() { return gestorDB; }
 }

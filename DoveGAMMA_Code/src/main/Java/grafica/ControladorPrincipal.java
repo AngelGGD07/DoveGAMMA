@@ -303,6 +303,36 @@ public class ControladorPrincipal {
         lblMensaje.setManaged(true);
     }
 
+    private void cargarDatosDesdeBD() {
+        logica.GestorDB db = AdaptadorVisual.getInstancia().getGestorDB();
+        try {
+            // Cargar paradas primero
+            java.sql.ResultSet rsP = db.cargarParadas();
+            while (rsP.next()) {
+                AdaptadorVisual.getInstancia().agregarParada(
+                        rsP.getString("id"),
+                        rsP.getString("nombre"),
+                        rsP.getDouble("x"),
+                        rsP.getDouble("y")
+                );
+            }
+
+            // Cargar rutas después
+            java.sql.ResultSet rsR = db.cargarRutas();
+            while (rsR.next()) {
+                AdaptadorVisual.getInstancia().agregarRuta(
+                        rsR.getString("origen"),
+                        rsR.getString("destino"),
+                        rsR.getDouble("tiempo"),
+                        rsR.getDouble("distancia"),
+                        rsR.getDouble("costo")
+                );
+            }
+        } catch (java.sql.SQLException e) {
+            System.out.println("Error cargando datos: " + e.getMessage());
+        }
+    }
+
     private void ocultarMsg() { lblMensaje.setVisible(false); lblMensaje.setManaged(false); }
     private void limpiar(TextField... campos) { for (TextField tf : campos) tf.clear(); }
 }

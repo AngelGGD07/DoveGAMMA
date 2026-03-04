@@ -76,6 +76,7 @@ public class ControladorPrincipal {
                 "tiempo", "distancia", "costo", "transbordos"
         ));
         cmbCriterio.getSelectionModel().selectFirst();
+        cargarDatosDesdeBD();
     }
 
     // ── NAV ───────────────────────────────────────────────────────────────────
@@ -309,25 +310,20 @@ public class ControladorPrincipal {
     private void cargarDatosDesdeBD() {
         logica.GestorDB db = AdaptadorVisual.getInstancia().getGestorDB();
         try {
-            System.out.println("--- INTENTANDO CARGAR DATOS DESDE MYSQL ---");
-
+            // Cargar paradas primero
             java.sql.ResultSet rsP = db.cargarParadas();
             while (rsP.next()) {
-                String nombreParada = rsP.getString("nombre");
-                System.out.println("Encontré en BD la parada: " + nombreParada);
-
                 AdaptadorVisual.getInstancia().agregarParada(
                         rsP.getString("id"),
-                        nombreParada,
+                        rsP.getString("nombre"),
                         rsP.getDouble("x"),
                         rsP.getDouble("y")
                 );
             }
 
+            // Cargar rutas después (las paradas ya tienen que estar)
             java.sql.ResultSet rsR = db.cargarRutas();
             while (rsR.next()) {
-                System.out.println("Encontré en BD ruta de " + rsR.getString("origen") + " a " + rsR.getString("destino"));
-
                 AdaptadorVisual.getInstancia().agregarRuta(
                         rsR.getString("origen"),
                         rsR.getString("destino"),
@@ -336,9 +332,8 @@ public class ControladorPrincipal {
                         rsR.getDouble("costo")
                 );
             }
-            System.out.println("--- CARGA FINALIZADA ---");
         } catch (java.sql.SQLException e) {
-            System.out.println("Error cargando datos: " + e.getMessage());
+            System.out.println("Error cargando datos: " + e.getMessage()); // Este sí lo dejamos por si hay fallos reales
         }
     }
 }

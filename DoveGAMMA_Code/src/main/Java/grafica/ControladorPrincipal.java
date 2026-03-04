@@ -303,23 +303,31 @@ public class ControladorPrincipal {
         lblMensaje.setManaged(true);
     }
 
+    private void ocultarMsg() { lblMensaje.setVisible(false); lblMensaje.setManaged(false); }
+    private void limpiar(TextField... campos) { for (TextField tf : campos) tf.clear(); }
+
     private void cargarDatosDesdeBD() {
         logica.GestorDB db = AdaptadorVisual.getInstancia().getGestorDB();
         try {
-            // Cargar paradas primero
+            System.out.println("--- INTENTANDO CARGAR DATOS DESDE MYSQL ---");
+
             java.sql.ResultSet rsP = db.cargarParadas();
             while (rsP.next()) {
+                String nombreParada = rsP.getString("nombre");
+                System.out.println("Encontré en BD la parada: " + nombreParada);
+
                 AdaptadorVisual.getInstancia().agregarParada(
                         rsP.getString("id"),
-                        rsP.getString("nombre"),
+                        nombreParada,
                         rsP.getDouble("x"),
                         rsP.getDouble("y")
                 );
             }
 
-            // Cargar rutas después
             java.sql.ResultSet rsR = db.cargarRutas();
             while (rsR.next()) {
+                System.out.println("Encontré en BD ruta de " + rsR.getString("origen") + " a " + rsR.getString("destino"));
+
                 AdaptadorVisual.getInstancia().agregarRuta(
                         rsR.getString("origen"),
                         rsR.getString("destino"),
@@ -328,11 +336,9 @@ public class ControladorPrincipal {
                         rsR.getDouble("costo")
                 );
             }
+            System.out.println("--- CARGA FINALIZADA ---");
         } catch (java.sql.SQLException e) {
             System.out.println("Error cargando datos: " + e.getMessage());
         }
     }
-
-    private void ocultarMsg() { lblMensaje.setVisible(false); lblMensaje.setManaged(false); }
-    private void limpiar(TextField... campos) { for (TextField tf : campos) tf.clear(); }
 }

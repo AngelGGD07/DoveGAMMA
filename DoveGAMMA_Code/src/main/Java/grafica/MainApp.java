@@ -29,4 +29,9 @@ public class MainApp extends Application {
     public static void main(String[] args) {
         launch(args);
     }
+
+    @Override
+    public void stop() {
+        AdaptadorVisual.getInstancia().getGestorDB().cerrar();
+    }
 }

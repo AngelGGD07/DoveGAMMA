@@ -76,6 +76,7 @@ public class ControladorPrincipal {
                 "tiempo", "distancia", "costo", "transbordos"
         ));
         cmbCriterio.getSelectionModel().selectFirst();
+        cargarDatosDesdeBD();
     }
 
     // ── NAV ───────────────────────────────────────────────────────────────────

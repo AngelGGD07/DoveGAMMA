@@ -2,7 +2,7 @@ package logica;
 
 public class Tren extends MedioTransporte{
     private int cantVagones;
-    private String claseServicio; // economica, primera clase
+    private String claseServicio;
 
     public Tren(int capacidad, String estado, int id, int cantVagones, String claseServicio) {
         super(capacidad, estado, id);

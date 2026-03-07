@@ -55,10 +55,7 @@ public class GrafoTransporte {
             mapaParadas.get(id).setNombre(nuevoNombre);
         }
     }
- rama-logica
 
-
- main
     public void modificarRuta(String idOrigen, String idDestino,
                               double tiempo, double costo, double dist) {
         eliminarRuta(idOrigen, idDestino);
@@ -91,10 +88,7 @@ public class GrafoTransporte {
             if(actual.idParada.equals(idFinal)){
                 break;
             }
- rama-logica
 
-
-main
             List<Ruta> vecinos = listasAdyacencia.getOrDefault(actual.idParada, new ArrayList<>());
             for(Ruta rutaVecina: vecinos){
                 double pesoArista = 0.0;
@@ -135,10 +129,6 @@ main
 
 }
 
-rama-logica
-
-
- main
 class DatoCamino implements Comparable<DatoCamino> {
     String idParada;
     double pesoAcumulado;

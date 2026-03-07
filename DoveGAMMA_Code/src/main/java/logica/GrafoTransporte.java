@@ -55,7 +55,10 @@ public class GrafoTransporte {
             mapaParadas.get(id).setNombre(nuevoNombre);
         }
     }
+ rama-logica
 
+
+ main
     public void modificarRuta(String idOrigen, String idDestino,
                               double tiempo, double costo, double dist) {
         eliminarRuta(idOrigen, idDestino);
@@ -70,12 +73,8 @@ public class GrafoTransporte {
         return todas;
     }
 
-
-    // dentro de la clase GrafoTransporte
     public List<String> calcularDijkstra(String idInicio, String idFinal, String criterio) {
-        // criterio puede ser "tiempo" o "distancia"
 
-        // cola de prioridad para procesar nodos
         PriorityQueue<DatoCamino> cola = new PriorityQueue<>();
 
         HashMap<String, Double> distanciasMinimas = new HashMap<>();
@@ -92,6 +91,10 @@ public class GrafoTransporte {
             if(actual.idParada.equals(idFinal)){
                 break;
             }
+ rama-logica
+
+
+main
             List<Ruta> vecinos = listasAdyacencia.getOrDefault(actual.idParada, new ArrayList<>());
             for(Ruta rutaVecina: vecinos){
                 double pesoArista = 0.0;
@@ -132,6 +135,10 @@ public class GrafoTransporte {
 
 }
 
+rama-logica
+
+
+ main
 class DatoCamino implements Comparable<DatoCamino> {
     String idParada;
     double pesoAcumulado;

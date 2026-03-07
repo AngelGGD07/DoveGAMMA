@@ -3,11 +3,8 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
- rama-logica
-    <groupId>logica</groupId>
-=======
+
     <groupId>grafica</groupId>
- main
     <artifactId>DoveGAMMA_Code</artifactId>
     <version>1.0-SNAPSHOT</version>
 
@@ -16,7 +13,6 @@
         <maven.compiler.target>25</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-
 
     <dependencies>
         <dependency>
@@ -34,6 +30,11 @@
             <artifactId>javafx-fxml</artifactId>
             <version>21</version>
         </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.33</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -43,7 +44,8 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
-                    <mainClass>org.example.grafica.AppInterfaz</mainClass> </configuration>
+                    <mainClass>org.example.grafica.AppInterfaz</mainClass>
+                </configuration>
             </plugin>
         </plugins>
     </build>

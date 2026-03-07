@@ -5,9 +5,9 @@ import java.util.List;
 public class Ruta {
     private String idOrigen;
     private String idDestino;
-    private double tiempo;    // Minutos
-    private double costo;     // Dinero
-    private double distancia; // Kilómetros
+    private double tiempo;
+    private double costo;
+    private double distancia;
 
     public Ruta(String idOrigen, String idDestino, double tiempo, double costo, double distancia) {
         this.idOrigen = idOrigen;

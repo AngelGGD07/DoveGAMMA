@@ -31,44 +31,37 @@ public class GrafoTransporte {
     }
 
     public void eliminarParada(String idParada) {
-        // si el hashmap de paradas contiene el id de la parada que buscamos, elimina esa parada del hashmap y de la lista
         if(mapaParadas.containsKey(idParada)){
 
             mapaParadas.remove(idParada);
             listasAdyacencia.remove(idParada);
             for(List<Ruta> rutasDeOtraParada: listasAdyacencia.values()){
-                /*se recorre las listas de rutas para eliminar de esas rutas
-                y borra las rutas que su destino era la parada que se elimina
-                */
+
                 rutasDeOtraParada.removeIf(ruta -> ruta.getIdDestino().equals(idParada));
             }
         }
     }
     public void eliminarRuta(String idOrigen, String idDestino){
-        // se verifica que la parada de origen exista
-        if(listasAdyacencia.containsKey(idOrigen)){
-            List<Ruta> rutasDelOrigen = listasAdyacencia.get(idOrigen); // lista de las rutas que salen de ese origen
 
-            rutasDelOrigen.removeIf(ruta -> ruta.getIdDestino().equals(idDestino)); /* se borra la ruta
-            que va a ese destino*/
+        if(listasAdyacencia.containsKey(idOrigen)){
+            List<Ruta> rutasDelOrigen = listasAdyacencia.get(idOrigen);
+
+            rutasDelOrigen.removeIf(ruta -> ruta.getIdDestino().equals(idDestino));
         }
     }
 
-    // 1 - Modificar el nombre de una parada
     public void modificarParada(String id, String nuevoNombre) {
         if (mapaParadas.containsKey(id)) {
-            mapaParadas.get(id).setNombre(nuevoNombre); // necesita setter en Parada
+            mapaParadas.get(id).setNombre(nuevoNombre);
         }
     }
 
-    // 2 - Modificar los pesos de una ruta (borra y vuelve a agregar)
     public void modificarRuta(String idOrigen, String idDestino,
                               double tiempo, double costo, double dist) {
         eliminarRuta(idOrigen, idDestino);
         agregarRuta(idOrigen, idDestino, tiempo, costo, dist);
     }
 
-    // 3 - Devolver todas las rutas activas (pa' redibujar tras eliminar parada)
     public List<Ruta> obtenerTodasLasRutas() {
         List<Ruta> todas = new ArrayList<>();
         for (List<Ruta> lista : listasAdyacencia.values()) {
@@ -85,7 +78,6 @@ public class GrafoTransporte {
         // cola de prioridad para procesar nodos
         PriorityQueue<DatoCamino> cola = new PriorityQueue<>();
 
-        // mapas para guardar distancias minimas y paradas previas (para reconstruir el camino)
         HashMap<String, Double> distanciasMinimas = new HashMap<>();
         HashMap<String, String> paradasPrevias = new HashMap<>();
 
@@ -95,12 +87,11 @@ public class GrafoTransporte {
         distanciasMinimas.put(idInicio, 0.0);
         cola.add(new DatoCamino(idInicio,0.0));
         while(!cola.isEmpty()){
-            // saca el nodo con menor peso
+
             DatoCamino actual = cola.poll();
             if(actual.idParada.equals(idFinal)){
                 break;
             }
-            // recorre sus vecinos (rutas) usando listasAdyacencia
             List<Ruta> vecinos = listasAdyacencia.getOrDefault(actual.idParada, new ArrayList<>());
             for(Ruta rutaVecina: vecinos){
                 double pesoArista = 0.0;
@@ -141,7 +132,6 @@ public class GrafoTransporte {
 
 }
 
-// estructura auxiliar para que dijkstra guarde datos temporales
 class DatoCamino implements Comparable<DatoCamino> {
     String idParada;
     double pesoAcumulado;
@@ -151,7 +141,6 @@ class DatoCamino implements Comparable<DatoCamino> {
         this.pesoAcumulado = pesoAcumulado;
     }
 
-    // necesario para que la PriorityQueue sepa cual es menor
     @Override
     public int compareTo(DatoCamino otro) {
         return Double.compare(this.pesoAcumulado, otro.pesoAcumulado);

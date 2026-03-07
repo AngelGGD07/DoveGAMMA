@@ -18,6 +18,7 @@ public class Parada {
     }
 
     public void setNombre(String nuevoNombre) {
+        this.nombre = nuevoNombre;
     }
 
     @Override

@@ -6,7 +6,7 @@ import java.util.List;
 public class InventarioTransporte {
     private List <MedioTransporte> listaVehiculos;
 
-    public InventarioTransporte(List listaVehiculos) {
+    public InventarioTransporte() {
        listaVehiculos = new ArrayList<>();
     }
 

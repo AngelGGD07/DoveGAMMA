@@ -4,7 +4,6 @@ import java.sql.*;
 
 public class GestorDB {
 
-    // Credenciales y URL para MySQL según el Paso 5
     private static final String URL  = "jdbc:mysql://localhost:3306/dovegamma";
     private static final String USER = "dove";
     private static final String PASS = "gamma123";
@@ -25,7 +24,6 @@ public class GestorDB {
         }
     }
 
-    // Crea las tablas con la sintaxis de MySQL
     private void crearTablas() {
         String sqlParadas =
                 "CREATE TABLE IF NOT EXISTS paradas (" +
@@ -52,8 +50,6 @@ public class GestorDB {
             System.out.println("Error creando tablas: " + e.getMessage());
         }
     }
-
-    // ── PARADAS ──────────────────────────────────────────────────────────────
 
     public void guardarParada(String id, String nombre, double x, double y) {
         String sql = "INSERT INTO paradas (id, nombre, x, y) VALUES (?, ?, ?, ?) " +
@@ -82,8 +78,6 @@ public class GestorDB {
     public ResultSet cargarParadas() throws SQLException {
         return conexion.createStatement().executeQuery("SELECT * FROM paradas");
     }
-
-    // ── RUTAS ─────────────────────────────────────────────────────────────────
 
     public void guardarRuta(String origen, String destino,
                             double tiempo, double distancia, double costo) {

@@ -42,7 +42,7 @@ public class GrafoTransporte {
         }
     }
     public void eliminarRuta(String idOrigen, String idDestino){
-        // se verifica que la parada de origen exista
+
         if(listasAdyacencia.containsKey(idOrigen)){
             List<Ruta> rutasDelOrigen = listasAdyacencia.get(idOrigen);
 
@@ -52,9 +52,13 @@ public class GrafoTransporte {
 
     public void modificarParada(String id, String nuevoNombre) {
         if (mapaParadas.containsKey(id)) {
-            mapaParadas.get(id).setNombre(nuevoNombre); // necesita setter en Parada
+            mapaParadas.get(id).setNombre(nuevoNombre);
         }
     }
+ rama-logica
+
+
+ main
     public void modificarRuta(String idOrigen, String idDestino,
                               double tiempo, double costo, double dist) {
         eliminarRuta(idOrigen, idDestino);
@@ -87,7 +91,10 @@ public class GrafoTransporte {
             if(actual.idParada.equals(idFinal)){
                 break;
             }
+ rama-logica
 
+
+main
             List<Ruta> vecinos = listasAdyacencia.getOrDefault(actual.idParada, new ArrayList<>());
             for(Ruta rutaVecina: vecinos){
                 double pesoArista = 0.0;
@@ -128,7 +135,10 @@ public class GrafoTransporte {
 
 }
 
+rama-logica
 
+
+ main
 class DatoCamino implements Comparable<DatoCamino> {
     String idParada;
     double pesoAcumulado;

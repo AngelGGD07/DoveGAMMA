@@ -1,4 +1,4 @@
-// AdaptadorVisual.java
+
 package grafica;
 
 import javafx.application.Platform;
@@ -19,7 +19,6 @@ public class AdaptadorVisual {
     private HashMap<String, String>   nombresPorId        = new HashMap<>();
     private HashSet<String>           rutasExistentes     = new HashSet<>();
 
-    // Guarda datos de cada ruta para poder redibujar: clave "origen|destino", valor [tiempo, dist, costo]
     private HashMap<String, double[]> datosRutas = new HashMap<>();
 
     private AdaptadorVisual() {
@@ -36,8 +35,6 @@ public class AdaptadorVisual {
     public GrafoTransporte    getBackend()            { return backend;      }
     public PanelVisualizacion getPanelVisual()        { return panelVisual;  }
 
-
-    // ── AGREGAR PARADA ────────────────────────────────────────────────────────
     public boolean agregarParada(String id, String nombre, double x, double y) {
         if (backend == null) return false;
 
@@ -56,7 +53,6 @@ public class AdaptadorVisual {
         return true;
     }
 
-    // ── AGREGAR RUTA ──────────────────────────────────────────────────────────
     public boolean agregarRuta(String origen, String destino, double tiempo, double distancia, double costo) {
         if (backend == null) return false;
         if (!nombresPorId.containsKey(origen) || !nombresPorId.containsKey(destino)) return false;
@@ -72,7 +68,6 @@ public class AdaptadorVisual {
         return true;
     }
 
-    // ── MODIFICAR PARADA ──────────────────────────────────────────────────────
     public boolean modificarParada(String id, String nuevoNombre) {
         if (!nombresPorId.containsKey(id)) return false;
 
@@ -84,7 +79,6 @@ public class AdaptadorVisual {
         return true;
     }
 
-    // ── MODIFICAR RUTA ────────────────────────────────────────────────────────
     public boolean modificarRuta(String origen, String destino, double tiempo, double distancia, double costo) {
         String clave = origen + "|" + destino;
         if (!rutasExistentes.contains(clave)) return false;
@@ -96,7 +90,6 @@ public class AdaptadorVisual {
         return true;
     }
 
-    // ── ELIMINAR PARADA ───────────────────────────────────────────────────────
     public boolean eliminarParada(String id) {
         if (backend == null || !nombresPorId.containsKey(id)) return false;
 
@@ -107,10 +100,10 @@ public class AdaptadorVisual {
         datosRutas.keySet().removeIf(r -> r.startsWith(id + "|") || r.endsWith("|" + id));
         gestorDB.eliminarParada(id);
         return true;
-        // El ControladorPrincipal llama redibujarAhora() justo después de este return
+
+
     }
 
-    // ── ELIMINAR RUTA ─────────────────────────────────────────────────────────
     public boolean eliminarRuta(String origen, String destino) {
         if (backend == null) return false;
         String clave = origen + "|" + destino;
@@ -121,23 +114,20 @@ public class AdaptadorVisual {
         datosRutas.remove(clave);
         gestorDB.eliminarRuta(origen, destino);
         return true;
-        // El ControladorPrincipal llama redibujarAhora() justo después de este return
+
     }
 
-    // ── REDIBUJAR GRAFO — llamar desde el hilo FX directamente ────────────────
     public void redibujarAhora() {
         if (panelVisual == null) return;
 
-        panelVisual.limpiarTodo(); // borra todo y redibuja el grid
+        panelVisual.limpiarTodo();
 
-        // Primero los nodos
         for (String id : nombresPorId.keySet()) {
             double[] pos = coordenadasVisuales.get(id);
             if (pos != null)
                 panelVisual.agregarParadaVisual(id, nombresPorId.get(id), pos[0], pos[1]);
         }
 
-        // Luego las rutas encima
         for (String clave : rutasExistentes) {
             String[] partes = clave.split("\\|");
             double[] datos  = datosRutas.get(clave);
@@ -146,7 +136,6 @@ public class AdaptadorVisual {
         }
     }
 
-    // ── CALCULAR Y FORMATEAR RESULTADO ────────────────────────────────────────
     public String calcularRuta(String idInicio, String idFin, String criterio) {
         if (backend == null) return "Backend no conectado.";
 
@@ -175,7 +164,6 @@ public class AdaptadorVisual {
                 "Paradas: " + camino.size() + "  |  Saltos: " + (camino.size() - 1);
     }
 
-    // ── LIMPIAR TODO ──────────────────────────────────────────────────────────
     public void limpiarTodo() {
         coordenadasVisuales.clear();
         nombresPorId.clear();

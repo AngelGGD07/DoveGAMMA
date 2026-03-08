@@ -11,50 +11,40 @@ import java.util.List;
 
 public class ControladorPrincipal {
 
-    // Sidebar
     @FXML private Button btnNavAgregar, btnNavModificar, btnNavEliminar, btnNavCalcular;
     @FXML private VBox   subMenuAgregar, subMenuModificar, subMenuEliminar;
 
-    // Formularios
     @FXML private VBox formAgregarParada, formAgregarRuta;
     @FXML private VBox formModParada,     formModRuta;
     @FXML private VBox formElimParada,    formElimRuta;
     @FXML private VBox formCalcular,      panelResultado;
 
-    // Agregar parada
     @FXML private TextField txtIdParada, txtNombreParada, txtXParada, txtYParada;
 
-    // Agregar ruta
     @FXML private TextField txtOrigenRuta, txtDestinoRuta;
     @FXML private TextField txtTiempoRuta, txtDistanciaRuta, txtCostoRuta;
 
-    // Modificar parada
     @FXML private TextField txtModIdParada, txtModNombreParada;
 
-    // Modificar ruta
     @FXML private TextField txtModOrigenRuta, txtModDestinoRuta;
     @FXML private TextField txtModTiempoRuta, txtModDistanciaRuta, txtModCostoRuta;
 
-    // Eliminar
     @FXML private TextField txtDelIdParada;
     @FXML private TextField txtDelOrigenRuta, txtDelDestinoRuta;
 
-    // Calcular
     @FXML private TextField        txtCalcInicio, txtCalcFin;
     @FXML private ComboBox<String> cmbCriterio;
     @FXML private TextArea         txtResultado;
 
-    // Toast de mensajes
     @FXML private Label lblMensaje;
 
-    // Contenedor del grafo
     @FXML private StackPane contenedorGrafo;
 
     private VBox[] todosLosForms;
 
-    // ── INITIALIZE ───────────────────────────────────────────────────────────
     @FXML
     public void initialize() {
+
         GrafoTransporte grafo = new GrafoTransporte();
         PanelVisualizacion panelVisual = new PanelVisualizacion();
         AdaptadorVisual.getInstancia().setBackend(grafo);
@@ -77,9 +67,9 @@ public class ControladorPrincipal {
         ));
         cmbCriterio.getSelectionModel().selectFirst();
         cargarDatosDesdeBD();
+
     }
 
-    // ── NAV ───────────────────────────────────────────────────────────────────
     @FXML private void mostrarPanelAgregar()  { toggleSub(subMenuAgregar);  activarBtn(btnNavAgregar);   }
     @FXML private void mostrarPanelModificar(){ toggleSub(subMenuModificar); activarBtn(btnNavModificar); }
     @FXML private void mostrarPanelEliminar() { toggleSub(subMenuEliminar);  activarBtn(btnNavEliminar);  }
@@ -98,7 +88,6 @@ public class ControladorPrincipal {
     @FXML private void mostrarFormElimParada()    { mostrarForm(formElimParada);    }
     @FXML private void mostrarFormElimRuta()      { mostrarForm(formElimRuta);      }
 
-    // ── ACCIONES ──────────────────────────────────────────────────────────────
     @FXML
     private void agregarParada() {
         String id     = txtIdParada.getText().trim();
@@ -207,7 +196,6 @@ public class ControladorPrincipal {
 
         if (AdaptadorVisual.getInstancia().eliminarParada(id)) {
             txtDelIdParada.clear();
-            // Forzar redibujado inmediato directo, sin esperar Platform.runLater
             AdaptadorVisual.getInstancia().redibujarAhora();
             exito("Parada eliminada: " + id);
         } else {
@@ -262,7 +250,6 @@ public class ControladorPrincipal {
         exito("Grafo limpiado.");
     }
 
-    // ── HELPERS NAV ───────────────────────────────────────────────────────────
     private void toggleSub(VBox sub) {
         boolean abierto = sub.isVisible();
         cerrarSubMenus();
@@ -289,7 +276,6 @@ public class ControladorPrincipal {
             b.setStyle(b == activo ? ACTIVO : BASE);
     }
 
-    // ── HELPERS MENSAJES ──────────────────────────────────────────────────────
     private void exito(String msg) {
         lblMensaje.setText("✔  " + msg);
         lblMensaje.setStyle("-fx-text-fill: #7acc7a; -fx-background-color: #0a2a0a; -fx-background-radius: 6; -fx-padding: 8; -fx-font-size: 11; -fx-font-family: 'Segoe UI';");
@@ -310,7 +296,7 @@ public class ControladorPrincipal {
     private void cargarDatosDesdeBD() {
         logica.GestorDB db = AdaptadorVisual.getInstancia().getGestorDB();
         try {
-            // Cargar paradas primero
+
             java.sql.ResultSet rsP = db.cargarParadas();
             while (rsP.next()) {
                 AdaptadorVisual.getInstancia().agregarParada(
@@ -321,7 +307,6 @@ public class ControladorPrincipal {
                 );
             }
 
-            // Cargar rutas después (las paradas ya tienen que estar)
             java.sql.ResultSet rsR = db.cargarRutas();
             while (rsR.next()) {
                 AdaptadorVisual.getInstancia().agregarRuta(
@@ -333,7 +318,8 @@ public class ControladorPrincipal {
                 );
             }
         } catch (java.sql.SQLException e) {
-            System.out.println("Error cargando datos: " + e.getMessage()); // Este sí lo dejamos por si hay fallos reales
+            System.out.println("Error cargando datos: " + e.getMessage());
         }
     }
+
 }

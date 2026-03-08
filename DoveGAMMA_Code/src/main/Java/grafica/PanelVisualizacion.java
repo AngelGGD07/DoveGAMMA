@@ -1,4 +1,3 @@
-// PanelVisualizacion.java
 package grafica;
 
 import javafx.animation.FadeTransition;
@@ -18,7 +17,6 @@ public class PanelVisualizacion extends Pane {
     private Map<String, NodoVisual> nodos  = new HashMap<>();
     private List<LineaVisual>       lineas = new ArrayList<>();
 
-    // paleta de colores del proyecto
     private final Color cOscuro   = Color.web("#0a0714");
     private final Color cMorado   = Color.web("#4a1a5e");
     private final Color cTerra    = Color.web("#a65d48");
@@ -70,13 +68,11 @@ public class PanelVisualizacion extends Pane {
         lblId.setFill(cClaro);
         posicionarTexto(lblId, x, y + 4);
 
-        // animación de entrada
         circulo.setScaleX(0); circulo.setScaleY(0);
         ScaleTransition st = new ScaleTransition(Duration.millis(350), circulo);
         st.setToX(1); st.setToY(1);
         st.play();
 
-        // hover
         circulo.setOnMouseEntered(e -> {
             circulo.setFill(cBeige);
             circulo.setRadius(26);
@@ -88,7 +84,6 @@ public class PanelVisualizacion extends Pane {
             circulo.setEffect(null);
         });
 
-        // drag
         final String idFinal = id;
         circulo.setOnMousePressed(e -> {
             dragOffsetX = e.getX() - circulo.getCenterX();
@@ -132,7 +127,6 @@ public class PanelVisualizacion extends Pane {
         subirNodosAlFrente();
     }
 
-    // elimina solo la linea visual entre origen y destino — las paradas quedan
     public void eliminarRutaVisual(String idOrigen, String idDestino) {
         Iterator<LineaVisual> iter = lineas.iterator();
         while (iter.hasNext()) {
@@ -146,7 +140,6 @@ public class PanelVisualizacion extends Pane {
         }
     }
 
-    // cambia el texto del nombre de una parada en la pantalla
     public void actualizarNombreParada(String id, String nuevoNombre) {
         NodoVisual nodo = nodos.get(id);
         if (nodo == null) return;
@@ -245,7 +238,6 @@ public class PanelVisualizacion extends Pane {
         }
     }
 
-    // resalta la ruta calculada por Dijkstra
     public void resaltarRuta(List<String> idsParadas) {
         lineas.forEach(lv -> {
             lv.linea.setStroke(cBeige);
@@ -293,8 +285,6 @@ public class PanelVisualizacion extends Pane {
             nv.lblId.toFront();
         });
     }
-
-    // ── clases internas ──
 
     static class NodoVisual {
         String id, nombre;

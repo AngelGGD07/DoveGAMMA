@@ -16,12 +16,10 @@
     style="-fx-background-color: #0a0714;"
     prefWidth="1200" prefHeight="720">
 
-    <!-- ═══════════════════════════ SIDEBAR IZQUIERDO ═══════════════════════════ -->
     <left>
         <VBox prefWidth="190" spacing="0"
               style="-fx-background-color: #0e0b1a; -fx-border-color: #2a1040; -fx-border-width: 0 2 0 0;">
 
-            <!-- LOGO -->
             <VBox alignment="CENTER" spacing="4"
                   style="-fx-padding: 24 10 20 10; -fx-background-color: #120d22;">
                 <ImageView fitWidth="312" fitHeight="312" preserveRatio="true">
@@ -37,10 +35,8 @@
 
             <Separator style="-fx-background-color: #2a1040;"/>
 
-            <!-- NAV MENU -->
             <VBox spacing="4" style="-fx-padding: 12 8 8 8;" VBox.vgrow="ALWAYS">
 
-                <!-- Agregar -->
                 <VBox spacing="2">
                     <Button fx:id="btnNavAgregar" text="  ＋  Agregar"
                             onAction="#mostrarPanelAgregar"
@@ -48,7 +44,6 @@
                             style="-fx-background-color: #a65d48; -fx-text-fill: #e8c9a8;
                                    -fx-font-size: 13; -fx-font-weight: BOLD; -fx-font-family: 'Segoe UI';
                                    -fx-background-radius: 8; -fx-cursor: hand;"/>
-                    <!-- sub-botones del menu agregar -->
                     <VBox fx:id="subMenuAgregar" spacing="2" style="-fx-padding: 0 0 0 16;" visible="true" managed="true">
                         <Button text="🛑  Parada" onAction="#mostrarFormAgregarParada"
                                 maxWidth="Infinity" prefHeight="34"
@@ -63,7 +58,6 @@
                     </VBox>
                 </VBox>
 
-                <!-- Modificar -->
                 <VBox spacing="2">
                     <Button fx:id="btnNavModificar" text="  ✎  Modificar"
                             onAction="#mostrarPanelModificar"
@@ -85,7 +79,6 @@
                     </VBox>
                 </VBox>
 
-                <!-- Eliminar -->
                 <VBox spacing="2">
                     <Button fx:id="btnNavEliminar" text="  ✕  Eliminar"
                             onAction="#mostrarPanelEliminar"
@@ -107,7 +100,6 @@
                     </VBox>
                 </VBox>
 
-                <!-- Calcular Ruta -->
                 <Button fx:id="btnNavCalcular" text="  ⊙  Calcular Ruta"
                         onAction="#mostrarPanelCalcular"
                         maxWidth="Infinity" prefHeight="44"
@@ -116,7 +108,6 @@
                                -fx-background-radius: 8; -fx-cursor: hand;"/>
             </VBox>
 
-            <!-- BOTON LIMPIAR abajo del todo -->
             <VBox style="-fx-padding: 10 8 16 8;">
                 <Separator style="-fx-background-color: #2a1040;"/>
                 <Region prefHeight="10"/>
@@ -130,16 +121,13 @@
         </VBox>
     </left>
 
-    <!-- ═══════════════════════════ AREA PRINCIPAL ═══════════════════════════ -->
     <center>
         <SplitPane dividerPositions="0.29"
                    style="-fx-background-color: #0a0714; -fx-padding: 0;">
 
-            <!-- PANEL DE FORMULARIOS (izquierda del centro) -->
             <VBox style="-fx-background-color: #0e0b1a; -fx-padding: 16; -fx-spacing: 10;"
                   minWidth="240">
 
-                <!-- ── FORM: AGREGAR PARADA ── -->
                 <VBox fx:id="formAgregarParada" spacing="8" visible="true" managed="true">
                     <Label text="Nueva Parada"
                            style="-fx-font-size: 14; -fx-font-weight: BOLD;
@@ -179,7 +167,6 @@
                                    -fx-background-radius: 8; -fx-cursor: hand;"/>
                 </VBox>
 
-                <!-- ── FORM: AGREGAR RUTA ── -->
                 <VBox fx:id="formAgregarRuta" spacing="8" visible="false" managed="false">
                     <Label text="Nueva Ruta"
                            style="-fx-font-size: 14; -fx-font-weight: BOLD;
@@ -222,7 +209,6 @@
                                    -fx-background-radius: 8; -fx-cursor: hand;"/>
                 </VBox>
 
-                <!-- ── FORM: MODIFICAR PARADA ── -->
                 <VBox fx:id="formModParada" spacing="8" visible="false" managed="false">
                     <Label text="Modificar Parada"
                            style="-fx-font-size: 14; -fx-font-weight: BOLD;
@@ -246,7 +232,6 @@
                                    -fx-background-radius: 8; -fx-cursor: hand;"/>
                 </VBox>
 
-                <!-- ── FORM: MODIFICAR RUTA ── -->
                 <VBox fx:id="formModRuta" spacing="8" visible="false" managed="false">
                     <Label text="Modificar Ruta"
                            style="-fx-font-size: 14; -fx-font-weight: BOLD;
@@ -289,7 +274,6 @@
                                    -fx-background-radius: 8; -fx-cursor: hand;"/>
                 </VBox>
 
-                <!-- ── FORM: ELIMINAR PARADA ── -->
                 <VBox fx:id="formElimParada" spacing="8" visible="false" managed="false">
                     <Label text="Eliminar Parada"
                            style="-fx-font-size: 14; -fx-font-weight: BOLD;
@@ -309,7 +293,6 @@
                                    -fx-background-radius: 8; -fx-cursor: hand;"/>
                 </VBox>
 
-                <!-- ── FORM: ELIMINAR RUTA ── -->
                 <VBox fx:id="formElimRuta" spacing="8" visible="false" managed="false">
                     <Label text="Eliminar Ruta"
                            style="-fx-font-size: 14; -fx-font-weight: BOLD;
@@ -331,7 +314,6 @@
                                    -fx-background-radius: 8; -fx-cursor: hand;"/>
                 </VBox>
 
-                <!-- ── FORM: CALCULAR RUTA ── -->
                 <VBox fx:id="formCalcular" spacing="8" visible="false" managed="false">
                     <Label text="Calcular Ruta"
                            style="-fx-font-size: 14; -fx-font-weight: BOLD;
@@ -369,7 +351,6 @@
                     </VBox>
                 </VBox>
 
-                <!-- TOAST de mensajes (errores / exito) -->
                 <Label fx:id="lblMensaje" maxWidth="Infinity" wrapText="true"
                        style="-fx-text-fill: #e8c9a8; -fx-background-color: #2a1a00;
                               -fx-background-radius: 6; -fx-padding: 8;
@@ -377,7 +358,6 @@
                        visible="false" managed="false"/>
             </VBox>
 
-            <!-- PANEL DEL GRAFO (derecha del centro) -->
             <ScrollPane style="-fx-background-color: #0a0714; -fx-background: #0a0714;"
                         fitToWidth="true" fitToHeight="true" pannable="true">
                 <content>

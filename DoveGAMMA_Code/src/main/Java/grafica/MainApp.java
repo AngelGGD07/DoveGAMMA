@@ -15,7 +15,6 @@ public class MainApp extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader(MainApp.class.getResource("/main.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 1200, 720);
 
-        // Ícono de la app — el archivo va en src/main/resources/icon.png
         Image icono = new Image(MainApp.class.getResourceAsStream("/icon.png"));
         stage.getIcons().add(icono);
 

@@ -1,4 +1,3 @@
-// ControladorPrincipal.java
 package grafica;
 
 import javafx.collections.FXCollections;
@@ -9,317 +8,534 @@ import logica.GrafoTransporte;
 
 import java.util.List;
 
+
 public class ControladorPrincipal {
 
-    @FXML private Button btnNavAgregar, btnNavModificar, btnNavEliminar, btnNavCalcular;
-    @FXML private VBox   subMenuAgregar, subMenuModificar, subMenuEliminar;
+    private static final String STYLE_BUTTON_BASE =
+            "-fx-background-color: #2a1a40; " +
+                    "-fx-text-fill: #d4a574; " +
+                    "-fx-font-size: 13; " +
+                    "-fx-font-weight: BOLD; " +
+                    "-fx-font-family: 'Segoe UI'; " +
+                    "-fx-background-radius: 8; " +
+                    "-fx-cursor: hand;";
 
-    @FXML private VBox formAgregarParada, formAgregarRuta;
-    @FXML private VBox formModParada,     formModRuta;
-    @FXML private VBox formElimParada,    formElimRuta;
-    @FXML private VBox formCalcular,      panelResultado;
+    private static final String STYLE_BUTTON_ACTIVE =
+            "-fx-background-color: #a65d48; " +
+                    "-fx-text-fill: #e8c9a8; " +
+                    "-fx-font-size: 13; " +
+                    "-fx-font-weight: BOLD; " +
+                    "-fx-font-family: 'Segoe UI'; " +
+                    "-fx-background-radius: 8; " +
+                    "-fx-cursor: hand;";
 
-    @FXML private TextField txtIdParada, txtNombreParada, txtXParada, txtYParada;
+    private static final String STYLE_MESSAGE_SUCCESS =
+            "-fx-text-fill: #7acc7a; " +
+                    "-fx-background-color: #0a2a0a; " +
+                    "-fx-background-radius: 6; " +
+                    "-fx-padding: 8; " +
+                    "-fx-font-size: 11; " +
+                    "-fx-font-family: 'Segoe UI';";
 
-    @FXML private TextField txtOrigenRuta, txtDestinoRuta;
-    @FXML private TextField txtTiempoRuta, txtDistanciaRuta, txtCostoRuta;
+    private static final String STYLE_MESSAGE_ERROR =
+            "-fx-text-fill: #e07070; " +
+                    "-fx-background-color: #2a0a0a; " +
+                    "-fx-background-radius: 6; " +
+                    "-fx-padding: 8; " +
+                    "-fx-font-size: 11; " +
+                    "-fx-font-family: 'Segoe UI';";
 
-    @FXML private TextField txtModIdParada, txtModNombreParada;
+    private static final String ERROR_ALL_FIELDS_REQUIRED = "Todos los campos son obligatorios.";
+    private static final String ERROR_ORIGIN_DESTINATION_SAME = "Origen y destino deben ser diferentes.";
+    private static final String ERROR_NUMERIC_FIELDS = "X e Y deben ser numeros.";
+    private static final String ERROR_NUMERIC_ROUTE_FIELDS = "Tiempo, distancia y costo deben ser numeros.";
+    private static final String ERROR_STOP_NOT_FOUND = "Paradas no encontradas. Agrega las paradas primero.";
+    private static final String ERROR_STOP_EXISTS = "Ya existe una parada con ese ID o ese nombre.";
+    private static final String ERROR_STOP_NOT_FOUND_OR_NAME_TAKEN = "Parada no encontrada o el nuevo nombre ya existe.";
+    private static final String ERROR_ROUTE_NOT_FOUND = "Ruta no encontrada. Verifica IDs y la direccion.";
+    private static final String ERROR_ROUTE_NOT_FOUND_DIRECTION = "No existe ruta de %s a %s en esa direccion.";
+    private static final String ERROR_STOP_NOT_FOUND_ID = "Parada no encontrada: %s";
+    private static final String ERROR_ENTER_STOP_ID = "Escribe el ID de la parada.";
+    private static final String ERROR_ENTER_ORIGIN_DESTINATION = "Escribe ID de origen y destino.";
+    private static final String ERROR_ENTER_START_END = "Escribe el ID de inicio y fin.";
+    private static final String ERROR_START_END_SAME = "Inicio y fin deben ser diferentes.";
 
-    @FXML private TextField txtModOrigenRuta, txtModDestinoRuta;
-    @FXML private TextField txtModTiempoRuta, txtModDistanciaRuta, txtModCostoRuta;
+    private static final String SUCCESS_STOP_ADDED = "Parada agregada: %s";
+    private static final String SUCCESS_ROUTE_CREATED = "Ruta creada: %s -> %s";
+    private static final String SUCCESS_STOP_UPDATED = "Parada actualizada: %s";
+    private static final String SUCCESS_ROUTE_UPDATED = "Ruta actualizada: %s -> %s";
+    private static final String SUCCESS_STOP_DELETED = "Parada eliminada: %s";
+    private static final String SUCCESS_ROUTE_DELETED = "Ruta eliminada: %s -> %s";
+    private static final String SUCCESS_GRAPH_CLEARED = "Grafo limpiado.";
+
+    private static final String SYMBOL_SUCCESS = "✔";
+    private static final String SYMBOL_ERROR = "⚠";
+    private static final String ARROW = " -> ";
+
+    private static final String[] ROUTE_CRITERIA = {"tiempo", "distancia", "costo", "transbordos"};
+
+    @FXML private Button btnNavAgregar;
+    @FXML private Button btnNavModificar;
+    @FXML private Button btnNavEliminar;
+    @FXML private Button btnNavCalcular;
+
+    @FXML private VBox subMenuAgregar;
+    @FXML private VBox subMenuModificar;
+    @FXML private VBox subMenuEliminar;
+
+    @FXML private VBox formAgregarParada;
+    @FXML private VBox formAgregarRuta;
+    @FXML private VBox formModParada;
+    @FXML private VBox formModRuta;
+    @FXML private VBox formElimParada;
+    @FXML private VBox formElimRuta;
+    @FXML private VBox formCalcular;
+    @FXML private VBox panelResultado;
+
+    @FXML private TextField txtIdParada;
+    @FXML private TextField txtNombreParada;
+    @FXML private TextField txtXParada;
+    @FXML private TextField txtYParada;
+
+    @FXML private TextField txtOrigenRuta;
+    @FXML private TextField txtDestinoRuta;
+    @FXML private TextField txtTiempoRuta;
+    @FXML private TextField txtDistanciaRuta;
+    @FXML private TextField txtCostoRuta;
+
+    @FXML private TextField txtModIdParada;
+    @FXML private TextField txtModNombreParada;
+
+    @FXML private TextField txtModOrigenRuta;
+    @FXML private TextField txtModDestinoRuta;
+    @FXML private TextField txtModTiempoRuta;
+    @FXML private TextField txtModDistanciaRuta;
+    @FXML private TextField txtModCostoRuta;
 
     @FXML private TextField txtDelIdParada;
-    @FXML private TextField txtDelOrigenRuta, txtDelDestinoRuta;
 
-    @FXML private TextField        txtCalcInicio, txtCalcFin;
+    @FXML private TextField txtDelOrigenRuta;
+    @FXML private TextField txtDelDestinoRuta;
+
+    @FXML private TextField txtCalcInicio;
+    @FXML private TextField txtCalcFin;
     @FXML private ComboBox<String> cmbCriterio;
-    @FXML private TextArea         txtResultado;
+    @FXML private TextArea txtResultado;
 
     @FXML private Label lblMensaje;
 
     @FXML private StackPane contenedorGrafo;
 
-    private VBox[] todosLosForms;
+    private VBox[] allForms;
+    private Button[] navigationButtons;
+
 
     @FXML
     public void initialize() {
-
-        GrafoTransporte grafo = new GrafoTransporte();
-        PanelVisualizacion panelVisual = new PanelVisualizacion();
-        AdaptadorVisual.getInstancia().setBackend(grafo);
-        AdaptadorVisual.getInstancia().setPanelVisual(panelVisual);
-
-        contenedorGrafo.getChildren().add(panelVisual);
-        StackPane.setAlignment(panelVisual, javafx.geometry.Pos.TOP_LEFT);
-        panelVisual.prefWidthProperty().bind(contenedorGrafo.widthProperty());
-        panelVisual.prefHeightProperty().bind(contenedorGrafo.heightProperty());
-
-        todosLosForms = new VBox[]{
-                formAgregarParada, formAgregarRuta,
-                formModParada,     formModRuta,
-                formElimParada,    formElimRuta,
-                formCalcular
-        };
-
-        cmbCriterio.setItems(FXCollections.observableArrayList(
-                "tiempo", "distancia", "costo", "transbordos"
-        ));
-        cmbCriterio.getSelectionModel().selectFirst();
-        cargarDatosDesdeBD();
-
+        initializeGraphVisualization();
+        initializeFormArray();
+        initializeNavigationButtons();
+        initializeCriteriaComboBox();
+        loadDataFromDatabase();
     }
 
-    @FXML private void mostrarPanelAgregar()  { toggleSub(subMenuAgregar);  activarBtn(btnNavAgregar);   }
-    @FXML private void mostrarPanelModificar(){ toggleSub(subMenuModificar); activarBtn(btnNavModificar); }
-    @FXML private void mostrarPanelEliminar() { toggleSub(subMenuEliminar);  activarBtn(btnNavEliminar);  }
+    private void initializeGraphVisualization() {
+        GrafoTransporte graph = new GrafoTransporte();
+        PanelVisualizacion visualizationPanel = new PanelVisualizacion();
+
+        AdaptadorVisual.getInstance().setBackend(graph);
+        AdaptadorVisual.getInstance().setVisualizationPanel(visualizationPanel);
+
+        contenedorGrafo.getChildren().add(visualizationPanel);
+        StackPane.setAlignment(visualizationPanel, javafx.geometry.Pos.TOP_LEFT);
+
+        visualizationPanel.prefWidthProperty().bind(contenedorGrafo.widthProperty());
+        visualizationPanel.prefHeightProperty().bind(contenedorGrafo.heightProperty());
+    }
+
+    private void initializeFormArray() {
+        allForms = new VBox[]{
+                formAgregarParada, formAgregarRuta,
+                formModParada, formModRuta,
+                formElimParada, formElimRuta,
+                formCalcular
+        };
+    }
+
+    private void initializeNavigationButtons() {
+        navigationButtons = new Button[]{
+                btnNavAgregar, btnNavModificar,
+                btnNavEliminar, btnNavCalcular
+        };
+    }
+
+    private void initializeCriteriaComboBox() {
+        cmbCriterio.setItems(FXCollections.observableArrayList(ROUTE_CRITERIA));
+        cmbCriterio.getSelectionModel().selectFirst();
+    }
+
+
+    @FXML
+    private void mostrarPanelAgregar() {
+        toggleSubmenu(subMenuAgregar);
+        activateButton(btnNavAgregar);
+    }
+
+    @FXML
+    private void mostrarPanelModificar() {
+        toggleSubmenu(subMenuModificar);
+        activateButton(btnNavModificar);
+    }
+
+    @FXML
+    private void mostrarPanelEliminar() {
+        toggleSubmenu(subMenuEliminar);
+        activateButton(btnNavEliminar);
+    }
 
     @FXML
     private void mostrarPanelCalcular() {
-        cerrarSubMenus();
-        activarBtn(btnNavCalcular);
-        mostrarForm(formCalcular);
+        closeAllSubmenus();
+        activateButton(btnNavCalcular);
+        showForm(formCalcular);
     }
 
-    @FXML private void mostrarFormAgregarParada() { mostrarForm(formAgregarParada); }
-    @FXML private void mostrarFormAgregarRuta()   { mostrarForm(formAgregarRuta);   }
-    @FXML private void mostrarFormModParada()     { mostrarForm(formModParada);     }
-    @FXML private void mostrarFormModRuta()       { mostrarForm(formModRuta);       }
-    @FXML private void mostrarFormElimParada()    { mostrarForm(formElimParada);    }
-    @FXML private void mostrarFormElimRuta()      { mostrarForm(formElimRuta);      }
+
+    @FXML private void mostrarFormAgregarParada() { showForm(formAgregarParada); }
+    @FXML private void mostrarFormAgregarRuta() { showForm(formAgregarRuta); }
+    @FXML private void mostrarFormModParada() { showForm(formModParada); }
+    @FXML private void mostrarFormModRuta() { showForm(formModRuta); }
+    @FXML private void mostrarFormElimParada() { showForm(formElimParada); }
+    @FXML private void mostrarFormElimRuta() { showForm(formElimRuta); }
+
 
     @FXML
     private void agregarParada() {
-        String id     = txtIdParada.getText().trim();
-        String nombre = txtNombreParada.getText().trim();
-        String xStr   = txtXParada.getText().trim();
-        String yStr   = txtYParada.getText().trim();
+        String stopId = txtIdParada.getText().trim();
+        String stopName = txtNombreParada.getText().trim();
+        String coordinateX = txtXParada.getText().trim();
+        String coordinateY = txtYParada.getText().trim();
 
-        if (id.isEmpty() || nombre.isEmpty() || xStr.isEmpty() || yStr.isEmpty()) {
-            error("Todos los campos son obligatorios."); return;
+        if (areAnyFieldsEmpty(stopId, stopName, coordinateX, coordinateY)) {
+            showError(ERROR_ALL_FIELDS_REQUIRED);
+            return;
         }
+
         try {
-            boolean ok = AdaptadorVisual.getInstancia().agregarParada(
-                    id, nombre,
-                    Double.parseDouble(xStr),
-                    Double.parseDouble(yStr)
-            );
-            if (ok) {
-                limpiar(txtIdParada, txtNombreParada, txtXParada, txtYParada);
-                exito("Parada agregada: " + nombre);
+            double x = Double.parseDouble(coordinateX);
+            double y = Double.parseDouble(coordinateY);
+
+            boolean isAdded = AdaptadorVisual.getInstance().addStop(stopId, stopName, x, y);
+
+            if (isAdded) {
+                clearFields(txtIdParada, txtNombreParada, txtXParada, txtYParada);
+                showSuccess(String.format(SUCCESS_STOP_ADDED, stopName));
             } else {
-                error("Ya existe una parada con ese ID o ese nombre.");
+                showError(ERROR_STOP_EXISTS);
             }
-        } catch (NumberFormatException e) {
-            error("X e Y deben ser numeros.");
+        } catch (NumberFormatException exception) {
+            showError(ERROR_NUMERIC_FIELDS);
         }
     }
 
     @FXML
     private void agregarRuta() {
-        String o  = txtOrigenRuta.getText().trim();
-        String d  = txtDestinoRuta.getText().trim();
-        String t  = txtTiempoRuta.getText().trim();
-        String di = txtDistanciaRuta.getText().trim();
-        String c  = txtCostoRuta.getText().trim();
+        String originId = txtOrigenRuta.getText().trim();
+        String destinationId = txtDestinoRuta.getText().trim();
+        String timeValue = txtTiempoRuta.getText().trim();
+        String distanceValue = txtDistanciaRuta.getText().trim();
+        String costValue = txtCostoRuta.getText().trim();
 
-        if (o.isEmpty() || d.isEmpty() || t.isEmpty() || di.isEmpty() || c.isEmpty()) {
-            error("Todos los campos son obligatorios."); return;
+        if (areAnyFieldsEmpty(originId, destinationId, timeValue, distanceValue, costValue)) {
+            showError(ERROR_ALL_FIELDS_REQUIRED);
+            return;
         }
-        if (o.equals(d)) { error("Origen y destino deben ser diferentes."); return; }
+
+        if (originId.equals(destinationId)) {
+            showError(ERROR_ORIGIN_DESTINATION_SAME);
+            return;
+        }
 
         try {
-            boolean ok = AdaptadorVisual.getInstancia().agregarRuta(
-                    o, d,
-                    Double.parseDouble(t),
-                    Double.parseDouble(di),
-                    Double.parseDouble(c)
-            );
-            if (ok) {
-                limpiar(txtOrigenRuta, txtDestinoRuta, txtTiempoRuta, txtDistanciaRuta, txtCostoRuta);
-                exito("Ruta creada: " + o + " -> " + d);
+            double time = Double.parseDouble(timeValue);
+            double distance = Double.parseDouble(distanceValue);
+            double cost = Double.parseDouble(costValue);
+
+            boolean isAdded = AdaptadorVisual.getInstance().addRoute(
+                    originId, destinationId, time, distance, cost);
+
+            if (isAdded) {
+                clearFields(txtOrigenRuta, txtDestinoRuta, txtTiempoRuta,
+                        txtDistanciaRuta, txtCostoRuta);
+                showSuccess(String.format(SUCCESS_ROUTE_CREATED, originId, destinationId));
             } else {
-                error("Paradas no encontradas. Agrega las paradas primero.");
+                showError(ERROR_STOP_NOT_FOUND);
             }
-        } catch (NumberFormatException e) {
-            error("Tiempo, distancia y costo deben ser numeros.");
+        } catch (NumberFormatException exception) {
+            showError(ERROR_NUMERIC_ROUTE_FIELDS);
         }
     }
 
+
     @FXML
     private void modificarParada() {
-        String id     = txtModIdParada.getText().trim();
-        String nombre = txtModNombreParada.getText().trim();
-        if (id.isEmpty() || nombre.isEmpty()) { error("Todos los campos son obligatorios."); return; }
+        String stopId = txtModIdParada.getText().trim();
+        String newName = txtModNombreParada.getText().trim();
 
-        if (AdaptadorVisual.getInstancia().modificarParada(id, nombre)) {
-            limpiar(txtModIdParada, txtModNombreParada);
-            exito("Parada actualizada: " + id);
+        if (areAnyFieldsEmpty(stopId, newName)) {
+            showError(ERROR_ALL_FIELDS_REQUIRED);
+            return;
+        }
+
+        boolean isModified = AdaptadorVisual.getInstance().modifyStopName(stopId, newName);
+
+        if (isModified) {
+            clearFields(txtModIdParada, txtModNombreParada);
+            showSuccess(String.format(SUCCESS_STOP_UPDATED, stopId));
         } else {
-            error("Parada no encontrada o el nuevo nombre ya existe.");
+            showError(ERROR_STOP_NOT_FOUND_OR_NAME_TAKEN);
         }
     }
 
     @FXML
     private void modificarRuta() {
-        String o  = txtModOrigenRuta.getText().trim();
-        String d  = txtModDestinoRuta.getText().trim();
-        String t  = txtModTiempoRuta.getText().trim();
-        String di = txtModDistanciaRuta.getText().trim();
-        String c  = txtModCostoRuta.getText().trim();
+        String originId = txtModOrigenRuta.getText().trim();
+        String destinationId = txtModDestinoRuta.getText().trim();
+        String timeValue = txtModTiempoRuta.getText().trim();
+        String distanceValue = txtModDistanciaRuta.getText().trim();
+        String costValue = txtModCostoRuta.getText().trim();
 
-        if (o.isEmpty() || d.isEmpty() || t.isEmpty() || di.isEmpty() || c.isEmpty()) {
-            error("Todos los campos son obligatorios."); return;
+        if (areAnyFieldsEmpty(originId, destinationId, timeValue, distanceValue, costValue)) {
+            showError(ERROR_ALL_FIELDS_REQUIRED);
+            return;
         }
+
         try {
-            boolean ok = AdaptadorVisual.getInstancia().modificarRuta(
-                    o, d,
-                    Double.parseDouble(t),
-                    Double.parseDouble(di),
-                    Double.parseDouble(c)
-            );
-            if (ok) {
-                limpiar(txtModOrigenRuta, txtModDestinoRuta, txtModTiempoRuta, txtModDistanciaRuta, txtModCostoRuta);
-                exito("Ruta actualizada: " + o + " -> " + d);
+            double time = Double.parseDouble(timeValue);
+            double distance = Double.parseDouble(distanceValue);
+            double cost = Double.parseDouble(costValue);
+
+            boolean isModified = AdaptadorVisual.getInstance().modifyRoute(
+                    originId, destinationId, time, distance, cost);
+
+            if (isModified) {
+                clearFields(txtModOrigenRuta, txtModDestinoRuta,
+                        txtModTiempoRuta, txtModDistanciaRuta, txtModCostoRuta);
+                showSuccess(String.format(SUCCESS_ROUTE_UPDATED, originId, destinationId));
             } else {
-                error("Ruta no encontrada. Verifica IDs y la direccion.");
+                showError(ERROR_ROUTE_NOT_FOUND);
             }
-        } catch (NumberFormatException e) {
-            error("Tiempo, distancia y costo deben ser numeros.");
+        } catch (NumberFormatException exception) {
+            showError(ERROR_NUMERIC_ROUTE_FIELDS);
         }
     }
 
+
     @FXML
     private void eliminarParada() {
-        String id = txtDelIdParada.getText().trim();
-        if (id.isEmpty()) { error("Escribe el ID de la parada."); return; }
+        String stopId = txtDelIdParada.getText().trim();
 
-        if (AdaptadorVisual.getInstancia().eliminarParada(id)) {
+        if (stopId.isEmpty()) {
+            showError(ERROR_ENTER_STOP_ID);
+            return;
+        }
+
+        boolean isDeleted = AdaptadorVisual.getInstance().removeStop(stopId);
+
+        if (isDeleted) {
             txtDelIdParada.clear();
-            AdaptadorVisual.getInstancia().redibujarAhora();
-            exito("Parada eliminada: " + id);
+            AdaptadorVisual.getInstance().refreshVisualization();
+            showSuccess(String.format(SUCCESS_STOP_DELETED, stopId));
         } else {
-            error("Parada no encontrada: " + id);
+            showError(String.format(ERROR_STOP_NOT_FOUND_ID, stopId));
         }
     }
 
     @FXML
     private void eliminarRuta() {
-        String o = txtDelOrigenRuta.getText().trim();
-        String d = txtDelDestinoRuta.getText().trim();
-        if (o.isEmpty() || d.isEmpty()) { error("Escribe ID de origen y destino."); return; }
+        String originId = txtDelOrigenRuta.getText().trim();
+        String destinationId = txtDelDestinoRuta.getText().trim();
 
-        if (AdaptadorVisual.getInstancia().eliminarRuta(o, d)) {
-            limpiar(txtDelOrigenRuta, txtDelDestinoRuta);
-            // Forzar redibujado inmediato directo
-            AdaptadorVisual.getInstancia().redibujarAhora();
-            exito("Ruta eliminada: " + o + " -> " + d);
+        if (areAnyFieldsEmpty(originId, destinationId)) {
+            showError(ERROR_ENTER_ORIGIN_DESTINATION);
+            return;
+        }
+
+        boolean isDeleted = AdaptadorVisual.getInstance().removeRoute(originId, destinationId);
+
+        if (isDeleted) {
+            clearFields(txtDelOrigenRuta, txtDelDestinoRuta);
+            AdaptadorVisual.getInstance().refreshVisualization();
+            showSuccess(String.format(SUCCESS_ROUTE_DELETED, originId, destinationId));
         } else {
-            error("No existe ruta de " + o + " a " + d + " en esa direccion.");
+            showError(String.format(ERROR_ROUTE_NOT_FOUND_DIRECTION, originId, destinationId));
         }
     }
 
+
     @FXML
     private void calcularRuta() {
-        String idI = txtCalcInicio.getText().trim();
-        String idF = txtCalcFin.getText().trim();
-        String cri = cmbCriterio.getValue();
+        String startId = txtCalcInicio.getText().trim();
+        String endId = txtCalcFin.getText().trim();
+        String criteria = cmbCriterio.getValue();
 
-        if (idI.isEmpty() || idF.isEmpty()) { error("Escribe el ID de inicio y fin."); return; }
-        if (idI.equals(idF)) { error("Inicio y fin deben ser diferentes."); return; }
+        if (areAnyFieldsEmpty(startId, endId)) {
+            showError(ERROR_ENTER_START_END);
+            return;
+        }
 
-        String resultado = AdaptadorVisual.getInstancia().calcularRuta(idI, idF, cri);
-        txtResultado.setText(resultado);
+        if (startId.equals(endId)) {
+            showError(ERROR_START_END_SAME);
+            return;
+        }
 
-        List<String> camino = AdaptadorVisual.getInstancia().getBackend()
-                .calcularDijkstra(idI, idF, cri);
-        if (!camino.isEmpty())
-            AdaptadorVisual.getInstancia().getPanelVisual().resaltarRuta(camino);
+        String result = AdaptadorVisual.getInstance().calculateRoute(startId, endId, criteria);
+        txtResultado.setText(result);
 
+        highlightRouteOnMap(startId, endId, criteria);
+        showResultPanel();
+    }
+
+    private void highlightRouteOnMap(String startId, String endId, String criteria) {
+        List<String> path = AdaptadorVisual.getInstance().getBackend()
+                .calcularDijkstra(startId, endId, criteria);
+
+        if (!path.isEmpty()) {
+            AdaptadorVisual.getInstance().getVisualizationPanel().resaltarRuta(path);
+        }
+    }
+
+    private void showResultPanel() {
         panelResultado.setVisible(true);
         panelResultado.setManaged(true);
-        ocultarMsg();
+        hideMessage();
     }
 
     @FXML
     private void limpiarTodo() {
-        AdaptadorVisual.getInstancia().limpiarTodo();
+        AdaptadorVisual.getInstance().clearAll();
         txtResultado.clear();
+        hideResultPanel();
+        showSuccess(SUCCESS_GRAPH_CLEARED);
+    }
+
+
+    private void toggleSubmenu(VBox submenu) {
+        boolean isCurrentlyVisible = submenu.isVisible();
+        closeAllSubmenus();
+
+        if (!isCurrentlyVisible) {
+            submenu.setVisible(true);
+            submenu.setManaged(true);
+        }
+    }
+
+    private void closeAllSubmenus() {
+        VBox[] allSubmenus = {subMenuAgregar, subMenuModificar, subMenuEliminar};
+        for (VBox submenu : allSubmenus) {
+            submenu.setVisible(false);
+            submenu.setManaged(false);
+        }
+    }
+
+    private void showForm(VBox targetForm) {
+        hideAllForms();
+        targetForm.setVisible(true);
+        targetForm.setManaged(true);
+        hideMessage();
+    }
+
+    private void hideAllForms() {
+        for (VBox form : allForms) {
+            form.setVisible(false);
+            form.setManaged(false);
+        }
+    }
+
+    private void hideResultPanel() {
         panelResultado.setVisible(false);
         panelResultado.setManaged(false);
-        exito("Grafo limpiado.");
     }
 
-    private void toggleSub(VBox sub) {
-        boolean abierto = sub.isVisible();
-        cerrarSubMenus();
-        if (!abierto) { sub.setVisible(true); sub.setManaged(true); }
-    }
-
-    private void cerrarSubMenus() {
-        for (VBox s : new VBox[]{subMenuAgregar, subMenuModificar, subMenuEliminar}) {
-            s.setVisible(false); s.setManaged(false);
+    private void activateButton(Button activeButton) {
+        for (Button button : navigationButtons) {
+            String style = (button == activeButton) ? STYLE_BUTTON_ACTIVE : STYLE_BUTTON_BASE;
+            button.setStyle(style);
         }
     }
 
-    private void mostrarForm(VBox target) {
-        for (VBox f : todosLosForms) { f.setVisible(false); f.setManaged(false); }
-        target.setVisible(true);
-        target.setManaged(true);
-        ocultarMsg();
-    }
 
-    private void activarBtn(Button activo) {
-        String BASE   = "-fx-background-color: #2a1a40; -fx-text-fill: #d4a574; -fx-font-size: 13; -fx-font-weight: BOLD; -fx-font-family: 'Segoe UI'; -fx-background-radius: 8; -fx-cursor: hand;";
-        String ACTIVO = "-fx-background-color: #a65d48; -fx-text-fill: #e8c9a8; -fx-font-size: 13; -fx-font-weight: BOLD; -fx-font-family: 'Segoe UI'; -fx-background-radius: 8; -fx-cursor: hand;";
-        for (Button b : new Button[]{btnNavAgregar, btnNavModificar, btnNavEliminar, btnNavCalcular})
-            b.setStyle(b == activo ? ACTIVO : BASE);
-    }
-
-    private void exito(String msg) {
-        lblMensaje.setText("✔  " + msg);
-        lblMensaje.setStyle("-fx-text-fill: #7acc7a; -fx-background-color: #0a2a0a; -fx-background-radius: 6; -fx-padding: 8; -fx-font-size: 11; -fx-font-family: 'Segoe UI';");
+    private void showSuccess(String message) {
+        lblMensaje.setText(SYMBOL_SUCCESS + "  " + message);
+        lblMensaje.setStyle(STYLE_MESSAGE_SUCCESS);
         lblMensaje.setVisible(true);
         lblMensaje.setManaged(true);
     }
 
-    private void error(String msg) {
-        lblMensaje.setText("⚠  " + msg);
-        lblMensaje.setStyle("-fx-text-fill: #e07070; -fx-background-color: #2a0a0a; -fx-background-radius: 6; -fx-padding: 8; -fx-font-size: 11; -fx-font-family: 'Segoe UI';");
+    private void showError(String message) {
+        lblMensaje.setText(SYMBOL_ERROR + "  " + message);
+        lblMensaje.setStyle(STYLE_MESSAGE_ERROR);
         lblMensaje.setVisible(true);
         lblMensaje.setManaged(true);
     }
 
-    private void ocultarMsg() { lblMensaje.setVisible(false); lblMensaje.setManaged(false); }
-    private void limpiar(TextField... campos) { for (TextField tf : campos) tf.clear(); }
+    private void hideMessage() {
+        lblMensaje.setVisible(false);
+        lblMensaje.setManaged(false);
+    }
 
-    private void cargarDatosDesdeBD() {
-        logica.GestorDB db = AdaptadorVisual.getInstancia().getGestorDB();
+
+    private boolean areAnyFieldsEmpty(String... fieldValues) {
+        for (String value : fieldValues) {
+            if (value.isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void clearFields(TextField... fields) {
+        for (TextField field : fields) {
+            field.clear();
+        }
+    }
+
+
+    private void loadDataFromDatabase() {
+        logica.GestorDB database = AdaptadorVisual.getInstance().getDatabaseManager();
+
         try {
-
-            java.sql.ResultSet rsP = db.cargarParadas();
-            while (rsP.next()) {
-                AdaptadorVisual.getInstancia().agregarParada(
-                        rsP.getString("id"),
-                        rsP.getString("nombre"),
-                        rsP.getDouble("x"),
-                        rsP.getDouble("y")
-                );
-            }
-
-            java.sql.ResultSet rsR = db.cargarRutas();
-            while (rsR.next()) {
-                AdaptadorVisual.getInstancia().agregarRuta(
-                        rsR.getString("origen"),
-                        rsR.getString("destino"),
-                        rsR.getDouble("tiempo"),
-                        rsR.getDouble("distancia"),
-                        rsR.getDouble("costo")
-                );
-            }
-        } catch (java.sql.SQLException e) {
-            System.out.println("Error cargando datos: " + e.getMessage());
+            loadStopsFromDatabase(database);
+            loadRoutesFromDatabase(database);
+        } catch (java.sql.SQLException exception) {
+            System.out.println("Error cargando datos: " + exception.getMessage());
         }
     }
 
+    private void loadStopsFromDatabase(logica.GestorDB database) throws java.sql.SQLException {
+        java.sql.ResultSet stopsResult = database.cargarParadas();
+
+        while (stopsResult.next()) {
+            AdaptadorVisual.getInstance().addStop(
+                    stopsResult.getString("id"),
+                    stopsResult.getString("nombre"),
+                    stopsResult.getDouble("x"),
+                    stopsResult.getDouble("y")
+            );
+        }
+    }
+
+    private void loadRoutesFromDatabase(logica.GestorDB database) throws java.sql.SQLException {
+        java.sql.ResultSet routesResult = database.cargarRutas();
+
+        while (routesResult.next()) {
+            AdaptadorVisual.getInstance().addRoute(
+                    routesResult.getString("origen"),
+                    routesResult.getString("destino"),
+                    routesResult.getDouble("tiempo"),
+                    routesResult.getDouble("distancia"),
+                    routesResult.getDouble("costo")
+            );
+        }
+    }
 }

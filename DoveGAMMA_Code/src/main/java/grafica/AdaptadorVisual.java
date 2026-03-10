@@ -1,183 +1,475 @@
-
 package grafica;
 
 import javafx.application.Platform;
-import logica.CalculadorRuta;
 import logica.GrafoTransporte;
 import logica.Parada;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 
 public class AdaptadorVisual {
-    private static AdaptadorVisual instancia;
-    private GrafoTransporte    backend;
-    private PanelVisualizacion panelVisual;
-    private logica.GestorDB gestorDB;
 
-    private HashMap<String, double[]> coordenadasVisuales = new HashMap<>();
-    private HashMap<String, String>   nombresPorId        = new HashMap<>();
-    private HashSet<String>           rutasExistentes     = new HashSet<>();
+    private static final String ROUTE_KEY_SEPARATOR = "|";
+    private static final String ERROR_BACKEND_NOT_CONNECTED = "Backend no conectado.";
+    private static final String ERROR_NO_ROUTE_EXISTS = "No existe ruta entre ";
+    private static final String AND = " y ";
+    private static final String DOT = ".";
 
-    private HashMap<String, double[]> datosRutas = new HashMap<>();
+    private static final String TITLE_SHORTEST_TIME = "Menor Tiempo";
+    private static final String TITLE_SHORTEST_DISTANCE = "Menor Distancia";
+    private static final String TITLE_LOWEST_COST = "Menor Costo";
+    private static final String TITLE_FEWEST_TRANSFERS = "Menos Transbordos";
+
+    private static final String FORMAT_RESULT_HEADER = "=== %s ===\n";
+    private static final String FORMAT_ROUTE_SUMMARY = "Paradas: %d  |  Saltos: %d";
+    private static final String ARROW_SEPARATOR = " -> ";
+
+    private static AdaptadorVisual instance;
+
+    private GrafoTransporte backend;
+    private PanelVisualizacion visualizationPanel;
+    private logica.GestorDB databaseManager;
+
+    private final Map<String, double[]> visualCoordinates = new HashMap<>();
+    private final Map<String, String> stopNamesById = new HashMap<>();
+    private final Set<String> existingRoutes = new HashSet<>();
+    private final Map<String, double[]> routeData = new HashMap<>();
+
 
     private AdaptadorVisual() {
-        gestorDB = new logica.GestorDB();
+        this.databaseManager = new logica.GestorDB();
     }
 
+    @Deprecated
     public static AdaptadorVisual getInstancia() {
-        if (instancia == null) instancia = new AdaptadorVisual();
-        return instancia;
+        return getInstance();
     }
 
-    public void setBackend(GrafoTransporte b)        { this.backend    = b; }
-    public void setPanelVisual(PanelVisualizacion p) { this.panelVisual = p; }
-    public GrafoTransporte    getBackend()            { return backend;      }
-    public PanelVisualizacion getPanelVisual()        { return panelVisual;  }
-
-    public boolean agregarParada(String id, String nombre, double x, double y) {
-        if (backend == null) return false;
-
-        if (nombresPorId.containsKey(id)) return false;
-
-        for (String n : nombresPorId.values())
-            if (n.equalsIgnoreCase(nombre)) return false;
-
-        backend.registrarParada(new Parada(id, nombre, x, y));
-        coordenadasVisuales.put(id, new double[]{x, y});
-        nombresPorId.put(id, nombre);
-
-        if (panelVisual != null)
-            Platform.runLater(() -> panelVisual.agregarParadaVisual(id, nombre, x, y));
-        gestorDB.guardarParada(id, nombre, x, y);
-        return true;
+    public static AdaptadorVisual getInstance() {
+        if (instance == null) {
+            instance = new AdaptadorVisual();
+        }
+        return instance;
     }
 
-    public boolean agregarRuta(String origen, String destino, double tiempo, double distancia, double costo) {
-        if (backend == null) return false;
-        if (!nombresPorId.containsKey(origen) || !nombresPorId.containsKey(destino)) return false;
-
-        backend.agregarRuta(origen, destino, tiempo, costo, distancia);
-        String clave = origen + "|" + destino;
-        rutasExistentes.add(clave);
-        datosRutas.put(clave, new double[]{tiempo, distancia, costo});
-
-        if (panelVisual != null)
-            Platform.runLater(() -> panelVisual.agregarRutaVisual(origen, destino, tiempo, distancia, costo));
-        gestorDB.guardarRuta(origen, destino, tiempo, distancia, costo);
-        return true;
+    public void setBackend(GrafoTransporte backend) {
+        this.backend = backend;
     }
 
-    public boolean modificarParada(String id, String nuevoNombre) {
-        if (!nombresPorId.containsKey(id)) return false;
-
-        for (java.util.Map.Entry<String, String> e : nombresPorId.entrySet())
-            if (!e.getKey().equals(id) && e.getValue().equalsIgnoreCase(nuevoNombre)) return false;
-
-        nombresPorId.put(id, nuevoNombre);
-        Platform.runLater(this::redibujarAhora);
-        return true;
+    @Deprecated
+    public void setPanelVisual(PanelVisualizacion panel) {
+        setVisualizationPanel(panel);
     }
 
-    public boolean modificarRuta(String origen, String destino, double tiempo, double distancia, double costo) {
-        String clave = origen + "|" + destino;
-        if (!rutasExistentes.contains(clave)) return false;
-
-        backend.eliminarRuta(origen, destino);
-        backend.agregarRuta(origen, destino, tiempo, costo, distancia);
-        datosRutas.put(clave, new double[]{tiempo, distancia, costo});
-        Platform.runLater(this::redibujarAhora);
-        return true;
+    public void setVisualizationPanel(PanelVisualizacion panel) {
+        this.visualizationPanel = panel;
     }
 
-    public boolean eliminarParada(String id) {
-        if (backend == null || !nombresPorId.containsKey(id)) return false;
-
-        backend.eliminarParada(id);
-        coordenadasVisuales.remove(id);
-        nombresPorId.remove(id);
-        rutasExistentes.removeIf(r -> r.startsWith(id + "|") || r.endsWith("|" + id));
-        datosRutas.keySet().removeIf(r -> r.startsWith(id + "|") || r.endsWith("|" + id));
-        gestorDB.eliminarParada(id);
-        return true;
-
-
+    public GrafoTransporte getBackend() {
+        return backend;
     }
 
-    public boolean eliminarRuta(String origen, String destino) {
-        if (backend == null) return false;
-        String clave = origen + "|" + destino;
-        if (!rutasExistentes.contains(clave)) return false;
-
-        backend.eliminarRuta(origen, destino);
-        rutasExistentes.remove(clave);
-        datosRutas.remove(clave);
-        gestorDB.eliminarRuta(origen, destino);
-        return true;
-
+    @Deprecated
+    public PanelVisualizacion getPanelVisual() {
+        return getVisualizationPanel();
     }
 
-    public void redibujarAhora() {
-        if (panelVisual == null) return;
+    public PanelVisualizacion getVisualizationPanel() {
+        return visualizationPanel;
+    }
 
-        panelVisual.limpiarTodo();
+    @Deprecated
+    public logica.GestorDB getGestorDB() {
+        return getDatabaseManager();
+    }
 
-        for (String id : nombresPorId.keySet()) {
-            double[] pos = coordenadasVisuales.get(id);
-            if (pos != null)
-                panelVisual.agregarParadaVisual(id, nombresPorId.get(id), pos[0], pos[1]);
+    public logica.GestorDB getDatabaseManager() {
+        return databaseManager;
+    }
+
+    public boolean addStop(String stopId, String stopName, double coordinateX, double coordinateY) {
+        if (backend == null) {
+            return false;
         }
 
-        for (String clave : rutasExistentes) {
-            String[] partes = clave.split("\\|");
-            double[] datos  = datosRutas.get(clave);
-            if (partes.length == 2 && datos != null)
-                panelVisual.agregarRutaVisual(partes[0], partes[1], datos[0], datos[1], datos[2]);
+        if (isStopIdAlreadyExists(stopId)) {
+            return false;
         }
+
+        if (isStopNameAlreadyExists(stopName)) {
+            return false;
+        }
+
+        registerStopInBackend(stopId, stopName);
+        storeVisualCoordinates(stopId, coordinateX, coordinateY);
+        storeStopName(stopId, stopName);
+        persistStopToDatabase(stopId, stopName, coordinateX, coordinateY);
+        addStopToVisualization(stopId, stopName, coordinateX, coordinateY);
+
+        return true;
     }
 
-    public String calcularRuta(String idInicio, String idFin, String criterio) {
-        if (backend == null) return "Backend no conectado.";
-
-        GrafoTransporte grafoActual = AdaptadorVisual.getInstancia().getBackend();
-        CalculadorRuta calculador = new CalculadorRuta();
-        List<String> camino = calculador.calcularDijkstra(grafoActual, idInicio, idFin, criterio);
-
-        if (camino.isEmpty())
-            return "No existe ruta entre " + getNombre(idInicio) + " y " + getNombre(idFin) + ".";
-
-        String titulo;
-        switch (criterio.toLowerCase()) {
-            case "tiempo":      titulo = "Menor Tiempo";      break;
-            case "distancia":   titulo = "Menor Distancia";   break;
-            case "costo":       titulo = "Menor Costo";       break;
-            case "transbordos": titulo = "Menos Transbordos"; break;
-            default:            titulo = criterio;
+    public boolean modifyStopName(String stopId, String newName) {
+        if (!stopNamesById.containsKey(stopId)) {
+            return false;
         }
 
-        StringBuilder linea = new StringBuilder();
-        for (int i = 0; i < camino.size(); i++) {
-            linea.append(getNombre(camino.get(i)));
-            if (i < camino.size() - 1) linea.append(" -> ");
+        if (isStopNameAlreadyExistsExcludingId(newName, stopId)) {
+            return false;
         }
 
-        return "=== " + titulo + " ===\n" +
-                linea + "\n" +
-                "Paradas: " + camino.size() + "  |  Saltos: " + (camino.size() - 1);
+        updateStopName(stopId, newName);
+        refreshVisualization();
+
+        return true;
     }
 
-    public void limpiarTodo() {
-        coordenadasVisuales.clear();
-        nombresPorId.clear();
-        rutasExistentes.clear();
-        datosRutas.clear();
-        if (panelVisual != null) panelVisual.limpiarTodo();
+    public boolean removeStop(String stopId) {
+        if (backend == null || !stopNamesById.containsKey(stopId)) {
+            return false;
+        }
+
+        removeStopFromBackend(stopId);
+        removeStopVisualData(stopId);
+        removeRoutesAssociatedWithStop(stopId);
+        removeStopFromDatabase(stopId);
+
+        return true;
+    }
+
+    public boolean addRoute(String originStopId, String destinationStopId,
+                            double travelTime, double distance, double cost) {
+        if (backend == null) {
+            return false;
+        }
+
+        if (!areBothStopsExist(originStopId, destinationStopId)) {
+            return false;
+        }
+
+        registerRouteInBackend(originStopId, destinationStopId, travelTime, cost, distance);
+        storeRouteData(originStopId, destinationStopId, travelTime, distance, cost);
+        persistRouteToDatabase(originStopId, destinationStopId, travelTime, distance, cost);
+        addRouteToVisualization(originStopId, destinationStopId, travelTime, distance, cost);
+
+        return true;
+    }
+
+    public boolean modifyRoute(String originStopId, String destinationStopId,
+                               double newTravelTime, double newDistance, double newCost) {
+        String routeKey = buildRouteKey(originStopId, destinationStopId);
+
+        if (!existingRoutes.contains(routeKey)) {
+            return false;
+        }
+
+        updateRouteInBackend(originStopId, destinationStopId, newTravelTime, newCost, newDistance);
+        updateRouteData(routeKey, newTravelTime, newDistance, newCost);
+        refreshVisualization();
+
+        return true;
+    }
+
+    public boolean removeRoute(String originStopId, String destinationStopId) {
+        if (backend == null) {
+            return false;
+        }
+
+        String routeKey = buildRouteKey(originStopId, destinationStopId);
+
+        if (!existingRoutes.contains(routeKey)) {
+            return false;
+        }
+
+        removeRouteFromBackend(originStopId, destinationStopId);
+        removeRouteData(routeKey);
+        removeRouteFromDatabase(originStopId, destinationStopId);
+
+        return true;
+    }
+
+    public String calculateRoute(String startStopId, String endStopId, String criteria) {
+        if (backend == null) {
+            return ERROR_BACKEND_NOT_CONNECTED;
+        }
+
+        List<String> path = backend.calcularDijkstra(startStopId, endStopId, criteria);
+
+        if (path.isEmpty()) {
+            return buildNoRouteMessage(startStopId, endStopId);
+        }
+
+        return formatRouteResult(path, criteria);
+    }
+
+    public void clearAll() {
+        visualCoordinates.clear();
+        stopNamesById.clear();
+        existingRoutes.clear();
+        routeData.clear();
+
+        if (visualizationPanel != null) {
+            visualizationPanel.clearAll();
+        }
+
         backend = new GrafoTransporte();
     }
 
-    public String getNombre(String id) {
-        return nombresPorId.getOrDefault(id, id);
+    @Deprecated
+    public void redibujarAhora() {
+        refreshVisualization();
     }
-    public logica.GestorDB getGestorDB() { return gestorDB; }
+
+    public void refreshVisualization() {
+        if (visualizationPanel == null) {
+            return;
+        }
+
+        Platform.runLater(() -> {
+            visualizationPanel.clearAll();
+            redrawAllStops();
+            redrawAllRoutes();
+        });
+    }
+
+    public String getStopName(String stopId) {
+        return stopNamesById.getOrDefault(stopId, stopId);
+    }
+
+    @Deprecated
+    public boolean agregarParada(String id, String nombre, double x, double y) {
+        return addStop(id, nombre, x, y);
+    }
+
+    @Deprecated
+    public boolean modificarParada(String id, String nuevoNombre) {
+        return modifyStopName(id, nuevoNombre);
+    }
+
+    @Deprecated
+    public boolean eliminarParada(String id) {
+        return removeStop(id);
+    }
+
+    @Deprecated
+    public boolean agregarRuta(String origen, String destino, double tiempo, double distancia, double costo) {
+        return addRoute(origen, destino, tiempo, distancia, costo);
+    }
+
+    @Deprecated
+    public boolean modificarRuta(String origen, String destino, double tiempo, double distancia, double costo) {
+        return modifyRoute(origen, destino, tiempo, distancia, costo);
+    }
+
+    @Deprecated
+    public boolean eliminarRuta(String origen, String destino) {
+        return removeRoute(origen, destino);
+    }
+
+    @Deprecated
+    public String calcularRuta(String idInicio, String idFin, String criterio) {
+        return calculateRoute(idInicio, idFin, criterio);
+    }
+
+    @Deprecated
+    public void limpiarTodo() {
+        clearAll();
+    }
+
+    @Deprecated
+    public String getNombre(String id) {
+        return getStopName(id);
+    }
+
+    private boolean isStopIdAlreadyExists(String stopId) {
+        return stopNamesById.containsKey(stopId);
+    }
+
+    private boolean isStopNameAlreadyExists(String stopName) {
+        for (String existingName : stopNamesById.values()) {
+            if (existingName.equalsIgnoreCase(stopName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isStopNameAlreadyExistsExcludingId(String stopName, String excludeId) {
+        for (Map.Entry<String, String> entry : stopNamesById.entrySet()) {
+            if (!entry.getKey().equals(excludeId) && entry.getValue().equalsIgnoreCase(stopName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean areBothStopsExist(String originId, String destinationId) {
+        return stopNamesById.containsKey(originId) && stopNamesById.containsKey(destinationId);
+    }
+    
+    private void registerStopInBackend(String stopId, String stopName) {
+        backend.registrarParada(new Parada(stopId, stopName));
+    }
+
+    private void storeVisualCoordinates(String stopId, double x, double y) {
+        visualCoordinates.put(stopId, new double[]{x, y});
+    }
+
+    private void storeStopName(String stopId, String stopName) {
+        stopNamesById.put(stopId, stopName);
+    }
+
+    private void updateStopName(String stopId, String newName) {
+        stopNamesById.put(stopId, newName);
+    }
+
+    private void removeStopFromBackend(String stopId) {
+        backend.eliminarParada(stopId);
+    }
+
+    private void removeStopVisualData(String stopId) {
+        visualCoordinates.remove(stopId);
+        stopNamesById.remove(stopId);
+    }
+
+    private void removeRoutesAssociatedWithStop(String stopId) {
+        existingRoutes.removeIf(route -> route.startsWith(stopId + ROUTE_KEY_SEPARATOR)
+                || route.endsWith(ROUTE_KEY_SEPARATOR + stopId));
+        routeData.keySet().removeIf(route -> route.startsWith(stopId + ROUTE_KEY_SEPARATOR)
+                || route.endsWith(ROUTE_KEY_SEPARATOR + stopId));
+    }
+
+    private String buildRouteKey(String originId, String destinationId) {
+        return originId + ROUTE_KEY_SEPARATOR + destinationId;
+    }
+
+    private void registerRouteInBackend(String originId, String destinationId,
+                                        double time, double cost, double distance) {
+        backend.agregarRuta(originId, destinationId, time, cost, distance);
+    }
+
+    private void storeRouteData(String originId, String destinationId,
+                                double time, double distance, double cost) {
+        String routeKey = buildRouteKey(originId, destinationId);
+        existingRoutes.add(routeKey);
+        routeData.put(routeKey, new double[]{time, distance, cost});
+    }
+
+    private void updateRouteInBackend(String originId, String destinationId,
+                                      double time, double cost, double distance) {
+        backend.eliminarRuta(originId, destinationId);
+        backend.agregarRuta(originId, destinationId, time, cost, distance);
+    }
+
+    private void updateRouteData(String routeKey, double time, double distance, double cost) {
+        routeData.put(routeKey, new double[]{time, distance, cost});
+    }
+
+    private void removeRouteFromBackend(String originId, String destinationId) {
+        backend.eliminarRuta(originId, destinationId);
+    }
+
+    private void removeRouteData(String routeKey) {
+        existingRoutes.remove(routeKey);
+        routeData.remove(routeKey);
+    }
+
+    private void addStopToVisualization(String stopId, String stopName, double x, double y) {
+        if (visualizationPanel != null) {
+            Platform.runLater(() -> visualizationPanel.addStopVisual(stopId, stopName, x, y));
+        }
+    }
+
+    private void addRouteToVisualization(String originId, String destinationId,
+                                         double time, double distance, double cost) {
+        if (visualizationPanel != null) {
+            Platform.runLater(() -> visualizationPanel.addRouteVisual(
+                    originId, destinationId, time, distance, cost));
+        }
+    }
+
+    private void redrawAllStops() {
+        for (String stopId : stopNamesById.keySet()) {
+            double[] position = visualCoordinates.get(stopId);
+            if (position != null) {
+                visualizationPanel.addStopVisual(
+                        stopId, stopNamesById.get(stopId), position[0], position[1]);
+            }
+        }
+    }
+
+    private void redrawAllRoutes() {
+        for (String routeKey : existingRoutes) {
+            String[] parts = routeKey.split("\\" + ROUTE_KEY_SEPARATOR);
+            double[] data = routeData.get(routeKey);
+
+            if (parts.length == 2 && data != null) {
+                visualizationPanel.addRouteVisual(parts[0], parts[1], data[0], data[1], data[2]);
+            }
+        }
+    }
+
+    private void persistStopToDatabase(String stopId, String stopName, double x, double y) {
+        databaseManager.guardarParada(stopId, stopName, x, y);
+    }
+
+    private void persistRouteToDatabase(String originId, String destinationId,
+                                        double time, double distance, double cost) {
+        databaseManager.guardarRuta(originId, destinationId, time, distance, cost);
+    }
+
+    private void removeStopFromDatabase(String stopId) {
+        databaseManager.eliminarParada(stopId);
+    }
+
+    private void removeRouteFromDatabase(String originId, String destinationId) {
+        databaseManager.eliminarRuta(originId, destinationId);
+    }
+
+    private String buildNoRouteMessage(String startId, String endId) {
+        return ERROR_NO_ROUTE_EXISTS + getStopName(startId) + AND + getStopName(endId) + DOT;
+    }
+
+    private String formatRouteResult(List<String> path, String criteria) {
+        String title = getTitleForCriteria(criteria);
+        String routePath = buildPathString(path);
+        int stopCount = path.size();
+        int hopCount = path.size() - 1;
+
+        return String.format(FORMAT_RESULT_HEADER, title) +
+                routePath + "\n" +
+                String.format(FORMAT_ROUTE_SUMMARY, stopCount, hopCount);
+    }
+
+    private String getTitleForCriteria(String criteria) {
+        switch (criteria.toLowerCase()) {
+            case "tiempo":
+                return TITLE_SHORTEST_TIME;
+            case "distancia":
+                return TITLE_SHORTEST_DISTANCE;
+            case "costo":
+                return TITLE_LOWEST_COST;
+            case "transbordos":
+                return TITLE_FEWEST_TRANSFERS;
+            default:
+                return criteria;
+        }
+    }
+
+    private String buildPathString(List<String> stopIds) {
+        StringBuilder pathBuilder = new StringBuilder();
+
+        for (int i = 0; i < stopIds.size(); i++) {
+            pathBuilder.append(getStopName(stopIds.get(i)));
+            if (i < stopIds.size() - 1) {
+                pathBuilder.append(ARROW_SEPARATOR);
+            }
+        }
+
+        return pathBuilder.toString();
+    }
 }

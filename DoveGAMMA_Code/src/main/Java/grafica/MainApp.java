@@ -8,18 +8,7 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
-/**
- * Main application entry point for DoveGAMMA route management system.
- *
- * Responsibilities:
- * - Initialize JavaFX application
- * - Load main FXML layout and CSS styling
- * - Configure primary stage (window) properties
- * - Manage application lifecycle (start/stop)
- *
- * @author DoveGAMMA Development Team
- * @version 1.0
- */
+
 public class MainApp extends Application {
 
     private static final String APPLICATION_TITLE = "DoveGAMMA - Sistema de Gestión de Rutas";

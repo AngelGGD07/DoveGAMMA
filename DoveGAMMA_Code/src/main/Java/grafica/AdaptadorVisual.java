@@ -3,7 +3,6 @@ package grafica;
 import javafx.application.Platform;
 import logica.GrafoTransporte;
 import logica.Parada;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;

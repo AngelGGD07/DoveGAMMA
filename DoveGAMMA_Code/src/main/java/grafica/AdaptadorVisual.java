@@ -2,6 +2,7 @@
 package grafica;
 
 import javafx.application.Platform;
+import logica.CalculadorRuta;
 import logica.GrafoTransporte;
 import logica.Parada;
 
@@ -43,7 +44,7 @@ public class AdaptadorVisual {
         for (String n : nombresPorId.values())
             if (n.equalsIgnoreCase(nombre)) return false;
 
-        backend.registrarParada(new Parada(id, nombre));
+        backend.registrarParada(new Parada(id, nombre, x, y));
         coordenadasVisuales.put(id, new double[]{x, y});
         nombresPorId.put(id, nombre);
 
@@ -139,7 +140,9 @@ public class AdaptadorVisual {
     public String calcularRuta(String idInicio, String idFin, String criterio) {
         if (backend == null) return "Backend no conectado.";
 
-        List<String> camino = backend.calcularDijkstra(idInicio, idFin, criterio);
+        GrafoTransporte grafoActual = AdaptadorVisual.getInstancia().getBackend();
+        CalculadorRuta calculador = new CalculadorRuta();
+        List<String> camino = calculador.calcularDijkstra(grafoActual, idInicio, idFin, criterio);
 
         if (camino.isEmpty())
             return "No existe ruta entre " + getNombre(idInicio) + " y " + getNombre(idFin) + ".";

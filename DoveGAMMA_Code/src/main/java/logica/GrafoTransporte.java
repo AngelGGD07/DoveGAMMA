@@ -1,10 +1,6 @@
 package logica;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.PriorityQueue;
-import java.util.List;
-import java.util.Collections;
+import java.util.*;
 
 public class GrafoTransporte {
     private HashMap<String, Parada> mapaParadas;
@@ -15,22 +11,33 @@ public class GrafoTransporte {
         this.mapaParadas = new HashMap<>();
         this.listasAdyacencia = new HashMap<>();
     }
+    public Set<String> obtenerIdsParadas() {
+        return mapaParadas.keySet();
+    }
 
-    public void registrarParada(Parada nuevaParada) {
+    public List<Ruta> obtenerVecinos(String idParada) {
+        return listasAdyacencia.getOrDefault(idParada, new ArrayList<>());
+    }
+
+    public boolean registrarParada(Parada nuevaParada) {
         if (!mapaParadas.containsKey(nuevaParada.getCodigo())) {
             mapaParadas.put(nuevaParada.getCodigo(), nuevaParada);
             listasAdyacencia.put(nuevaParada.getCodigo(), new ArrayList<>());
+            return true;
         }
+        return false;
     }
 
-    public void agregarRuta(String idOrigen, String idDestino, double tiempo, double costo, double dist) {
+    public boolean agregarRuta(String idOrigen, String idDestino, double tiempo, double costo, double dist) {
         if (mapaParadas.containsKey(idOrigen) && mapaParadas.containsKey(idDestino)) {
             Ruta nuevaRuta = new Ruta(idOrigen, idDestino, tiempo, costo, dist);
             listasAdyacencia.get(idOrigen).add(nuevaRuta);
+            return true;
         }
+        return false;
     }
 
-    public void eliminarParada(String idParada) {
+    public boolean eliminarParada(String idParada) {
         if(mapaParadas.containsKey(idParada)){
 
             mapaParadas.remove(idParada);
@@ -39,27 +46,47 @@ public class GrafoTransporte {
 
                 rutasDeOtraParada.removeIf(ruta -> ruta.getIdDestino().equals(idParada));
             }
+            return true;
         }
+        return false;
     }
-    public void eliminarRuta(String idOrigen, String idDestino){
+    public boolean eliminarRuta(String idOrigen, String idDestino){
 
         if(listasAdyacencia.containsKey(idOrigen)){
             List<Ruta> rutasDelOrigen = listasAdyacencia.get(idOrigen);
 
-            rutasDelOrigen.removeIf(ruta -> ruta.getIdDestino().equals(idDestino));
+            return rutasDelOrigen.removeIf(ruta -> ruta.getIdDestino().equals(idDestino));
         }
+        return false;
     }
 
-    public void modificarParada(String id, String nuevoNombre) {
+    public boolean modificarParada(String id, String nuevoNombre, double nuevaX, double nuevaY) {
         if (mapaParadas.containsKey(id)) {
-            mapaParadas.get(id).setNombre(nuevoNombre);
+            // Extraemos el objeto Parada original
+            Parada parada = mapaParadas.get(id);
+
+            // Actualizamos los atributos
+            parada.setNombre(nuevoNombre);
+            parada.setX(nuevaX);
+            parada.setY(nuevaY);
+
+            // Avisamos que fue un exito
+            return true;
         }
+        return false;
     }
 
-    public void modificarRuta(String idOrigen, String idDestino,
+    public boolean modificarRuta(String idOrigen, String idDestino,
                               double tiempo, double costo, double dist) {
-        eliminarRuta(idOrigen, idDestino);
-        agregarRuta(idOrigen, idDestino, tiempo, costo, dist);
+        // Intentamos borrar la ruta vieja. Si devuelve true, es que sí existía.
+        boolean sePudoEliminar = eliminarRuta(idOrigen, idDestino);
+
+        // Si la borramos con éxito, creamos la nueva con los datos frescos
+        if (sePudoEliminar) {
+            return agregarRuta(idOrigen, idDestino, tiempo, costo, dist);
+        }
+        // Si no se pudo eliminar (porque no existía), devolvemos false
+        return false;
     }
 
     public List<Ruta> obtenerTodasLasRutas() {
@@ -70,76 +97,5 @@ public class GrafoTransporte {
         return todas;
     }
 
-    public List<String> calcularDijkstra(String idInicio, String idFinal, String criterio) {
 
-        PriorityQueue<DatoCamino> cola = new PriorityQueue<>();
-
-        HashMap<String, Double> distanciasMinimas = new HashMap<>();
-        HashMap<String, String> paradasPrevias = new HashMap<>();
-
-        for(String idParada: mapaParadas.keySet()){
-            distanciasMinimas.put(idParada, Double.MAX_VALUE);
-        }
-        distanciasMinimas.put(idInicio, 0.0);
-        cola.add(new DatoCamino(idInicio,0.0));
-        while(!cola.isEmpty()){
-
-            DatoCamino actual = cola.poll();
-            if(actual.idParada.equals(idFinal)){
-                break;
-            }
-
-            List<Ruta> vecinos = listasAdyacencia.getOrDefault(actual.idParada, new ArrayList<>());
-            for(Ruta rutaVecina: vecinos){
-                double pesoArista = 0.0;
-                if(criterio.equalsIgnoreCase("tiempo")){
-                    pesoArista = rutaVecina.getTiempo();
-                } else if (criterio.equalsIgnoreCase("costo")) {
-                    pesoArista = rutaVecina.getCosto();
-
-                } else if (criterio.equalsIgnoreCase("distancia")) {
-                    pesoArista = rutaVecina.getDistancia();
-
-                } else if (criterio.equalsIgnoreCase("transbordos")) {
-                pesoArista = 1.0;
-                }
-
-                double nuevaDistancia = distanciasMinimas.get(actual.idParada) + pesoArista;
-
-                if (nuevaDistancia < distanciasMinimas.get(rutaVecina.getIdDestino())) {
-                    distanciasMinimas.put(rutaVecina.getIdDestino(), nuevaDistancia);
-                    paradasPrevias.put(rutaVecina.getIdDestino(), actual.idParada);
-                    cola.add(new DatoCamino(rutaVecina.getIdDestino(), nuevaDistancia));
-                }
-            }
-        }
-        if (distanciasMinimas.get(idFinal) == Double.MAX_VALUE) {
-            return new ArrayList<>();
-        }
-        List<String> caminoFinal = new ArrayList<>();
-        String paradaActual = idFinal;
-        while(paradaActual != null){
-            caminoFinal.add(paradaActual);
-            paradaActual = paradasPrevias.get(paradaActual);
-        }
-        Collections.reverse(caminoFinal);
-        return caminoFinal;
-
-    }
-
-}
-
-class DatoCamino implements Comparable<DatoCamino> {
-    String idParada;
-    double pesoAcumulado;
-
-    public DatoCamino(String idParada, double pesoAcumulado) {
-        this.idParada = idParada;
-        this.pesoAcumulado = pesoAcumulado;
-    }
-
-    @Override
-    public int compareTo(DatoCamino otro) {
-        return Double.compare(this.pesoAcumulado, otro.pesoAcumulado);
-    }
 }

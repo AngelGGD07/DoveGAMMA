@@ -9,311 +9,595 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
+import javafx.scene.effect.DropShadow;
 
 import java.util.*;
 
+
 public class PanelVisualizacion extends Pane {
 
-    private Map<String, NodoVisual> nodos  = new HashMap<>();
-    private List<LineaVisual>       lineas = new ArrayList<>();
+    private static final Color COLOR_BACKGROUND_DARK = Color.web("#0a0714");
+    private static final Color COLOR_PURPLE_ACCENT = Color.web("#4a1a5e");
+    private static final Color COLOR_TERRACOTTA = Color.web("#a65d48");
+    private static final Color COLOR_BEIGE = Color.web("#d4a574");
+    private static final Color COLOR_LIGHT_BEIGE = Color.web("#e8c9a8");
+    private static final Color COLOR_HIGHLIGHT_GOLD = Color.web("#f0c040");
+    private static final Color COLOR_GRID_LINE = Color.web("#1e1030");
+    private static final Color COLOR_LABEL_BACKGROUND = Color.web("#0a0714", 0.85);
 
-    private final Color cOscuro   = Color.web("#0a0714");
-    private final Color cMorado   = Color.web("#4a1a5e");
-    private final Color cTerra    = Color.web("#a65d48");
-    private final Color cBeige    = Color.web("#d4a574");
-    private final Color cClaro    = Color.web("#e8c9a8");
-    private final Color cResalte  = Color.web("#f0c040");
-    private final Color cGridLine = Color.web("#1e1030");
+    private static final double PANEL_PREFERRED_WIDTH = 900.0;
+    private static final double PANEL_PREFERRED_HEIGHT = 630.0;
+    private static final double GRID_MAX_X = 1400.0;
+    private static final double GRID_MAX_Y = 900.0;
 
-    private double dragOffsetX, dragOffsetY;
+    private static final double NODE_RADIUS_DEFAULT = 22.0;
+    private static final double NODE_RADIUS_HOVER = 26.0;
+    private static final double NODE_RADIUS_OFFSET = 24.0;
+    private static final double NODE_MARGIN = 35.0;
+    private static final double NODE_STROKE_WIDTH = 2.5;
+    private static final double NODE_ANIMATION_DURATION_MS = 350.0;
+
+    private static final String FONT_FAMILY_PRIMARY = "Segoe UI";
+    private static final String FONT_FAMILY_MONO = "Consolas";
+    private static final double FONT_SIZE_STOP_NAME = 12.0;
+    private static final double FONT_SIZE_STOP_ID = 11.0;
+    private static final double FONT_SIZE_ROUTE_METRICS = 10.0;
+    private static final double LABEL_OFFSET_Y_NAME = 30.0;
+    private static final double LABEL_OFFSET_Y_ID = 4.0;
+
+    private static final double ROUTE_STROKE_WIDTH_DEFAULT = 2.5;
+    private static final double ROUTE_STROKE_WIDTH_HIGHLIGHT = 5.0;
+    private static final double ROUTE_OPACITY_DEFAULT = 0.85;
+    private static final double ROUTE_OPACITY_DIMMED = 0.4;
+    private static final double ROUTE_ANIMATION_DURATION_MS = 500.0;
+
+    private static final double ARROW_LENGTH = 13.0;
+    private static final double ARROW_STROKE_WIDTH = 1.5;
+    private static final double ARROW_ANGLE_OFFSET_RADIANS = Math.PI / 6.0;
+
+    private static final double ROUTE_LABEL_HEIGHT = 18.0;
+    private static final double ROUTE_LABEL_PADDING = 10.0;
+    private static final double ROUTE_LABEL_OFFSET_Y = 14.0;
+    private static final double ROUTE_LABEL_CORNER_RADIUS = 4.0;
+
+    private static final int GRID_STEP_SIZE = 40;
+    private static final double GRID_STROKE_WIDTH = 0.5;
+
+    private static final double HIGHLIGHT_FADE_DURATION_MS = 700.0;
+    private static final double HIGHLIGHT_OPACITY_MIN = 0.4;
+    private static final double HIGHLIGHT_OPACITY_MAX = 1.0;
+    private static final int HIGHLIGHT_CYCLE_COUNT = 6;
+    private static final double DROP_SHADOW_RADIUS = 18.0;
+
+    private final Map<String, VisualStop> stops = new HashMap<>();
+    private final List<VisualRoute> routes = new ArrayList<>();
+
+    private double dragOffsetX;
+    private double dragOffsetY;
 
     public PanelVisualizacion() {
-        setPrefSize(900, 630);
-        setStyle("-fx-background-color: #0a0714;");
-        dibujarGrid();
+        setPreferredSize();
+        setBackgroundColor();
+        drawGrid();
     }
 
-    private void dibujarGrid() {
-        int paso = 40;
-        for (int x = 0; x < 1400; x += paso) {
-            Line l = new Line(x, 0, x, 900);
-            l.setStroke(cGridLine);
-            l.setStrokeWidth(0.5);
-            getChildren().add(l);
+    private void setPreferredSize() {
+        setPrefSize(PANEL_PREFERRED_WIDTH, PANEL_PREFERRED_HEIGHT);
+    }
+
+    private void setBackgroundColor() {
+        setStyle("-fx-background-color: " + COLOR_BACKGROUND_DARK.toString().replace("0x", "#") + ";");
+    }
+
+    private void drawGrid() {
+        drawVerticalGridLines();
+        drawHorizontalGridLines();
+    }
+
+    private void drawVerticalGridLines() {
+        for (int x = 0; x < GRID_MAX_X; x += GRID_STEP_SIZE) {
+            Line gridLine = createGridLine(x, 0, x, GRID_MAX_Y);
+            getChildren().add(gridLine);
         }
-        for (int y = 0; y < 900; y += paso) {
-            Line l = new Line(0, y, 1400, y);
-            l.setStroke(cGridLine);
-            l.setStrokeWidth(0.5);
-            getChildren().add(l);
+    }
+
+    private void drawHorizontalGridLines() {
+        for (int y = 0; y < GRID_MAX_Y; y += GRID_STEP_SIZE) {
+            Line gridLine = createGridLine(0, y, GRID_MAX_Y, y);
+            getChildren().add(gridLine);
         }
     }
 
-    public void agregarParadaVisual(String id, String nombre, double x, double y) {
-        x = Math.max(35, Math.min(x, getPrefWidth()  - 35));
-        y = Math.max(35, Math.min(y, getPrefHeight() - 35));
-
-        Circle circulo = new Circle(x, y, 22);
-        circulo.setFill(cTerra);
-        circulo.setStroke(cBeige);
-        circulo.setStrokeWidth(2.5);
-
-        Text lblNombre = new Text(nombre);
-        lblNombre.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
-        lblNombre.setFill(cClaro);
-        posicionarTexto(lblNombre, x, y - 30);
-
-        Text lblId = new Text(id.length() > 4 ? id.substring(0, 4) : id);
-        lblId.setFont(Font.font("Consolas", FontWeight.BOLD, 11));
-        lblId.setFill(cClaro);
-        posicionarTexto(lblId, x, y + 4);
-
-        circulo.setScaleX(0); circulo.setScaleY(0);
-        ScaleTransition st = new ScaleTransition(Duration.millis(350), circulo);
-        st.setToX(1); st.setToY(1);
-        st.play();
-
-        circulo.setOnMouseEntered(e -> {
-            circulo.setFill(cBeige);
-            circulo.setRadius(26);
-            circulo.setEffect(new javafx.scene.effect.DropShadow(18, cTerra));
-        });
-        circulo.setOnMouseExited(e -> {
-            circulo.setFill(cTerra);
-            circulo.setRadius(22);
-            circulo.setEffect(null);
-        });
-
-        final String idFinal = id;
-        circulo.setOnMousePressed(e -> {
-            dragOffsetX = e.getX() - circulo.getCenterX();
-            dragOffsetY = e.getY() - circulo.getCenterY();
-            circulo.toFront(); lblNombre.toFront(); lblId.toFront();
-        });
-
-        circulo.setOnMouseDragged(e -> {
-            double nx = Math.max(35, Math.min(e.getX() - dragOffsetX, getPrefWidth()  - 35));
-            double ny = Math.max(35, Math.min(e.getY() - dragOffsetY, getPrefHeight() - 35));
-
-            circulo.setCenterX(nx); circulo.setCenterY(ny);
-            posicionarTexto(lblNombre, nx, ny - 30);
-            posicionarTexto(lblId, nx, ny + 4);
-
-            NodoVisual nodo = nodos.get(idFinal);
-            if (nodo != null) {
-                nodo.x = nx; nodo.y = ny;
-                redibPjarLineas(idFinal);
-            }
-        });
-
-        NodoVisual nodo = new NodoVisual(id, nombre, circulo, lblNombre, lblId, x, y);
-        nodos.put(id, nodo);
-        getChildren().addAll(circulo, lblNombre, lblId);
+    private Line createGridLine(double startX, double startY, double endX, double endY) {
+        Line line = new Line(startX, startY, endX, endY);
+        line.setStroke(COLOR_GRID_LINE);
+        line.setStrokeWidth(GRID_STROKE_WIDTH);
+        return line;
     }
 
-    public void agregarRutaVisual(String idOrigen, String idDestino,
-                                  double tiempo, double distancia, double costo) {
-        NodoVisual origen  = nodos.get(idOrigen);
-        NodoVisual destino = nodos.get(idDestino);
-        if (origen == null || destino == null) return;
+    public void addStopVisual(String stopId, String stopName, double x, double y) {
+        double clampedX = clampCoordinateToPanelBounds(x, getPrefWidth());
+        double clampedY = clampCoordinateToPanelBounds(y, getPrefHeight());
 
-        LineaVisual lv = construirLinea(origen, destino, tiempo, distancia, costo);
-        lineas.add(lv);
+        Circle nodeCircle = createNodeCircle(clampedX, clampedY);
+        Text nameLabel = createStopNameLabel(stopName, clampedX, clampedY);
+        Text idLabel = createStopIdLabel(stopId, clampedX, clampedY);
 
-        FadeTransition ft = new FadeTransition(Duration.millis(500), lv.linea);
-        ft.setFromValue(0); ft.setToValue(1);
-        ft.play();
+        setupNodeInteractions(nodeCircle, nameLabel, idLabel, stopId);
+        animateNodeAppearance(nodeCircle);
 
-        subirNodosAlFrente();
+        VisualStop stop = new VisualStop(stopId, stopName, nodeCircle, nameLabel, idLabel, clampedX, clampedY);
+        stops.put(stopId, stop);
+
+        getChildren().addAll(nodeCircle, nameLabel, idLabel);
     }
 
-    public void eliminarRutaVisual(String idOrigen, String idDestino) {
-        Iterator<LineaVisual> iter = lineas.iterator();
-        while (iter.hasNext()) {
-            LineaVisual lv = iter.next();
-            if (lv.origen.id.equals(idOrigen) && lv.destino.id.equals(idDestino)) {
-                // borra del panel todos los elementos gráficos de esa línea
-                getChildren().removeAll(lv.linea, lv.flecha, lv.bgTexto, lv.etiqueta);
-                iter.remove();
+    public void updateStopName(String stopId, String newName) {
+        VisualStop stop = stops.get(stopId);
+        if (stop == null) {
+            return;
+        }
+
+        stop.name = newName;
+        stop.nameLabel.setText(newName);
+        centerTextAtPosition(stop.nameLabel, stop.x, stop.y - LABEL_OFFSET_Y_NAME);
+    }
+
+    private double clampCoordinateToPanelBounds(double coordinate, double maxDimension) {
+        return Math.max(NODE_MARGIN, Math.min(coordinate, maxDimension - NODE_MARGIN));
+    }
+
+    private Circle createNodeCircle(double centerX, double centerY) {
+        Circle circle = new Circle(centerX, centerY, NODE_RADIUS_DEFAULT);
+        circle.setFill(COLOR_TERRACOTTA);
+        circle.setStroke(COLOR_BEIGE);
+        circle.setStrokeWidth(NODE_STROKE_WIDTH);
+        return circle;
+    }
+
+    private Text createStopNameLabel(String stopName, double centerX, double centerY) {
+        Text label = new Text(stopName);
+        label.setFont(Font.font(FONT_FAMILY_PRIMARY, FontWeight.BOLD, FONT_SIZE_STOP_NAME));
+        label.setFill(COLOR_LIGHT_BEIGE);
+        centerTextAtPosition(label, centerX, centerY - LABEL_OFFSET_Y_NAME);
+        return label;
+    }
+
+    private Text createStopIdLabel(String stopId, double centerX, double centerY) {
+        String displayId = truncateIdForDisplay(stopId);
+        Text label = new Text(displayId);
+        label.setFont(Font.font(FONT_FAMILY_MONO, FontWeight.BOLD, FONT_SIZE_STOP_ID));
+        label.setFill(COLOR_LIGHT_BEIGE);
+        centerTextAtPosition(label, centerX, centerY + LABEL_OFFSET_Y_ID);
+        return label;
+    }
+
+    private String truncateIdForDisplay(String stopId) {
+        final int MAX_DISPLAY_LENGTH = 4;
+        if (stopId.length() > MAX_DISPLAY_LENGTH) {
+            return stopId.substring(0, MAX_DISPLAY_LENGTH);
+        }
+        return stopId;
+    }
+
+    private void centerTextAtPosition(Text text, double centerX, double centerY) {
+        double textWidth = text.getBoundsInLocal().getWidth();
+        text.setX(centerX - textWidth / 2.0);
+        text.setY(centerY);
+    }
+
+    private void setupNodeInteractions(Circle nodeCircle, Text nameLabel, Text idLabel, String stopId) {
+        setupHoverEffect(nodeCircle);
+        setupDragBehavior(nodeCircle, nameLabel, idLabel, stopId);
+    }
+
+    private void setupHoverEffect(Circle nodeCircle) {
+        nodeCircle.setOnMouseEntered(event -> {
+            nodeCircle.setFill(COLOR_BEIGE);
+            nodeCircle.setRadius(NODE_RADIUS_HOVER);
+            nodeCircle.setEffect(new DropShadow(DROP_SHADOW_RADIUS, COLOR_TERRACOTTA));
+        });
+
+        nodeCircle.setOnMouseExited(event -> {
+            nodeCircle.setFill(COLOR_TERRACOTTA);
+            nodeCircle.setRadius(NODE_RADIUS_DEFAULT);
+            nodeCircle.setEffect(null);
+        });
+    }
+
+    private void setupDragBehavior(Circle nodeCircle, Text nameLabel, Text idLabel, String stopId) {
+        nodeCircle.setOnMousePressed(event -> {
+            dragOffsetX = event.getX() - nodeCircle.getCenterX();
+            dragOffsetY = event.getY() - nodeCircle.getCenterY();
+            bringNodeToFront(nodeCircle, nameLabel, idLabel);
+        });
+
+        nodeCircle.setOnMouseDragged(event -> {
+            handleNodeDrag(nodeCircle, nameLabel, idLabel, stopId, event.getX(), event.getY());
+        });
+    }
+
+    private void bringNodeToFront(Circle circle, Text nameLabel, Text idLabel) {
+        circle.toFront();
+        nameLabel.toFront();
+        idLabel.toFront();
+    }
+
+    private void handleNodeDrag(Circle nodeCircle, Text nameLabel, Text idLabel,
+                                String stopId, double mouseX, double mouseY) {
+        double newX = calculateClampedCoordinate(mouseX, dragOffsetX, getPrefWidth());
+        double newY = calculateClampedCoordinate(mouseY, dragOffsetY, getPrefHeight());
+
+        updateNodePosition(nodeCircle, nameLabel, idLabel, newX, newY);
+        updateStopCoordinates(stopId, newX, newY);
+        redrawConnectedRoutes(stopId);
+    }
+
+    private double calculateClampedCoordinate(double mousePosition, double offset, double maxDimension) {
+        return Math.max(NODE_MARGIN, Math.min(mousePosition - offset, maxDimension - NODE_MARGIN));
+    }
+
+    private void updateNodePosition(Circle circle, Text nameLabel, Text idLabel, double newX, double newY) {
+        circle.setCenterX(newX);
+        circle.setCenterY(newY);
+        centerTextAtPosition(nameLabel, newX, newY - LABEL_OFFSET_Y_NAME);
+        centerTextAtPosition(idLabel, newX, newY + LABEL_OFFSET_Y_ID);
+    }
+
+    private void updateStopCoordinates(String stopId, double newX, double newY) {
+        VisualStop stop = stops.get(stopId);
+        if (stop != null) {
+            stop.x = newX;
+            stop.y = newY;
+        }
+    }
+
+    private void animateNodeAppearance(Circle nodeCircle) {
+        nodeCircle.setScaleX(0);
+        nodeCircle.setScaleY(0);
+
+        ScaleTransition scaleTransition = new ScaleTransition(
+                Duration.millis(NODE_ANIMATION_DURATION_MS), nodeCircle);
+        scaleTransition.setToX(1.0);
+        scaleTransition.setToY(1.0);
+        scaleTransition.play();
+    }
+
+    public void addRouteVisual(String originStopId, String destinationStopId,
+                               double travelTime, double distance, double cost) {
+        VisualStop originStop = stops.get(originStopId);
+        VisualStop destinationStop = stops.get(destinationStopId);
+
+        if (originStop == null || destinationStop == null) {
+            return;
+        }
+
+        VisualRoute route = createVisualRoute(originStop, destinationStop, travelTime, distance, cost);
+        routes.add(route);
+
+        animateRouteAppearance(route.routeLine);
+        bringAllStopsToFront();
+    }
+
+    public void removeRouteVisual(String originStopId, String destinationStopId) {
+        Iterator<VisualRoute> routeIterator = routes.iterator();
+
+        while (routeIterator.hasNext()) {
+            VisualRoute route = routeIterator.next();
+
+            if (isRouteMatch(route, originStopId, destinationStopId)) {
+                removeRouteFromPanel(route);
+                routeIterator.remove();
                 break;
             }
         }
     }
 
-    public void actualizarNombreParada(String id, String nuevoNombre) {
-        NodoVisual nodo = nodos.get(id);
-        if (nodo == null) return;
-        nodo.nombre = nuevoNombre;
-        nodo.lblNombre.setText(nuevoNombre);
-        posicionarTexto(nodo.lblNombre, nodo.x, nodo.y - 30);
+    private boolean isRouteMatch(VisualRoute route, String originId, String destinationId) {
+        return route.originStop.id.equals(originId) && route.destinationStop.id.equals(destinationId);
     }
 
-    private LineaVisual construirLinea(NodoVisual origen, NodoVisual destino,
-                                       double tiempo, double distancia, double costo) {
-        double x1 = origen.x,  y1 = origen.y;
-        double x2 = destino.x, y2 = destino.y;
-        double angulo = Math.atan2(y2 - y1, x2 - x1);
-        double r = 24;
-
-        double startX = x1 + r * Math.cos(angulo);
-        double startY = y1 + r * Math.sin(angulo);
-        double endX   = x2 - r * Math.cos(angulo);
-        double endY   = y2 - r * Math.sin(angulo);
-
-        Line linea = new Line(startX, startY, endX, endY);
-        linea.setStroke(cBeige);
-        linea.setStrokeWidth(2.5);
-        linea.setOpacity(0.85);
-
-        Polygon flecha = construirFlecha(endX, endY, angulo);
-
-        double midX = (startX + endX) / 2;
-        double midY = (startY + endY) / 2;
-
-        Rectangle bgTexto = new Rectangle(0, 0, 100, 18);
-        bgTexto.setFill(Color.web("#0a0714", 0.85));
-        bgTexto.setArcWidth(4); bgTexto.setArcHeight(4);
-
-        Text etiqueta = new Text(String.format("⏱%.0fm  📏%.1fkm  $%.0f", tiempo, distancia, costo));
-        etiqueta.setFont(Font.font("Consolas", 10));
-        etiqueta.setFill(cClaro);
-
-        double anchoEtiq = etiqueta.getBoundsInLocal().getWidth() + 10;
-        bgTexto.setWidth(anchoEtiq);
-        bgTexto.setX(midX - anchoEtiq / 2);
-        bgTexto.setY(midY - 14);
-        posicionarTexto(etiqueta, midX, midY - 3);
-
-        getChildren().addAll(linea, flecha, bgTexto, etiqueta);
-
-        return new LineaVisual(linea, flecha, bgTexto, etiqueta, origen, destino, tiempo, distancia, costo);
-    }
-
-    private Polygon construirFlecha(double endX, double endY, double angulo) {
-        double len = 13;
-        Polygon flecha = new Polygon(
-                endX, endY,
-                endX - len * Math.cos(angulo - Math.PI / 6),
-                endY - len * Math.sin(angulo - Math.PI / 6),
-                endX - len * Math.cos(angulo + Math.PI / 6),
-                endY - len * Math.sin(angulo + Math.PI / 6)
+    private void removeRouteFromPanel(VisualRoute route) {
+        getChildren().removeAll(
+                route.routeLine,
+                route.arrowHead,
+                route.labelBackground,
+                route.metricsLabel
         );
-        flecha.setFill(cTerra);
-        flecha.setStroke(cBeige);
-        flecha.setStrokeWidth(1.5);
-        return flecha;
     }
 
-    private void redibPjarLineas(String idNodo) {
-        for (LineaVisual lv : lineas) {
-            if (!lv.origen.id.equals(idNodo) && !lv.destino.id.equals(idNodo)) continue;
+    private VisualRoute createVisualRoute(VisualStop origin, VisualStop destination,
+                                          double travelTime, double distance, double cost) {
+        double angle = calculateAngleBetweenPoints(origin.x, origin.y, destination.x, destination.y);
 
-            double x1 = lv.origen.x,  y1 = lv.origen.y;
-            double x2 = lv.destino.x, y2 = lv.destino.y;
-            double angulo = Math.atan2(y2 - y1, x2 - x1);
-            double r = 24;
+        Line routeLine = createRouteLine(origin, destination, angle);
+        Polygon arrowHead = createArrowHead(destination.x, destination.y, angle);
+        Text metricsLabel = createRouteMetricsLabel(travelTime, distance, cost);
+        Rectangle labelBackground = createLabelBackground(metricsLabel);
 
-            double startX = x1 + r * Math.cos(angulo);
-            double startY = y1 + r * Math.sin(angulo);
-            double endX   = x2 - r * Math.cos(angulo);
-            double endY   = y2 - r * Math.sin(angulo);
+        positionRouteLabel(labelBackground, metricsLabel, origin, destination, angle);
 
-            lv.linea.setStartX(startX); lv.linea.setStartY(startY);
-            lv.linea.setEndX(endX);     lv.linea.setEndY(endY);
+        getChildren().addAll(routeLine, arrowHead, labelBackground, metricsLabel);
 
-            lv.flecha.getPoints().setAll(
-                    endX, endY,
-                    endX - 13 * Math.cos(angulo - Math.PI / 6),
-                    endY - 13 * Math.sin(angulo - Math.PI / 6),
-                    endX - 13 * Math.cos(angulo + Math.PI / 6),
-                    endY - 13 * Math.sin(angulo + Math.PI / 6)
-            );
+        return new VisualRoute(routeLine, arrowHead, labelBackground, metricsLabel,
+                origin, destination, travelTime, distance, cost);
+    }
 
-            double midX = (startX + endX) / 2;
-            double midY = (startY + endY) / 2;
-            double w = lv.bgTexto.getWidth();
-            lv.bgTexto.setX(midX - w / 2);
-            lv.bgTexto.setY(midY - 14);
-            posicionarTexto(lv.etiqueta, midX, midY - 3);
+    private double calculateAngleBetweenPoints(double x1, double y1, double x2, double y2) {
+        return Math.atan2(y2 - y1, x2 - x1);
+    }
+
+    private Line createRouteLine(VisualStop origin, VisualStop destination, double angle) {
+        double startX = origin.x + NODE_RADIUS_OFFSET * Math.cos(angle);
+        double startY = origin.y + NODE_RADIUS_OFFSET * Math.sin(angle);
+        double endX = destination.x - NODE_RADIUS_OFFSET * Math.cos(angle);
+        double endY = destination.y - NODE_RADIUS_OFFSET * Math.sin(angle);
+
+        Line line = new Line(startX, startY, endX, endY);
+        line.setStroke(COLOR_BEIGE);
+        line.setStrokeWidth(ROUTE_STROKE_WIDTH_DEFAULT);
+        line.setOpacity(ROUTE_OPACITY_DEFAULT);
+        return line;
+    }
+
+    private Polygon createArrowHead(double endX, double endY, double angle) {
+        double leftAngle = angle - ARROW_ANGLE_OFFSET_RADIANS;
+        double rightAngle = angle + ARROW_ANGLE_OFFSET_RADIANS;
+
+        Polygon arrow = new Polygon(
+                endX, endY,
+                endX - ARROW_LENGTH * Math.cos(leftAngle),
+                endY - ARROW_LENGTH * Math.sin(leftAngle),
+                endX - ARROW_LENGTH * Math.cos(rightAngle),
+                endY - ARROW_LENGTH * Math.sin(rightAngle)
+        );
+
+        arrow.setFill(COLOR_TERRACOTTA);
+        arrow.setStroke(COLOR_BEIGE);
+        arrow.setStrokeWidth(ARROW_STROKE_WIDTH);
+        return arrow;
+    }
+
+    private Text createRouteMetricsLabel(double travelTime, double distance, double cost) {
+        String metricsText = String.format("⏱%.0fm  📏%.1fkm  $%.0f", travelTime, distance, cost);
+        Text label = new Text(metricsText);
+        label.setFont(Font.font(FONT_FAMILY_MONO, FONT_SIZE_ROUTE_METRICS));
+        label.setFill(COLOR_LIGHT_BEIGE);
+        return label;
+    }
+
+    private Rectangle createLabelBackground(Text metricsLabel) {
+        double labelWidth = metricsLabel.getBoundsInLocal().getWidth() + ROUTE_LABEL_PADDING;
+
+        Rectangle background = new Rectangle(0, 0, labelWidth, ROUTE_LABEL_HEIGHT);
+        background.setFill(COLOR_LABEL_BACKGROUND);
+        background.setArcWidth(ROUTE_LABEL_CORNER_RADIUS);
+        background.setArcHeight(ROUTE_LABEL_CORNER_RADIUS);
+        return background;
+    }
+
+    private void positionRouteLabel(Rectangle background, Text label,
+                                    VisualStop origin, VisualStop destination, double angle) {
+        double startX = origin.x + NODE_RADIUS_OFFSET * Math.cos(angle);
+        double startY = origin.y + NODE_RADIUS_OFFSET * Math.sin(angle);
+        double endX = destination.x - NODE_RADIUS_OFFSET * Math.cos(angle);
+        double endY = destination.y - NODE_RADIUS_OFFSET * Math.sin(angle);
+
+        double midX = (startX + endX) / 2.0;
+        double midY = (startY + endY) / 2.0;
+        double backgroundWidth = background.getWidth();
+
+        background.setX(midX - backgroundWidth / 2.0);
+        background.setY(midY - ROUTE_LABEL_OFFSET_Y);
+        centerTextAtPosition(label, midX, midY - ROUTE_LABEL_OFFSET_Y + 11);
+    }
+
+    private void animateRouteAppearance(Line routeLine) {
+        FadeTransition fadeTransition = new FadeTransition(
+                Duration.millis(ROUTE_ANIMATION_DURATION_MS), routeLine);
+        fadeTransition.setFromValue(0.0);
+        fadeTransition.setToValue(ROUTE_OPACITY_DEFAULT);
+        fadeTransition.play();
+    }
+
+    private void redrawConnectedRoutes(String stopId) {
+        for (VisualRoute route : routes) {
+            if (isRouteConnectedToStop(route, stopId)) {
+                redrawRoute(route);
+            }
         }
     }
 
-    public void resaltarRuta(List<String> idsParadas) {
-        lineas.forEach(lv -> {
-            lv.linea.setStroke(cBeige);
-            lv.linea.setStrokeWidth(2.5);
-            lv.linea.setOpacity(0.4);
-        });
+    private boolean isRouteConnectedToStop(VisualRoute route, String stopId) {
+        return route.originStop.id.equals(stopId) || route.destinationStop.id.equals(stopId);
+    }
 
-        for (int i = 0; i < idsParadas.size() - 1; i++) {
-            String id1 = idsParadas.get(i);
-            String id2 = idsParadas.get(i + 1);
+    private void redrawRoute(VisualRoute route) {
+        double angle = calculateAngleBetweenPoints(
+                route.originStop.x, route.originStop.y,
+                route.destinationStop.x, route.destinationStop.y
+        );
 
-            lineas.stream()
-                    .filter(lv -> lv.origen.id.equals(id1) && lv.destino.id.equals(id2))
-                    .forEach(lv -> {
-                        lv.linea.setStroke(cResalte);
-                        lv.linea.setStrokeWidth(5);
-                        lv.linea.setOpacity(1);
+        updateRouteLineEndpoints(route.routeLine, route.originStop, route.destinationStop, angle);
+        updateArrowHeadPosition(route.arrowHead, route.destinationStop.x, route.destinationStop.y, angle);
+        updateRouteLabelPosition(route.labelBackground, route.metricsLabel,
+                route.originStop, route.destinationStop, angle);
+    }
 
-                        FadeTransition ft = new FadeTransition(Duration.millis(700), lv.linea);
-                        ft.setFromValue(1.0);
-                        ft.setToValue(0.4);
-                        ft.setAutoReverse(true);
-                        ft.setCycleCount(6);
-                        ft.play();
-                    });
+    private void updateRouteLineEndpoints(Line line, VisualStop origin, VisualStop destination, double angle) {
+        double startX = origin.x + NODE_RADIUS_OFFSET * Math.cos(angle);
+        double startY = origin.y + NODE_RADIUS_OFFSET * Math.sin(angle);
+        double endX = destination.x - NODE_RADIUS_OFFSET * Math.cos(angle);
+        double endY = destination.y - NODE_RADIUS_OFFSET * Math.sin(angle);
+
+        line.setStartX(startX);
+        line.setStartY(startY);
+        line.setEndX(endX);
+        line.setEndY(endY);
+    }
+
+    private void updateArrowHeadPosition(Polygon arrowHead, double endX, double endY, double angle) {
+        double leftAngle = angle - ARROW_ANGLE_OFFSET_RADIANS;
+        double rightAngle = angle + ARROW_ANGLE_OFFSET_RADIANS;
+
+        arrowHead.getPoints().setAll(
+                endX, endY,
+                endX - ARROW_LENGTH * Math.cos(leftAngle),
+                endY - ARROW_LENGTH * Math.sin(leftAngle),
+                endX - ARROW_LENGTH * Math.cos(rightAngle),
+                endY - ARROW_LENGTH * Math.sin(rightAngle)
+        );
+    }
+
+    private void updateRouteLabelPosition(Rectangle background, Text label,
+                                          VisualStop origin, VisualStop destination, double angle) {
+        double startX = origin.x + NODE_RADIUS_OFFSET * Math.cos(angle);
+        double startY = origin.y + NODE_RADIUS_OFFSET * Math.sin(angle);
+        double endX = destination.x - NODE_RADIUS_OFFSET * Math.cos(angle);
+        double endY = destination.y - NODE_RADIUS_OFFSET * Math.sin(angle);
+
+        double midX = (startX + endX) / 2.0;
+        double midY = (startY + endY) / 2.0;
+        double backgroundWidth = background.getWidth();
+
+        background.setX(midX - backgroundWidth / 2.0);
+        background.setY(midY - ROUTE_LABEL_OFFSET_Y);
+        centerTextAtPosition(label, midX, midY - 3);
+    }
+
+    public void highlightRoute(List<String> stopIds) {
+        dimAllRoutes();
+
+        for (int i = 0; i < stopIds.size() - 1; i++) {
+            String currentStopId = stopIds.get(i);
+            String nextStopId = stopIds.get(i + 1);
+
+            highlightRouteSegment(currentStopId, nextStopId);
         }
     }
 
-    public void limpiarTodo() {
+    private void dimAllRoutes() {
+        for (VisualRoute route : routes) {
+            route.routeLine.setStroke(COLOR_BEIGE);
+            route.routeLine.setStrokeWidth(ROUTE_STROKE_WIDTH_DEFAULT);
+            route.routeLine.setOpacity(ROUTE_OPACITY_DIMMED);
+        }
+    }
+
+    private void highlightRouteSegment(String originId, String destinationId) {
+        for (VisualRoute route : routes) {
+            if (isRouteMatch(route, originId, destinationId)) {
+                applyHighlightStyle(route.routeLine);
+                animateHighlight(route.routeLine);
+            }
+        }
+    }
+
+    private void applyHighlightStyle(Line routeLine) {
+        routeLine.setStroke(COLOR_HIGHLIGHT_GOLD);
+        routeLine.setStrokeWidth(ROUTE_STROKE_WIDTH_HIGHLIGHT);
+        routeLine.setOpacity(HIGHLIGHT_OPACITY_MAX);
+    }
+
+    private void animateHighlight(Line routeLine) {
+        FadeTransition fadeTransition = new FadeTransition(
+                Duration.millis(HIGHLIGHT_FADE_DURATION_MS), routeLine);
+        fadeTransition.setFromValue(HIGHLIGHT_OPACITY_MAX);
+        fadeTransition.setToValue(HIGHLIGHT_OPACITY_MIN);
+        fadeTransition.setAutoReverse(true);
+        fadeTransition.setCycleCount(HIGHLIGHT_CYCLE_COUNT);
+        fadeTransition.play();
+    }
+
+    public void clearAll() {
         getChildren().clear();
-        nodos.clear();
-        lineas.clear();
-        dibujarGrid();
+        stops.clear();
+        routes.clear();
+        drawGrid();
     }
 
-    private void posicionarTexto(Text t, double cx, double cy) {
-        t.setX(cx - t.getBoundsInLocal().getWidth() / 2);
-        t.setY(cy);
-    }
-
-    private void subirNodosAlFrente() {
-        nodos.values().forEach(nv -> {
-            nv.circulo.toFront();
-            nv.lblNombre.toFront();
-            nv.lblId.toFront();
-        });
-    }
-
-    static class NodoVisual {
-        String id, nombre;
-        Circle circulo;
-        Text   lblNombre, lblId;
-        double x, y;
-
-        NodoVisual(String id, String nombre, Circle c, Text ln, Text li, double x, double y) {
-            this.id = id; this.nombre = nombre;
-            this.circulo = c; this.lblNombre = ln; this.lblId = li;
-            this.x = x; this.y = y;
+    private void bringAllStopsToFront() {
+        for (VisualStop stop : stops.values()) {
+            stop.nodeCircle.toFront();
+            stop.nameLabel.toFront();
+            stop.idLabel.toFront();
         }
     }
 
-    static class LineaVisual {
-        Line      linea;
-        Polygon   flecha;
-        Rectangle bgTexto;
-        Text      etiqueta;
-        NodoVisual origen, destino;
-        double    tiempo, distancia, costo;
+    @Deprecated
+    public void agregarParadaVisual(String id, String nombre, double x, double y) {
+        addStopVisual(id, nombre, x, y);
+    }
 
-        LineaVisual(Line l, Polygon f, Rectangle bg, Text e,
-                    NodoVisual o, NodoVisual d,
-                    double tiempo, double distancia, double costo) {
-            this.linea = l; this.flecha = f;
-            this.bgTexto = bg; this.etiqueta = e;
-            this.origen = o; this.destino = d;
-            this.tiempo = tiempo; this.distancia = distancia; this.costo = costo;
+    @Deprecated
+    public void agregarRutaVisual(String idOrigen, String idDestino,
+                                  double tiempo, double distancia, double costo) {
+        addRouteVisual(idOrigen, idDestino, tiempo, distancia, costo);
+    }
+
+    @Deprecated
+    public void eliminarRutaVisual(String idOrigen, String idDestino) {
+        removeRouteVisual(idOrigen, idDestino);
+    }
+
+    @Deprecated
+    public void actualizarNombreParada(String id, String nuevoNombre) {
+        updateStopName(id, nuevoNombre);
+    }
+
+    @Deprecated
+    public void resaltarRuta(List<String> idsParadas) {
+        highlightRoute(idsParadas);
+    }
+
+    @Deprecated
+    public void limpiarTodo() {
+        clearAll();
+    }
+
+    private static class VisualStop {
+        String id;
+        String name;
+        Circle nodeCircle;
+        Text nameLabel;
+        Text idLabel;
+        double x;
+        double y;
+
+        VisualStop(String id, String name, Circle circle, Text nameLabel, Text idLabel, double x, double y) {
+            this.id = id;
+            this.name = name;
+            this.nodeCircle = circle;
+            this.nameLabel = nameLabel;
+            this.idLabel = idLabel;
+            this.x = x;
+            this.y = y;
+        }
+    }
+
+    private static class VisualRoute {
+        Line routeLine;
+        Polygon arrowHead;
+        Rectangle labelBackground;
+        Text metricsLabel;
+        VisualStop originStop;
+        VisualStop destinationStop;
+        double travelTime;
+        double distance;
+        double cost;
+
+        VisualRoute(Line line, Polygon arrow, Rectangle background, Text label,
+                    VisualStop origin, VisualStop destination,
+                    double travelTime, double distance, double cost) {
+            this.routeLine = line;
+            this.arrowHead = arrow;
+            this.labelBackground = background;
+            this.metricsLabel = label;
+            this.originStop = origin;
+            this.destinationStop = destination;
+            this.travelTime = travelTime;
+            this.distance = distance;
+            this.cost = cost;
         }
     }
 }

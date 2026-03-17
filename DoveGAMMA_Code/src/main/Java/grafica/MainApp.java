@@ -8,30 +8,77 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
+
 public class MainApp extends Application {
 
-    @Override
-    public void start(Stage stage) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(MainApp.class.getResource("/main.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 1200, 720);
+    private static final String APPLICATION_TITLE = "DoveGAMMA - Sistema de Gestión de Rutas";
+    private static final String FXML_MAIN_LAYOUT = "/main.fxml";
+    private static final String ICON_APPLICATION = "/icon.png";
 
-        // Ícono de la app — el archivo va en src/main/resources/icon.png
-        Image icono = new Image(MainApp.class.getResourceAsStream("/icon.png"));
-        stage.getIcons().add(icono);
+    private static final double WINDOW_WIDTH = 1200.0;
+    private static final double WINDOW_HEIGHT = 720.0;
+    private static final double WINDOW_MIN_WIDTH = 1280.0;
+    private static final double WINDOW_MIN_HEIGHT = 729.0;
 
-        stage.setTitle("DoveGAMMA - Sistema de Gestión de Rutas");
-        stage.setMinWidth(1280);
-        stage.setMinHeight(729);
-        stage.setScene(scene);
-        stage.show();
+
+    public static void main(String[] commandLineArguments) {
+        launch(commandLineArguments);
     }
 
-    public static void main(String[] args) {
-        launch(args);
+    @Override
+    public void start(Stage primaryStage) throws IOException {
+        Scene mainScene = createMainScene();
+        configureStage(primaryStage, mainScene);
+        primaryStage.show();
     }
 
     @Override
     public void stop() {
-        AdaptadorVisual.getInstancia().getGestorDB().cerrar();
+        closeDatabaseConnection();
+    }
+
+    private Scene createMainScene() throws IOException {
+        FXMLLoader fxmlLoader = createFXMLLoader();
+        return new Scene(fxmlLoader.load(), WINDOW_WIDTH, WINDOW_HEIGHT);
+    }
+
+    private FXMLLoader createFXMLLoader() {
+        FXMLLoader loader = new FXMLLoader(MainApp.class.getResource(FXML_MAIN_LAYOUT));
+        return loader;
+    }
+
+    private void configureStage(Stage stage, Scene scene) {
+        stage.setTitle(APPLICATION_TITLE);
+        stage.setScene(scene);
+
+        setApplicationIcon(stage);
+        setWindowConstraints(stage);
+    }
+
+    private void setApplicationIcon(Stage stage) {
+        try {
+            Image applicationIcon = loadApplicationIcon();
+            stage.getIcons().add(applicationIcon);
+        } catch (Exception exception) {
+            // Icon loading is non-critical; log and continue
+            System.err.println("Warning: Could not load application icon: " + exception.getMessage());
+        }
+    }
+
+    private Image loadApplicationIcon() throws Exception {
+        return new Image(MainApp.class.getResourceAsStream(ICON_APPLICATION));
+    }
+
+    private void setWindowConstraints(Stage stage) {
+        stage.setMinWidth(WINDOW_MIN_WIDTH);
+        stage.setMinHeight(WINDOW_MIN_HEIGHT);
+    }
+
+    private void closeDatabaseConnection() {
+        try {
+            AdaptadorVisual.getInstance().getDatabaseManager().cerrar();
+        } catch (Exception exception) {
+            System.err.println("Error closing database connection: " + exception.getMessage());
+        }
     }
 }

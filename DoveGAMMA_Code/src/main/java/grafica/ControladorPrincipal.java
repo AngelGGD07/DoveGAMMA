@@ -5,12 +5,9 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import logica.GrafoTransporte;
-rama-logica
 import logica.CalculadorRuta;
 
- main
 import java.util.List;
-
 
 public class ControladorPrincipal {
 
@@ -400,22 +397,15 @@ public class ControladorPrincipal {
     }
 
     private void highlightRouteOnMap(String startId, String endId, String criteria) {
-        List<String> path = AdaptadorVisual.getInstance().getBackend()
-                .calcularDijkstra(startId, endId, criteria);
+        logica.GrafoTransporte grafo = AdaptadorVisual.getInstance().getBackend();
 
- rama-logica
-        GrafoTransporte grafoActual = AdaptadorVisual.getInstancia().getBackend();
-        CalculadorRuta calculador = new CalculadorRuta();
-        List<String> camino = calculador.calcularDijkstra(grafoActual, idI, idF, cri);
+        logica.CalculadorRuta calculador = new logica.CalculadorRuta();
 
-        if (!camino.isEmpty())
-            AdaptadorVisual.getInstancia().getPanelVisual().resaltarRuta(camino);
-
-        if (!path.isEmpty()) {
+        List<String> path = calculador.calcularDijkstra(grafo, startId, endId, criteria);
+        if (path != null && !path.isEmpty()) {
             AdaptadorVisual.getInstance().getVisualizationPanel().resaltarRuta(path);
         }
     }
- main
 
     private void showResultPanel() {
         panelResultado.setVisible(true);

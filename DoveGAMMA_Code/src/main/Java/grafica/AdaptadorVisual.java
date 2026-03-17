@@ -1,6 +1,7 @@
 package grafica;
 
 import javafx.application.Platform;
+import logica.CalculadorRuta;
 import logica.GrafoTransporte;
 import logica.Parada;
 import java.util.HashMap;
@@ -68,9 +69,15 @@ public class AdaptadorVisual {
         this.visualizationPanel = panel;
     }
 
+ rama-logica
+        backend.registrarParada(new Parada(id, nombre, x, y));
+        coordenadasVisuales.put(id, new double[]{x, y});
+        nombresPorId.put(id, nombre);
+
     public GrafoTransporte getBackend() {
         return backend;
     }
+ main
 
     @Deprecated
     public PanelVisualizacion getPanelVisual() {
@@ -314,9 +321,15 @@ public class AdaptadorVisual {
         backend.registrarParada(new Parada(stopId, stopName));
     }
 
+ rama-logica
+        GrafoTransporte grafoActual = AdaptadorVisual.getInstancia().getBackend();
+        CalculadorRuta calculador = new CalculadorRuta();
+        List<String> camino = calculador.calcularDijkstra(grafoActual, idInicio, idFin, criterio);
+
     private void storeVisualCoordinates(String stopId, double x, double y) {
         visualCoordinates.put(stopId, new double[]{x, y});
     }
+ main
 
     private void storeStopName(String stopId, String stopName) {
         stopNamesById.put(stopId, stopName);

@@ -6,6 +6,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import logica.GrafoTransporte;
+import logica.CalculadorRuta;
 
 import java.util.List;
 
@@ -231,8 +232,10 @@ public class ControladorPrincipal {
         String resultado = AdaptadorVisual.getInstancia().calcularRuta(idI, idF, cri);
         txtResultado.setText(resultado);
 
-        List<String> camino = AdaptadorVisual.getInstancia().getBackend()
-                .calcularDijkstra(idI, idF, cri);
+        GrafoTransporte grafoActual = AdaptadorVisual.getInstancia().getBackend();
+        CalculadorRuta calculador = new CalculadorRuta();
+        List<String> camino = calculador.calcularDijkstra(grafoActual, idI, idF, cri);
+
         if (!camino.isEmpty())
             AdaptadorVisual.getInstancia().getPanelVisual().resaltarRuta(camino);
 

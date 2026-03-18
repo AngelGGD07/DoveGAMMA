@@ -5,8 +5,6 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import logica.GrafoTransporte;
-import logica.CalculadorRuta;
-
 import java.util.List;
 
 

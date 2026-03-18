@@ -396,10 +396,13 @@ public class ControladorPrincipal {
     }
 
     private void highlightRouteOnMap(String startId, String endId, String criteria) {
-        List<String> path = AdaptadorVisual.getInstance().getBackend()
-                .calcularDijkstra(startId, endId, criteria);
+        logica.GrafoTransporte grafo = AdaptadorVisual.getInstance().getBackend();
 
-        if (!path.isEmpty()) {
+        logica.CalculadorRuta calculador = new logica.CalculadorRuta();
+
+        List<String> path = calculador.calcularDijkstra(grafo, startId, endId, criteria);
+
+        if (path != null && !path.isEmpty()) {
             AdaptadorVisual.getInstance().getVisualizationPanel().resaltarRuta(path);
         }
     }

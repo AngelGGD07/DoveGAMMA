@@ -9,6 +9,7 @@ import logica.CalculadorRuta;
 
 import java.util.List;
 
+
 public class ControladorPrincipal {
 
     private static final String STYLE_BUTTON_BASE =
@@ -402,6 +403,7 @@ public class ControladorPrincipal {
         logica.CalculadorRuta calculador = new logica.CalculadorRuta();
 
         List<String> path = calculador.calcularDijkstra(grafo, startId, endId, criteria);
+
         if (path != null && !path.isEmpty()) {
             AdaptadorVisual.getInstance().getVisualizationPanel().resaltarRuta(path);
         }

@@ -1,487 +1,363 @@
 package grafica;
 
-import javafx.application.Platform;
+import com.brunomnsilva.smartgraph.graph.Digraph;
+import com.brunomnsilva.smartgraph.graph.DigraphEdgeList;
 import logica.CalculadorRuta;
 import logica.GrafoTransporte;
 import logica.Parada;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-
 public class AdaptadorVisual {
 
-    private static final String ROUTE_KEY_SEPARATOR = "|";
-    private static final String ERROR_BACKEND_NOT_CONNECTED = "Backend no conectado.";
-    private static final String ERROR_NO_ROUTE_EXISTS = "No existe ruta entre ";
-    private static final String AND = " y ";
-    private static final String DOT = ".";
+    private static AdaptadorVisual instancia;
 
-    private static final String TITLE_SHORTEST_TIME = "Menor Tiempo";
-    private static final String TITLE_SHORTEST_DISTANCE = "Menor Distancia";
-    private static final String TITLE_LOWEST_COST = "Menor Costo";
-    private static final String TITLE_FEWEST_TRANSFERS = "Menos Transbordos";
+    private GrafoTransporte logicaGrafo;
+    private logica.GestorDB gestorBaseDatos;
 
-    private static final String FORMAT_RESULT_HEADER = "=== %s ===\n";
-    private static final String FORMAT_ROUTE_SUMMARY = "Paradas: %d  |  Saltos: %d";
-    private static final String ARROW_SEPARATOR = " -> ";
+    private Digraph<String, String> grafoVisual;
+    private PanelVisualizacion panelVisualizacion;
 
-    private static AdaptadorVisual instance;
+    private final Map<String, String> nombresParadas = new HashMap<>();
+    private final Set<String> rutasResaltadas = new HashSet<>();
 
-    private GrafoTransporte backend;
-    private PanelVisualizacion visualizationPanel;
-    private logica.GestorDB databaseManager;
-
-    private final Map<String, double[]> visualCoordinates = new HashMap<>();
-    private final Map<String, String> stopNamesById = new HashMap<>();
-    private final Set<String> existingRoutes = new HashSet<>();
-    private final Map<String, double[]> routeData = new HashMap<>();
-
-
+    /*
+       Función: AdaptadorVisual
+       Argumentos: Ninguno
+       Objetivo: Inicializar las instancias de la lógica, base de datos y el grafo visual vacío.
+       Retorno: (void): Constructor privado para patrón Singleton.
+    */
     private AdaptadorVisual() {
-        this.databaseManager = new logica.GestorDB();
+        this.gestorBaseDatos = new logica.GestorDB();
+        this.logicaGrafo = new GrafoTransporte();
+        this.grafoVisual = new DigraphEdgeList<>();
     }
 
-    @Deprecated
-    public static AdaptadorVisual getInstancia() {
-        return getInstance();
-    }
-
+    /*
+       Función: getInstance
+       Argumentos: Ninguno
+       Objetivo: Obtener la única instancia global del adaptador (Patrón Singleton).
+       Retorno: (AdaptadorVisual): Retorna la instancia actual para mantener el estado sincronizado en todo el programa.
+    */
     public static AdaptadorVisual getInstance() {
-        if (instance == null) {
-            instance = new AdaptadorVisual();
+        if (instancia == null) {
+            instancia = new AdaptadorVisual();
         }
-        return instance;
+        return instancia;
     }
 
-    public void setBackend(GrafoTransporte backend) {
-        this.backend = backend;
+    /*
+       Función: inicializarPanel
+       Argumentos: Ninguno
+       Objetivo: Crear el objeto PanelVisualizacion enlazándolo al grafo visual actual.
+       Retorno: (void): Solo inicializa un componente.
+    */
+    public void inicializarPanel() {
+        this.panelVisualizacion = new PanelVisualizacion(grafoVisual);
     }
 
-    @Deprecated
-    public void setPanelVisual(PanelVisualizacion panel) {
-        setVisualizationPanel(panel);
-    }
-
-    public void setVisualizationPanel(PanelVisualizacion panel) {
-        this.visualizationPanel = panel;
-    }
-
- rama-logica
-        backend.registrarParada(new Parada(id, nombre, x, y));
-        coordenadasVisuales.put(id, new double[]{x, y});
-        nombresPorId.put(id, nombre);
-
-    public GrafoTransporte getBackend() {
-        return backend;
-    }
- main
-
-    @Deprecated
-    public PanelVisualizacion getPanelVisual() {
-        return getVisualizationPanel();
-    }
-
+    /*
+       Función: getVisualizationPanel
+       Argumentos: Ninguno
+       Objetivo: Proveer acceso al panel gráfico configurado.
+       Retorno: (PanelVisualizacion): El panel que se incrustará en la interfaz gráfica.
+    */
     public PanelVisualizacion getVisualizationPanel() {
-        return visualizationPanel;
+        return panelVisualizacion;
     }
 
-    @Deprecated
-    public logica.GestorDB getGestorDB() {
-        return getDatabaseManager();
+    /*
+       Función: getBackend
+       Argumentos: Ninguno
+       Objetivo: Proveer acceso al grafo de la lógica.
+       Retorno: (GrafoTransporte): La instancia del gestor de rutas lógico.
+    */
+    public GrafoTransporte getBackend() {
+        return logicaGrafo;
     }
 
+    /*
+       Función: getDatabaseManager
+       Argumentos: Ninguno
+       Objetivo: Proveer acceso al gestor de base de datos.
+       Retorno: (GestorDB): La instancia que maneja las consultas SQL.
+    */
     public logica.GestorDB getDatabaseManager() {
-        return databaseManager;
+        return gestorBaseDatos;
     }
 
-    public boolean addStop(String stopId, String stopName, double coordinateX, double coordinateY) {
-        if (backend == null) {
-            return false;
-        }
-
-        if (isStopIdAlreadyExists(stopId)) {
-            return false;
-        }
-
-        if (isStopNameAlreadyExists(stopName)) {
-            return false;
-        }
-
-        registerStopInBackend(stopId, stopName);
-        storeVisualCoordinates(stopId, coordinateX, coordinateY);
-        storeStopName(stopId, stopName);
-        persistStopToDatabase(stopId, stopName, coordinateX, coordinateY);
-        addStopToVisualization(stopId, stopName, coordinateX, coordinateY);
-
-        return true;
-    }
-
-    public boolean modifyStopName(String stopId, String newName) {
-        if (!stopNamesById.containsKey(stopId)) {
-            return false;
-        }
-
-        if (isStopNameAlreadyExistsExcludingId(newName, stopId)) {
-            return false;
-        }
-
-        updateStopName(stopId, newName);
-        refreshVisualization();
-
-        return true;
-    }
-
-    public boolean removeStop(String stopId) {
-        if (backend == null || !stopNamesById.containsKey(stopId)) {
-            return false;
-        }
-
-        removeStopFromBackend(stopId);
-        removeStopVisualData(stopId);
-        removeRoutesAssociatedWithStop(stopId);
-        removeStopFromDatabase(stopId);
-
-        return true;
-    }
-
-    public boolean addRoute(String originStopId, String destinationStopId,
-                            double travelTime, double distance, double cost) {
-        if (backend == null) {
-            return false;
-        }
-
-        if (!areBothStopsExist(originStopId, destinationStopId)) {
-            return false;
-        }
-
-        registerRouteInBackend(originStopId, destinationStopId, travelTime, cost, distance);
-        storeRouteData(originStopId, destinationStopId, travelTime, distance, cost);
-        persistRouteToDatabase(originStopId, destinationStopId, travelTime, distance, cost);
-        addRouteToVisualization(originStopId, destinationStopId, travelTime, distance, cost);
-
-        return true;
-    }
-
-    public boolean modifyRoute(String originStopId, String destinationStopId,
-                               double newTravelTime, double newDistance, double newCost) {
-        String routeKey = buildRouteKey(originStopId, destinationStopId);
-
-        if (!existingRoutes.contains(routeKey)) {
-            return false;
-        }
-
-        updateRouteInBackend(originStopId, destinationStopId, newTravelTime, newCost, newDistance);
-        updateRouteData(routeKey, newTravelTime, newDistance, newCost);
-        refreshVisualization();
-
-        return true;
-    }
-
-    public boolean removeRoute(String originStopId, String destinationStopId) {
-        if (backend == null) {
-            return false;
-        }
-
-        String routeKey = buildRouteKey(originStopId, destinationStopId);
-
-        if (!existingRoutes.contains(routeKey)) {
-            return false;
-        }
-
-        removeRouteFromBackend(originStopId, destinationStopId);
-        removeRouteData(routeKey);
-        removeRouteFromDatabase(originStopId, destinationStopId);
-
-        return true;
-    }
-
-    public String calculateRoute(String startStopId, String endStopId, String criteria) {
-        if (backend == null) {
-            return ERROR_BACKEND_NOT_CONNECTED;
-        }
-
-        List<String> path = backend.calcularDijkstra(startStopId, endStopId, criteria);
-
-        if (path.isEmpty()) {
-            return buildNoRouteMessage(startStopId, endStopId);
-        }
-
-        return formatRouteResult(path, criteria);
-    }
-
-    public void clearAll() {
-        visualCoordinates.clear();
-        stopNamesById.clear();
-        existingRoutes.clear();
-        routeData.clear();
-
-        if (visualizationPanel != null) {
-            visualizationPanel.clearAll();
-        }
-
-        backend = new GrafoTransporte();
-    }
-
-    @Deprecated
-    public void redibujarAhora() {
-        refreshVisualization();
-    }
-
-    public void refreshVisualization() {
-        if (visualizationPanel == null) {
-            return;
-        }
-
-        Platform.runLater(() -> {
-            visualizationPanel.clearAll();
-            redrawAllStops();
-            redrawAllRoutes();
-        });
-    }
-
-    public String getStopName(String stopId) {
-        return stopNamesById.getOrDefault(stopId, stopId);
-    }
-
-    @Deprecated
+    /*
+       Función: agregarParada
+       Argumentos:
+             (String) id: Identificador único de la parada.
+             (String) nombre: Nombre descriptivo de la parada.
+             (double) x: Coordenada en el eje horizontal.
+             (double) y: Coordenada en el eje vertical.
+       Objetivo: Registrar una nueva parada en la lógica, la vista y la base de datos simultáneamente.
+       Retorno: (boolean): Retorna true si se agregó correctamente, false si el ID ya existía.
+    */
     public boolean agregarParada(String id, String nombre, double x, double y) {
-        return addStop(id, nombre, x, y);
+        if (nombresParadas.containsKey(id)) return false;
+
+        boolean agregadoLogica = logicaGrafo.registrarParada(new Parada(id, nombre, x, y));
+
+        if (agregadoLogica) {
+            grafoVisual.insertVertex(id);
+            nombresParadas.put(id, nombre);
+            gestorBaseDatos.guardarParada(id, nombre, x, y);
+
+            if (panelVisualizacion != null) {
+                panelVisualizacion.actualizarGrafico();
+                panelVisualizacion.fijarCoordenadasNodo(id, x, y);
+            }
+            return true;
+        }
+        return false;
     }
 
-    @Deprecated
-    public boolean modificarParada(String id, String nuevoNombre) {
-        return modifyStopName(id, nuevoNombre);
+    /*
+       Función: modificarNombreParada
+       Argumentos:
+             (String) id: Identificador de la parada a modificar.
+             (String) nuevoNombre: El nuevo nombre que recibirá.
+       Objetivo: Cambiar el nombre de una parada existente en la caché local y la lógica.
+       Retorno: (boolean): Retorna true si se modificó, false si la parada no existe.
+    */
+    public boolean modificarNombreParada(String id, String nuevoNombre) {
+        if (!nombresParadas.containsKey(id)) return false;
+
+        logicaGrafo.modificarParada(id, nuevoNombre, 0, 0);
+        nombresParadas.put(id, nuevoNombre);
+
+        return true;
     }
 
-    @Deprecated
+    /*
+       Función: eliminarParada
+       Argumentos: (String) id: El identificador de la parada a eliminar.
+       Objetivo: Borrar completamente una parada de todas las capas (Lógica, BD y Vista).
+       Retorno: (boolean): Retorna true si se eliminó con éxito, false si no se encontró.
+    */
     public boolean eliminarParada(String id) {
-        return removeStop(id);
+        if (!nombresParadas.containsKey(id)) return false;
+
+        if (logicaGrafo.eliminarParada(id)) {
+            grafoVisual.removeVertex(grafoVisual.vertices().stream().filter(v -> v.element().equals(id)).findFirst().get());
+            nombresParadas.remove(id);
+            gestorBaseDatos.eliminarParada(id);
+
+            if (panelVisualizacion != null) {
+                panelVisualizacion.actualizarGrafico();
+            }
+            return true;
+        }
+        return false;
     }
 
-    @Deprecated
+    /*
+       Función: agregarRuta
+       Argumentos:
+             (String) origen: ID de la parada de inicio.
+             (String) destino: ID de la parada de destino.
+             (double) tiempo: Tiempo estimado de viaje.
+             (double) distancia: Distancia física entre los puntos.
+             (double) costo: Valor monetario del trayecto.
+       Objetivo: Crear una conexión dirigida entre dos nodos en todas las capas.
+       Retorno: (boolean): Retorna true si se enlazaron con éxito, false si alguna parada no existe.
+    */
     public boolean agregarRuta(String origen, String destino, double tiempo, double distancia, double costo) {
-        return addRoute(origen, destino, tiempo, distancia, costo);
+        if (!nombresParadas.containsKey(origen) || !nombresParadas.containsKey(destino)) return false;
+
+        if (logicaGrafo.agregarRuta(origen, destino, tiempo, costo, distancia)) {
+            String idArista = origen + "-" + destino;
+
+            grafoVisual.insertEdge(origen, destino, idArista);
+            gestorBaseDatos.guardarRuta(origen, destino, tiempo, distancia, costo);
+
+            if (panelVisualizacion != null) {
+                panelVisualizacion.actualizarGrafico();
+            }
+            return true;
+        }
+        return false;
     }
 
-    @Deprecated
+    /*
+       Función: modificarRuta
+       Argumentos:
+             (String) origen: ID de la parada de inicio.
+             (String) destino: ID de la parada de destino.
+             (double) tiempo: Nuevo tiempo.
+             (double) distancia: Nueva distancia.
+             (double) costo: Nuevo costo.
+       Objetivo: Actualizar los pesos o valores de una arista ya existente.
+       Retorno: (boolean): Retorna true si la ruta existía y fue modificada, false en caso contrario.
+    */
     public boolean modificarRuta(String origen, String destino, double tiempo, double distancia, double costo) {
-        return modifyRoute(origen, destino, tiempo, distancia, costo);
+        if (logicaGrafo.modificarRuta(origen, destino, tiempo, costo, distancia)) {
+            gestorBaseDatos.guardarRuta(origen, destino, tiempo, distancia, costo);
+            return true;
+        }
+        return false;
     }
 
-    @Deprecated
+    /*
+       Función: eliminarRuta
+       Argumentos:
+             (String) origen: ID de la parada de inicio.
+             (String) destino: ID de la parada de destino.
+       Objetivo: Destruir la conexión entre dos paradas en la base de datos, lógica y vista.
+       Retorno: (boolean): Retorna true si se eliminó correctamente, false si no existía.
+    */
     public boolean eliminarRuta(String origen, String destino) {
-        return removeRoute(origen, destino);
+        if (logicaGrafo.eliminarRuta(origen, destino)) {
+            String idArista = origen + "-" + destino;
+            grafoVisual.edges().stream()
+                    .filter(e -> e.element().equals(idArista))
+                    .findFirst()
+                    .ifPresent(edge -> grafoVisual.removeEdge(edge));
+
+            gestorBaseDatos.eliminarRuta(origen, destino);
+
+            if (panelVisualizacion != null) {
+                panelVisualizacion.actualizarGrafico();
+            }
+            return true;
+        }
+        return false;
     }
 
-    @Deprecated
+    /*
+       Función: calcularRuta
+       Argumentos:
+             (String) idInicio: ID del nodo de inicio.
+             (String) idFin: ID del nodo destino.
+             (String) criterio: Criterio a evaluar (tiempo, costo, distancia).
+       Objetivo: Calcular la ruta con Dijkstra, activar las aristas visuales, sumar los costos y armar el reporte.
+       Retorno: (String): Un texto enriquecido con el resumen del viaje para el panel de resultados.
+    */
     public String calcularRuta(String idInicio, String idFin, String criterio) {
-        return calculateRoute(idInicio, idFin, criterio);
-    }
-
-    @Deprecated
-    public void limpiarTodo() {
-        clearAll();
-    }
-
-    @Deprecated
-    public String getNombre(String id) {
-        return getStopName(id);
-    }
-
-    private boolean isStopIdAlreadyExists(String stopId) {
-        return stopNamesById.containsKey(stopId);
-    }
-
-    private boolean isStopNameAlreadyExists(String stopName) {
-        for (String existingName : stopNamesById.values()) {
-            if (existingName.equalsIgnoreCase(stopName)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean isStopNameAlreadyExistsExcludingId(String stopName, String excludeId) {
-        for (Map.Entry<String, String> entry : stopNamesById.entrySet()) {
-            if (!entry.getKey().equals(excludeId) && entry.getValue().equalsIgnoreCase(stopName)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean areBothStopsExist(String originId, String destinationId) {
-        return stopNamesById.containsKey(originId) && stopNamesById.containsKey(destinationId);
-    }
-    
-    private void registerStopInBackend(String stopId, String stopName) {
-        backend.registrarParada(new Parada(stopId, stopName));
-    }
-
- rama-logica
-        GrafoTransporte grafoActual = AdaptadorVisual.getInstancia().getBackend();
         CalculadorRuta calculador = new CalculadorRuta();
-        List<String> camino = calculador.calcularDijkstra(grafoActual, idInicio, idFin, criterio);
+        List<String> camino = calculador.calcularDijkstra(logicaGrafo, idInicio, idFin, criterio);
 
-    private void storeVisualCoordinates(String stopId, double x, double y) {
-        visualCoordinates.put(stopId, new double[]{x, y});
-    }
- main
+        rutasResaltadas.clear();
 
-    private void storeStopName(String stopId, String stopName) {
-        stopNamesById.put(stopId, stopName);
-    }
-
-    private void updateStopName(String stopId, String newName) {
-        stopNamesById.put(stopId, newName);
-    }
-
-    private void removeStopFromBackend(String stopId) {
-        backend.eliminarParada(stopId);
-    }
-
-    private void removeStopVisualData(String stopId) {
-        visualCoordinates.remove(stopId);
-        stopNamesById.remove(stopId);
-    }
-
-    private void removeRoutesAssociatedWithStop(String stopId) {
-        existingRoutes.removeIf(route -> route.startsWith(stopId + ROUTE_KEY_SEPARATOR)
-                || route.endsWith(ROUTE_KEY_SEPARATOR + stopId));
-        routeData.keySet().removeIf(route -> route.startsWith(stopId + ROUTE_KEY_SEPARATOR)
-                || route.endsWith(ROUTE_KEY_SEPARATOR + stopId));
-    }
-
-    private String buildRouteKey(String originId, String destinationId) {
-        return originId + ROUTE_KEY_SEPARATOR + destinationId;
-    }
-
-    private void registerRouteInBackend(String originId, String destinationId,
-                                        double time, double cost, double distance) {
-        backend.agregarRuta(originId, destinationId, time, cost, distance);
-    }
-
-    private void storeRouteData(String originId, String destinationId,
-                                double time, double distance, double cost) {
-        String routeKey = buildRouteKey(originId, destinationId);
-        existingRoutes.add(routeKey);
-        routeData.put(routeKey, new double[]{time, distance, cost});
-    }
-
-    private void updateRouteInBackend(String originId, String destinationId,
-                                      double time, double cost, double distance) {
-        backend.eliminarRuta(originId, destinationId);
-        backend.agregarRuta(originId, destinationId, time, cost, distance);
-    }
-
-    private void updateRouteData(String routeKey, double time, double distance, double cost) {
-        routeData.put(routeKey, new double[]{time, distance, cost});
-    }
-
-    private void removeRouteFromBackend(String originId, String destinationId) {
-        backend.eliminarRuta(originId, destinationId);
-    }
-
-    private void removeRouteData(String routeKey) {
-        existingRoutes.remove(routeKey);
-        routeData.remove(routeKey);
-    }
-
-    private void addStopToVisualization(String stopId, String stopName, double x, double y) {
-        if (visualizationPanel != null) {
-            Platform.runLater(() -> visualizationPanel.addStopVisual(stopId, stopName, x, y));
+        if (camino == null || camino.isEmpty()) {
+            if (panelVisualizacion != null) panelVisualizacion.actualizarGrafico();
+            return "No existe ruta entre " + getStopName(idInicio) + " y " + getStopName(idFin) + ".";
         }
-    }
 
-    private void addRouteToVisualization(String originId, String destinationId,
-                                         double time, double distance, double cost) {
-        if (visualizationPanel != null) {
-            Platform.runLater(() -> visualizationPanel.addRouteVisual(
-                    originId, destinationId, time, distance, cost));
-        }
-    }
+        double totalTiempo = 0, totalDistancia = 0, totalCosto = 0;
+        StringBuilder sb = new StringBuilder();
+        sb.append("=== Ruta Óptima (").append(criterio.toUpperCase()).append(") ===\n\n");
 
-    private void redrawAllStops() {
-        for (String stopId : stopNamesById.keySet()) {
-            double[] position = visualCoordinates.get(stopId);
-            if (position != null) {
-                visualizationPanel.addStopVisual(
-                        stopId, stopNamesById.get(stopId), position[0], position[1]);
-            }
-        }
-    }
+        for (int i = 0; i < camino.size(); i++) {
+            String actual = camino.get(i);
+            sb.append("◉ ").append(getStopName(actual)).append("\n");
 
-    private void redrawAllRoutes() {
-        for (String routeKey : existingRoutes) {
-            String[] parts = routeKey.split("\\" + ROUTE_KEY_SEPARATOR);
-            double[] data = routeData.get(routeKey);
+            if (i < camino.size() - 1) {
+                String siguiente = camino.get(i + 1);
+                String idArista = actual + "-" + siguiente;
 
-            if (parts.length == 2 && data != null) {
-                visualizationPanel.addRouteVisual(parts[0], parts[1], data[0], data[1], data[2]);
-            }
-        }
-    }
+                rutasResaltadas.add(idArista);
 
-    private void persistStopToDatabase(String stopId, String stopName, double x, double y) {
-        databaseManager.guardarParada(stopId, stopName, x, y);
-    }
-
-    private void persistRouteToDatabase(String originId, String destinationId,
-                                        double time, double distance, double cost) {
-        databaseManager.guardarRuta(originId, destinationId, time, distance, cost);
-    }
-
-    private void removeStopFromDatabase(String stopId) {
-        databaseManager.eliminarParada(stopId);
-    }
-
-    private void removeRouteFromDatabase(String originId, String destinationId) {
-        databaseManager.eliminarRuta(originId, destinationId);
-    }
-
-    private String buildNoRouteMessage(String startId, String endId) {
-        return ERROR_NO_ROUTE_EXISTS + getStopName(startId) + AND + getStopName(endId) + DOT;
-    }
-
-    private String formatRouteResult(List<String> path, String criteria) {
-        String title = getTitleForCriteria(criteria);
-        String routePath = buildPathString(path);
-        int stopCount = path.size();
-        int hopCount = path.size() - 1;
-
-        return String.format(FORMAT_RESULT_HEADER, title) +
-                routePath + "\n" +
-                String.format(FORMAT_ROUTE_SUMMARY, stopCount, hopCount);
-    }
-
-    private String getTitleForCriteria(String criteria) {
-        switch (criteria.toLowerCase()) {
-            case "tiempo":
-                return TITLE_SHORTEST_TIME;
-            case "distancia":
-                return TITLE_SHORTEST_DISTANCE;
-            case "costo":
-                return TITLE_LOWEST_COST;
-            case "transbordos":
-                return TITLE_FEWEST_TRANSFERS;
-            default:
-                return criteria;
-        }
-    }
-
-    private String buildPathString(List<String> stopIds) {
-        StringBuilder pathBuilder = new StringBuilder();
-
-        for (int i = 0; i < stopIds.size(); i++) {
-            pathBuilder.append(getStopName(stopIds.get(i)));
-            if (i < stopIds.size() - 1) {
-                pathBuilder.append(ARROW_SEPARATOR);
+                for (logica.Ruta r : logicaGrafo.obtenerVecinos(actual)) {
+                    if (r.getIdDestino().equals(siguiente)) {
+                        totalTiempo += r.getTiempo();
+                        totalDistancia += r.getDistancia();
+                        totalCosto += r.getCosto();
+                        sb.append("   |  ").append(r.getTiempo()).append(" min, ")
+                                .append(r.getDistancia()).append(" km, $")
+                                .append(r.getCosto()).append("\n   v\n");
+                        break;
+                    }
+                }
             }
         }
 
-        return pathBuilder.toString();
+        sb.append("\n=== Resumen del Viaje ===\n");
+        sb.append("• Tiempo total: ").append(totalTiempo).append(" min\n");
+        sb.append("• Distancia: ").append(totalDistancia).append(" km\n");
+        sb.append("• Costo total: $").append(totalCosto).append("\n");
+        sb.append("• Tramos: ").append(camino.size() - 1).append("\n");
+
+        if (panelVisualizacion != null) {
+            panelVisualizacion.actualizarGrafico();
+        }
+
+        return sb.toString();
+    }
+
+    /*
+       Función: getStopName
+       Argumentos: (String) id: Identificador de la parada a consultar.
+       Objetivo: Devolver el nombre legible de una parada buscando en la caché.
+       Retorno: (String): El nombre de la parada o el mismo ID si no tiene nombre registrado.
+    */
+    public String getStopName(String id) {
+        return nombresParadas.getOrDefault(id, id);
+    }
+
+    /*
+       Función: getEdgeDataAsString
+       Argumentos: (String) idArista: el identificador de la arista en formato "Origen-Destino".
+       Objetivo: Proveer texto numérico a la vista gráfica ÚNICAMENTE si la ruta forma parte de un cálculo activo.
+       Retorno: (String): Texto formateado o cadena vacía para ocultarlo y evitar saturación visual.
+    */
+    public String getEdgeDataAsString(String idArista) {
+        if (!rutasResaltadas.contains(idArista)) {
+            return "";
+        }
+        return getDetallesRuta(idArista);
+    }
+
+    /*
+       Función: getDetallesRuta
+       Argumentos: (String) idArista: el identificador de la arista.
+       Objetivo: Buscar de forma obligatoria los datos físicos de una ruta para mostrarlos en pop-ups cuando el usuario haga clic.
+       Retorno: (String): Texto completo con tiempo, distancia y costo.
+    */
+    public String getDetallesRuta(String idArista) {
+        String[] partes = idArista.split("-");
+        if (partes.length == 2) {
+            String origen = partes[0];
+            String destino = partes[1];
+            for (logica.Ruta r : logicaGrafo.obtenerVecinos(origen)) {
+                if (r.getIdDestino().equals(destino)) {
+                    return r.getTiempo() + " min | " + r.getDistancia() + " km | $" + r.getCosto();
+                }
+            }
+        }
+        return "Datos no disponibles";
+    }
+
+    /*
+       Función: limpiarTodo
+       Argumentos: Ninguno
+       Objetivo: Reiniciar todas las estructuras de datos, limpiar la pantalla gráfica y listas de caché.
+       Retorno: (void): No retorna datos.
+    */
+    public void limpiarTodo() {
+        logicaGrafo = new GrafoTransporte();
+        grafoVisual = new DigraphEdgeList<>();
+        nombresParadas.clear();
+        rutasResaltadas.clear();
+        inicializarPanel();
+    }
+
+    /*
+       Función: refrescarVisualizacion
+       Argumentos: Ninguno
+       Objetivo: Forzar una recarga gráfica desde el controlador externo si es necesario.
+       Retorno: (void): No retorna datos.
+    */
+    public void refrescarVisualizacion() {
+        if (panelVisualizacion != null) {
+            panelVisualizacion.actualizarGrafico();
+        }
     }
 }

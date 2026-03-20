@@ -1,0 +1,47 @@
+/* Estilos base del panel */
+.graph {
+    -fx-background-color: transparent; /* Permite que se vea el fondo oscuro de tu app */
+}
+
+/* Nodos (Paradas) */
+.vertex {
+    -fx-fill: #ff8c00; /* Naranja intenso (DarkOrange) */
+    -fx-stroke: #ffffff; /* Borde blanco para que resalte */
+    -fx-stroke-width: 2;
+}
+
+.vertex-label {
+    -fx-fill: #ffffff; /* Letras blancas */
+    -fx-font-family: "Segoe UI", "System";
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+/* Líneas (Rutas) */
+.edge {
+    -fx-stroke: #ffa500; /* Naranja más suave para las uniones */
+    -fx-stroke-width: 3;
+    -fx-opacity: 0.8;
+}
+
+.edge-label {
+    -fx-fill: #e8c9a8;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+/* --- ESTILOS PARA LA RUTA ENCONTRADA (DIJKSTRA) --- */
+.vertex-resaltado {
+    -fx-fill: #ff4500; /* Naranja rojizo brillante (OrangeRed) */
+    -fx-stroke: #ffffff;
+    -fx-stroke-width: 4;
+    -fx-effect: dropshadow(gaussian, #ff4500, 15, 0.6, 0, 0); /* Resplandor estilo neón */
+}
+
+.edge-resaltado {
+    -fx-stroke: #ff4500;
+    -fx-stroke-width: 6;
+    -fx-opacity: 1.0;
+    -fx-effect: dropshadow(gaussian, #ff4500, 10, 0.6, 0, 0);
+}

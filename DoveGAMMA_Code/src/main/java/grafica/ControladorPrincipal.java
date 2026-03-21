@@ -5,7 +5,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import logica.GrafoTransporte;
-import logica.CalculadorRuta;
+import persistencia.GestorDB;
 
 import java.util.List;
 
@@ -506,7 +506,7 @@ public class ControladorPrincipal {
 
 
     private void loadDataFromDatabase() {
-        logica.GestorDB database = AdaptadorVisual.getInstance().getDatabaseManager();
+        GestorDB database = AdaptadorVisual.getInstance().getDatabaseManager();
 
         try {
             loadStopsFromDatabase(database);
@@ -516,7 +516,7 @@ public class ControladorPrincipal {
         }
     }
 
-    private void loadStopsFromDatabase(logica.GestorDB database) throws java.sql.SQLException {
+    private void loadStopsFromDatabase(GestorDB database) throws java.sql.SQLException {
         java.sql.ResultSet stopsResult = database.cargarParadas();
 
         while (stopsResult.next()) {
@@ -529,7 +529,7 @@ public class ControladorPrincipal {
         }
     }
 
-    private void loadRoutesFromDatabase(logica.GestorDB database) throws java.sql.SQLException {
+    private void loadRoutesFromDatabase(GestorDB database) throws java.sql.SQLException {
         java.sql.ResultSet routesResult = database.cargarRutas();
 
         while (routesResult.next()) {

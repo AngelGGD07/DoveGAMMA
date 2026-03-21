@@ -4,6 +4,8 @@ import javafx.application.Platform;
 import logica.CalculadorRuta;
 import logica.GrafoTransporte;
 import logica.Parada;
+import persistencia.GestorDB;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -31,7 +33,7 @@ public class AdaptadorVisual {
 
     private GrafoTransporte backend;
     private PanelVisualizacion visualizationPanel;
-    private logica.GestorDB databaseManager;
+    private GestorDB databaseManager;
 
     private final Map<String, double[]> visualCoordinates = new HashMap<>();
     private final Map<String, String> stopNamesById = new HashMap<>();
@@ -39,7 +41,7 @@ public class AdaptadorVisual {
     private final Map<String, double[]> routeData = new HashMap<>();
 
     private AdaptadorVisual() {
-        this.databaseManager = new logica.GestorDB();
+        this.databaseManager = new GestorDB();
         this.backend = new GrafoTransporte(); // Inicializamos para evitar NullPointerException
     }
 
@@ -68,7 +70,7 @@ public class AdaptadorVisual {
         return visualizationPanel;
     }
 
-    public logica.GestorDB getDatabaseManager() {
+    public GestorDB getDatabaseManager() {
         return databaseManager;
     }
 
@@ -352,5 +354,5 @@ public class AdaptadorVisual {
     @Deprecated public static AdaptadorVisual getInstancia() { return getInstance(); }
     @Deprecated public void setPanelVisual(PanelVisualizacion p) { setVisualizationPanel(p); }
     @Deprecated public PanelVisualizacion getPanelVisual() { return getVisualizationPanel(); }
-    @Deprecated public logica.GestorDB getGestorDB() { return getDatabaseManager(); }
+    @Deprecated public GestorDB getGestorDB() { return getDatabaseManager(); }
 }

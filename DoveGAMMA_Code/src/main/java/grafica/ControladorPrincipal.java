@@ -1,20 +1,19 @@
 package grafica;
 
-import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.layout.*;
-
 import logica.persistencia.GestorDB;
 
 
 import java.util.List;
 import java.util.Map;
 
-public class ControladorPrincipal {
 
+public class ControladorPrincipal {
     // === Estilos de mensajes ===
     private static final String ESTILO_EXITO =
             "-fx-text-fill: #7acc7a; -fx-background-color: #0a2a0a; -fx-background-radius: 6; " +
@@ -26,11 +25,9 @@ public class ControladorPrincipal {
 
     private static final String[] CRITERIOS_RUTA = {"tiempo", "distancia", "costo", "transbordos"};
 
-    // === Componentes del TabPane e Interfaz Principal ===
-    @FXML private SplitPane splitPanePrincipal;
-    @FXML private VBox      panelListados;
-    @FXML private TabPane   tabPrincipal;
-    @FXML private Button    btnTogglePanel;
+    // === Componentes del TabPane ===
+    @FXML private TabPane  tabPrincipal;
+    @FXML private Button   btnNavCalcular;
 
     // === Tabla Paradas ===
     @FXML private TableView<FilaParada>           tablaParadas;
@@ -38,11 +35,6 @@ public class ControladorPrincipal {
     @FXML private TableColumn<FilaParada, String> colParadaNombre;
     @FXML private TableColumn<FilaParada, String> colParadaX;
     @FXML private TableColumn<FilaParada, String> colParadaY;
-
-    // === Detalles de Parada Seleccionada ===
-    @FXML private VBox      panelDetallesParada;
-    @FXML private Label     lblDetalleParadaTitulo;
-    @FXML private TextArea  txtDetallesRutasParada;
 
     // === Tabla Rutas ===
     @FXML private TableView<FilaRuta>              tablaRutas;
@@ -132,29 +124,9 @@ public class ControladorPrincipal {
         colParadaY.setCellValueFactory(data -> data.getValue().yProperty());
         tablaParadas.setItems(listaParadas);
 
-        // Listener para la seleccion de paradas (Mostrar detalles arriba de las rutas)
-        tablaParadas.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-            if (newSelection != null) {
-                mostrarDetallesParada(newSelection);
-            } else {
-                panelDetallesParada.setVisible(false);
-                panelDetallesParada.setManaged(false);
-            }
-        });
-
-        // columnas de rutas - Muestra el Nombre y el (ID) para hacer el listado más comprensible
-        colRutaOrigen.setCellValueFactory(data -> {
-            String id = data.getValue().getOrigen();
-            String name = AdaptadorVisual.getInstance().getStopName(id);
-            return new SimpleStringProperty(name + " (" + id + ")");
-        });
-
-        colRutaDestino.setCellValueFactory(data -> {
-            String id = data.getValue().getDestino();
-            String name = AdaptadorVisual.getInstance().getStopName(id);
-            return new SimpleStringProperty(name + " (" + id + ")");
-        });
-
+        // columnas de rutas
+        colRutaOrigen.setCellValueFactory(data -> data.getValue().origenProperty());
+        colRutaDestino.setCellValueFactory(data -> data.getValue().destinoProperty());
         colRutaTiempo.setCellValueFactory(data -> data.getValue().tiempoProperty());
         colRutaDistancia.setCellValueFactory(data -> data.getValue().distanciaProperty());
         colRutaCosto.setCellValueFactory(data -> data.getValue().costoProperty());
@@ -182,49 +154,12 @@ public class ControladorPrincipal {
     }
 
     // =====================================================
-    // DETALLES DE PARADA (Al hacer clic en el listado)
-    // =====================================================
-
-    private void mostrarDetallesParada(FilaParada parada) {
-        lblDetalleParadaTitulo.setText("Datos de Parada: " + parada.getNombre() + " (ID: " + parada.getId() + ")");
-
-        logica.GrafoTransporte grafo = AdaptadorVisual.getInstance().getBackend();
-        List<logica.Ruta> salidas = grafo.obtenerVecinos(parada.getId());
-
-        StringBuilder sb = new StringBuilder();
-        if (salidas.isEmpty()) {
-            sb.append("No hay rutas de salida conectadas directamente a esta parada.");
-        } else {
-            for (logica.Ruta r : salidas) {
-                String destName = AdaptadorVisual.getInstance().getStopName(r.getIdDestino());
-                sb.append("➡ Hacia ").append(destName).append(" (").append(r.getIdDestino()).append(")\n")
-                        .append("   Tiempo: ").append(r.getTiempo()).append(" min | ")
-                        .append("Distancia: ").append(r.getDistancia()).append(" km | ")
-                        .append("Costo: $").append(r.getCosto()).append("\n\n");
-            }
-        }
-
-        txtDetallesRutasParada.setText(sb.toString().trim());
-        panelDetallesParada.setVisible(true);
-        panelDetallesParada.setManaged(true);
-    }
-
-    // =====================================================
-    // OCULTAR/MOSTRAR PANEL LATERAL
+    // NAVEGACIÓN
     // =====================================================
 
     @FXML
-    private void togglePanelListados() {
-        if (splitPanePrincipal.getItems().contains(panelListados)) {
-            // Ocultar listados: El mapa ocupará el 100% de la pantalla
-            splitPanePrincipal.getItems().remove(panelListados);
-            btnTogglePanel.setText("Mostrar Listados");
-        } else {
-            // Mostrar listados nuevamente
-            splitPanePrincipal.getItems().add(0, panelListados);
-            splitPanePrincipal.setDividerPositions(0.60);
-            btnTogglePanel.setText("Ocultar Listados");
-        }
+    private void irACalcular() {
+        tabPrincipal.getSelectionModel().select(2); // tab index 2 = Calcular
     }
 
     // =====================================================
@@ -393,8 +328,6 @@ public class ControladorPrincipal {
 
         if (ok) {
             refrescarTablaParadas();
-            // Actualiza también la tabla de rutas en caso de que mostrará los nombres
-            refrescarTablaRutas();
             formModParada.setVisible(false);
             formModParada.setManaged(false);
             limpiarCampos(txtModIdParada, txtModNombreParada);
@@ -471,12 +404,6 @@ public class ControladorPrincipal {
 
             if (ok) {
                 refrescarTablaRutas();
-                // Si la parada estaba seleccionada, refrescamos el panel de detalles visual
-                FilaParada paradaSeleccionada = tablaParadas.getSelectionModel().getSelectedItem();
-                if (paradaSeleccionada != null && paradaSeleccionada.getId().equals(origen)) {
-                    mostrarDetallesParada(paradaSeleccionada);
-                }
-
                 limpiarCampos(txtOrigenRuta, txtDestinoRuta, txtTiempoRuta,
                         txtDistanciaRuta, txtCostoRuta);
                 chkTransbordoRuta.setSelected(false);
@@ -555,12 +482,6 @@ public class ControladorPrincipal {
                 if (ok) {
                     refrescarTablaRutas();
                     AdaptadorVisual.getInstance().refrescarVisualizacion();
-
-                    FilaParada paradaSeleccionada = tablaParadas.getSelectionModel().getSelectedItem();
-                    if (paradaSeleccionada != null) {
-                        mostrarDetallesParada(paradaSeleccionada);
-                    }
-
                     mostrarExito("✔  Ruta eliminada: " + fila.getOrigen() + " → " + fila.getDestino());
                 } else {
                     mostrarError("No se pudo eliminar la ruta.");
@@ -630,8 +551,6 @@ public class ControladorPrincipal {
                 txtResultado.clear();
                 panelResultado.setVisible(false);
                 panelResultado.setManaged(false);
-                panelDetallesParada.setVisible(false);
-                panelDetallesParada.setManaged(false);
                 mostrarExito("✔  Grafo limpiado.");
             }
         });
@@ -674,7 +593,7 @@ public class ControladorPrincipal {
     // =====================================================
 
     private void cargarDatosDesdeBD() {
-        logica.GestorDB db = AdaptadorVisual.getInstance().getDatabaseManager();
+        logica.persistencia.GestorDB db = AdaptadorVisual.getInstance().getDatabaseManager();
         try {
             java.sql.ResultSet rsParadas = db.cargarParadas();
             while (rsParadas.next()) {
@@ -735,52 +654,7 @@ public class ControladorPrincipal {
         return false;
     }
 
-    private void clearFields(TextField... fields) {
-        for (TextField field : fields) {
-            field.clear();
-        }
-    }
-
-
-    private void loadDataFromDatabase() {
-        GestorDB database = AdaptadorVisual.getInstance().getDatabaseManager();
-
-        try {
-            loadStopsFromDatabase(database);
-            loadRoutesFromDatabase(database);
-        } catch (java.sql.SQLException exception) {
-            System.out.println("Error cargando datos: " + exception.getMessage());
-        }
-    }
-
-    private void loadStopsFromDatabase(GestorDB database) throws java.sql.SQLException {
-        java.sql.ResultSet stopsResult = database.cargarParadas();
-
-        while (stopsResult.next()) {
-            AdaptadorVisual.getInstance().addStop(
-                    stopsResult.getString("id"),
-                    stopsResult.getString("nombre"),
-                    stopsResult.getDouble("x"),
-                    stopsResult.getDouble("y")
-            );
-        }
-    }
-
-    private void loadRoutesFromDatabase(GestorDB database) throws java.sql.SQLException {
-        java.sql.ResultSet routesResult = database.cargarRutas();
-
-        while (routesResult.next()) {
-            AdaptadorVisual.getInstance().addRoute(
-                    routesResult.getString("origen"),
-                    routesResult.getString("destino"),
-                    routesResult.getDouble("tiempo"),
-                    routesResult.getDouble("distancia"),
-                    routesResult.getDouble("costo")
-            );
-        }
-
     private void limpiarCampos(TextField... campos) {
         for (TextField c : campos) c.clear();
-
     }
 }

@@ -6,7 +6,7 @@ import logica.CalculadorRuta;
 import logica.GrafoTransporte;
 import logica.Parada;
 
-import persistencia.GestorDB;
+import logica.persistencia.GestorDB;
 
 
 

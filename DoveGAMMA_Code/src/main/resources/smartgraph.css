@@ -1,0 +1,199 @@
+/* ============================================================
+   PANEL DEL GRAFO
+   ============================================================ */
+
+/* Quitar el borde azul de selección (focus ring) en toda la app */
+* {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.graph {
+    -fx-background-color: transparent;
+}
+
+/* Nodos (Paradas) con efecto 3D y sombra (Cubrimos clases por defecto y custom) */
+.graph-vertex, .vertex {
+    -fx-fill: linear-gradient(to bottom right, #ffae42, #e67e22);
+    -fx-stroke: #ffffff;
+    -fx-stroke-width: 2;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 8, 0, 0, 4);
+    -fx-cursor: hand;
+}
+.graph-vertex:hover, .vertex:hover {
+    -fx-fill: linear-gradient(to bottom right, #ffc060, #ff9500);
+    -fx-effect: dropshadow(three-pass-box, rgba(255,165,0,0.6), 15, 0, 0, 0);
+}
+
+.graph-vertex-label, .vertex-label {
+    -fx-fill: #ffffff;
+    -fx-font-family: "Segoe UI", "System";
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+/* Líneas (Rutas) */
+.graph-edge, .edge {
+    -fx-stroke: #ffa500;
+    -fx-stroke-width: 3;
+    -fx-opacity: 0.8;
+}
+.graph-edge-label, .edge-label {
+    -fx-fill: #e8c9a8;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+/* Ruta encontrada (Dijkstra) */
+.vertex-resaltado {
+    -fx-fill: linear-gradient(to bottom right, #ff6b33, #cc3700);
+    -fx-stroke: #ffffff;
+    -fx-stroke-width: 3;
+    -fx-effect: dropshadow(gaussian, #ff4500, 20, 0.7, 0, 0);
+}
+.edge-resaltado {
+    -fx-stroke: #ff4500;
+    -fx-stroke-width: 6;
+    -fx-opacity: 1.0;
+    -fx-effect: dropshadow(gaussian, #ff4500, 10, 0.6, 0, 0);
+}
+
+
+/* ============================================================
+   TAB PANE
+   ============================================================ */
+.tab-pane {
+    -fx-background-color: #0e0b1a;
+}
+.tab-pane .tab-header-area {
+    -fx-background-color: #120d22;
+    -fx-padding: 4 4 0 4;
+}
+.tab-pane .tab-header-background {
+    -fx-background-color: #120d22;
+}
+.tab-pane .tab {
+    -fx-background-color: #1e1030;
+    -fx-background-insets: 0;
+    -fx-background-radius: 6 6 0 0;
+    -fx-padding: 6 14 6 14;
+}
+.tab-pane .tab:selected {
+    -fx-background-color: #a65d48;
+}
+.tab-pane .tab .tab-label {
+    -fx-text-fill: #9a7a5a;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+.tab-pane .tab:selected .tab-label {
+    -fx-text-fill: #e8c9a8;
+}
+.tab-pane .tab:hover .tab-label {
+    -fx-text-fill: #d4a574;
+}
+.tab-pane .tab-content-area {
+    -fx-background-color: #0e0b1a;
+    -fx-border-color: transparent;
+}
+
+
+/* ============================================================
+   TABLE VIEW MEJORADO
+   ============================================================ */
+.table-view {
+    -fx-background-color: #0e0b1a;
+    -fx-border-color: #3a1a50;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-selection-bar: #31184a;
+    -fx-selection-bar-non-focused: #2a1540;
+}
+.table-view .column-header-background {
+    -fx-background-color: #1a0f2a;
+    -fx-background-radius: 8 8 0 0;
+}
+.table-view .column-header {
+    -fx-background-color: #1a0f2a;
+    -fx-border-color: #2a1040;
+    -fx-border-width: 0 1 1 0;
+    -fx-padding: 8 8 8 10;
+}
+.table-view .column-header .label {
+    -fx-text-fill: #d4a574;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER_LEFT;
+}
+.table-view .filler {
+    -fx-background-color: #1a0f2a;
+    -fx-border-color: #2a1040;
+    -fx-border-width: 0 0 1 0;
+}
+.table-row-cell {
+    -fx-background-color: #0e0b1a;
+    -fx-border-color: transparent transparent #1a0f2a transparent;
+    -fx-cell-size: 36px;
+}
+.table-row-cell:odd {
+    -fx-background-color: #12092a;
+}
+.table-row-cell:selected {
+    -fx-background-color: #31184a;
+    -fx-border-color: transparent transparent #512b7a transparent;
+}
+.table-row-cell:selected:odd {
+    -fx-background-color: #31184a;
+}
+.table-row-cell:hover {
+    -fx-background-color: #1f1138;
+    -fx-cursor: hand;
+}
+.table-cell {
+    -fx-text-fill: #e8c9a8;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-padding: 4 10 4 10;
+    -fx-border-color: transparent;
+}
+.table-view .placeholder .label {
+    -fx-text-fill: #4a3a6a;
+    -fx-font-style: italic;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 13px;
+}
+
+/* Scrollbar Modernizada (Estilo Web/MacOS) validada para JavaFX */
+.table-view .scroll-bar:vertical,
+.table-view .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+}
+.table-view .scroll-bar:vertical .thumb,
+.table-view .scroll-bar:horizontal .thumb {
+    -fx-background-color: #4a2a60;
+    -fx-background-radius: 6;
+}
+.table-view .scroll-bar:vertical .thumb:hover,
+.table-view .scroll-bar:horizontal .thumb:hover {
+    -fx-background-color: #6a3a8a;
+}
+.table-view .scroll-bar:vertical .track,
+.table-view .scroll-bar:horizontal .track {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+/* Ocultar las flechas de desplazamiento limpiamente */
+.table-view .scroll-bar .increment-button,
+.table-view .scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+.table-view .scroll-bar .increment-arrow,
+.table-view .scroll-bar .decrement-arrow {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}

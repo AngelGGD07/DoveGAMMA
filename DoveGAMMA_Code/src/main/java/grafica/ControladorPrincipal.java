@@ -7,8 +7,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 
-import logica.GrafoTransporte;
-import persistencia.GestorDB;
+import logica.persistencia.GestorDB;
 
 
 import java.util.List;

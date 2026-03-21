@@ -1,4 +1,4 @@
-package persistencia;
+package logica.persistencia;
 
 import java.sql.*;
 

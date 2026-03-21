@@ -6,7 +6,12 @@ import logica.CalculadorRuta;
 import logica.GrafoTransporte;
 import logica.Parada;
 
+import persistencia.GestorDB;
+
+
+
 import java.util.Collections;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -22,6 +27,20 @@ public class AdaptadorVisual {
     private Digraph<String, String> grafoVisual;
     private PanelVisualizacion    panelVisualizacion;
 
+
+    private GrafoTransporte backend;
+    private PanelVisualizacion visualizationPanel;
+    private GestorDB databaseManager;
+
+    private final Map<String, double[]> visualCoordinates = new HashMap<>();
+    private final Map<String, String> stopNamesById = new HashMap<>();
+    private final Set<String> existingRoutes = new HashSet<>();
+    private final Map<String, double[]> routeData = new HashMap<>();
+
+    private AdaptadorVisual() {
+        this.databaseManager = new GestorDB();
+        this.backend = new GrafoTransporte(); // Inicializamos para evitar NullPointerException
+
     private final Map<String, String>   nombresParadas      = new HashMap<>();
     private final Map<String, double[]> coordenadasParadas  = new HashMap<>(); // guarda x,y de cada parada
     private final Set<String>           rutasResaltadas     = new HashSet<>();
@@ -31,6 +50,7 @@ public class AdaptadorVisual {
         this.gestorBaseDatos = new logica.GestorDB();
         this.logicaGrafo     = new GrafoTransporte();
         this.grafoVisual     = new DigraphEdgeList<>();
+
     }
 
     public static AdaptadorVisual getInstance() {
@@ -58,9 +78,60 @@ public class AdaptadorVisual {
         return coordenadasParadas.getOrDefault(id, new double[]{0.0, 0.0});
     }
 
+
+    public GestorDB getDatabaseManager() {
+        return databaseManager;
+    }
+
+    // --- GESTIÓN DE PARADAS ---
+
+    public boolean addStop(String stopId, String stopName, double coordinateX, double coordinateY) {
+        if (backend == null) return false;
+
+        if (isStopIdAlreadyExists(stopId) || isStopNameAlreadyExists(stopName)) {
+            return false;
+        }
+
+        // 1. Registro en Backend
+        backend.registrarParada(new Parada(stopId, stopName, coordinateX, coordinateY));
+        
+        // 2. Registro local para visualización
+        storeVisualCoordinates(stopId, coordinateX, coordinateY);
+        storeStopName(stopId, stopName);
+        
+        // 3. Persistencia
+        persistStopToDatabase(stopId, stopName, coordinateX, coordinateY);
+        
+        // 4. GUI
+        addStopToVisualization(stopId, stopName, coordinateX, coordinateY);
+
+        return true;
+    }
+
+    public boolean modifyStopName(String stopId, String newName) {
+        if (!stopNamesById.containsKey(stopId)) return false;
+        if (isStopNameAlreadyExistsExcludingId(newName, stopId)) return false;
+
+        updateStopName(stopId, newName);
+        refreshVisualization();
+        return true;
+    }
+
+    public boolean removeStop(String stopId) {
+        if (backend == null || !stopNamesById.containsKey(stopId)) return false;
+
+        removeStopFromBackend(stopId);
+        removeStopVisualData(stopId);
+        removeRoutesAssociatedWithStop(stopId);
+        removeStopFromDatabase(stopId);
+        refreshVisualization();
+
+        return true;
+
     // true si esa ruta tiene transbordo
     public boolean tieneTransbordo(String idArista) {
         return rutasConTransbordo.contains(idArista);
+
     }
 
     public boolean agregarParada(String id, String nombre, double x, double y) {
@@ -255,7 +326,15 @@ public class AdaptadorVisual {
         inicializarPanel();
     }
 
+
+    // --- MÉTODOS DEPRECATED (Para compatibilidad) ---
+    @Deprecated public static AdaptadorVisual getInstancia() { return getInstance(); }
+    @Deprecated public void setPanelVisual(PanelVisualizacion p) { setVisualizationPanel(p); }
+    @Deprecated public PanelVisualizacion getPanelVisual() { return getVisualizationPanel(); }
+    @Deprecated public GestorDB getGestorDB() { return getDatabaseManager(); }
+
     public void refrescarVisualizacion() {
         if (panelVisualizacion != null) panelVisualizacion.actualizarGrafico();
     }
+
 }

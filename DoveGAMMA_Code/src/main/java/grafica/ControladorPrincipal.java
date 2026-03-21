@@ -6,6 +6,11 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+
+import logica.GrafoTransporte;
+import persistencia.GestorDB;
+
+
 import java.util.List;
 import java.util.Map;
 
@@ -731,7 +736,52 @@ public class ControladorPrincipal {
         return false;
     }
 
+    private void clearFields(TextField... fields) {
+        for (TextField field : fields) {
+            field.clear();
+        }
+    }
+
+
+    private void loadDataFromDatabase() {
+        GestorDB database = AdaptadorVisual.getInstance().getDatabaseManager();
+
+        try {
+            loadStopsFromDatabase(database);
+            loadRoutesFromDatabase(database);
+        } catch (java.sql.SQLException exception) {
+            System.out.println("Error cargando datos: " + exception.getMessage());
+        }
+    }
+
+    private void loadStopsFromDatabase(GestorDB database) throws java.sql.SQLException {
+        java.sql.ResultSet stopsResult = database.cargarParadas();
+
+        while (stopsResult.next()) {
+            AdaptadorVisual.getInstance().addStop(
+                    stopsResult.getString("id"),
+                    stopsResult.getString("nombre"),
+                    stopsResult.getDouble("x"),
+                    stopsResult.getDouble("y")
+            );
+        }
+    }
+
+    private void loadRoutesFromDatabase(GestorDB database) throws java.sql.SQLException {
+        java.sql.ResultSet routesResult = database.cargarRutas();
+
+        while (routesResult.next()) {
+            AdaptadorVisual.getInstance().addRoute(
+                    routesResult.getString("origen"),
+                    routesResult.getString("destino"),
+                    routesResult.getDouble("tiempo"),
+                    routesResult.getDouble("distancia"),
+                    routesResult.getDouble("costo")
+            );
+        }
+
     private void limpiarCampos(TextField... campos) {
         for (TextField c : campos) c.clear();
+
     }
 }

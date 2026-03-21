@@ -1,7 +1,10 @@
 package logica;
 
 import java.util.*;
-
+/**
+ * Estructura de datos principal del sistema. Representa la red de transporte
+ * utilizando un modelo de Grafo Dirigido basado en Listas de Adyacencia.
+ */
 public class GrafoTransporte {
     private HashMap<String, Parada> mapaParadas;
 

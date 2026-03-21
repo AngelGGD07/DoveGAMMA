@@ -1,90 +1,92 @@
 package logica;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Set;
+import logica.algoritmos.AlgoritmoRuta;
+import logica.algoritmos.Dijkstra;
+import logica.algoritmos.CriterioOptim.CriterioOptimizacion;
 
+import java.util.ArrayList;
+import java.util.List;
+
+/*
+ *
+ * Administra los algoritmos de búsqueda y delega el cálculo matemático a la estrategia seleccionada.
+ */
 public class CalculadorRuta {
 
-    // Este método ya no está en el grafo, así que le pedimos el grafo por parámetro
-    public List<String> calcularDijkstra(GrafoTransporte grafo, String idInicio, String idFinal, String criterio) {
+    // Aquí guardamos el algoritmo que se está usando en el momento
+    private AlgoritmoRuta algoritmoActual;
 
-        PriorityQueue<DatoCamino> cola = new PriorityQueue<>();
-        HashMap<String, Double> distanciasMinimas = new HashMap<>();
-        HashMap<String, String> paradasPrevias = new HashMap<>();
+    /*
+     * Constructor por defecto. Si nadie nos dice nada, usamos Dijkstra.
+     */
+    public CalculadorRuta() {
+        this.algoritmoActual = new Dijkstra();
+    }
+    /*
+     * Otro constructor para flexibilidad y permitir que otra clase pase otro de los algoritmos
+     */
+    public CalculadorRuta(AlgoritmoRuta algoritmoInicial) {
+        this.algoritmoActual = algoritmoInicial;
+    }
 
-        // 1. Inicializamos todas las distancias en "Infinito" (Double.MAX_VALUE)
-        Set<String> todasLasParadas = grafo.obtenerIdsParadas();
-        for(String idParada : todasLasParadas){
-            distanciasMinimas.put(idParada, Double.MAX_VALUE);
+    /*
+     * Permite cambiar el algoritmo en tiempo de ejecución (ej. cambiar a Bellman-Ford si hay descuentos)
+     */
+    public void setAlgoritmo(AlgoritmoRuta nuevoAlgoritmo) {
+        this.algoritmoActual = nuevoAlgoritmo;
+    }
+
+    /*
+     * Calcula la ruta óptima principal usando la estrategia actual.
+     */
+    public List<String> calcular(GrafoTransporte grafo, String idInicio, String idFinal, CriterioOptimizacion criterio) {
+        if (this.algoritmoActual == null) {
+            throw new IllegalStateException("¡Error! No se ha definido un algoritmo de búsqueda.");
         }
 
-        // 2. El punto de inicio tiene distancia 0
-        distanciasMinimas.put(idInicio, 0.0);
-        cola.add(new DatoCamino(idInicio, 0.0));
+        // El "Gerente" simplemente le pasa el trabajo al algoritmo seleccionado
+        return this.algoritmoActual.calcularRuta(grafo, idInicio, idFinal, criterio);
+    }
 
-        // 3. Comenzamos a recorrer
-        while(!cola.isEmpty()){
-            // ¡Aquí sacamos el nodo con la menor distancia acumulada!
-            DatoCamino actual = cola.poll();
+    /*
+     * Calcula una "Ruta Alternativa" (Plan B) bloqueando temporalmente
+     * el primer tramo de la ruta óptima original.
+     */
+    public List<String> calcularRutaAlternativa(GrafoTransporte grafo, String idInicio, String idFinal, CriterioOptimizacion criterio) {
+        // 1. Calculamos la ruta óptima original (El Plan A)
+        List<String> rutaOriginal = calcular(grafo, idInicio, idFinal, criterio);
 
-            // Si ya sacamos de la cola nuestro destino final, terminamos de buscar
-            if(actual.idParada.equals(idFinal)){
-                break;
-            }
-
-            // 4. Revisamos los vecinos pidiéndole la lista al grafo
-            List<Ruta> vecinos = grafo.obtenerVecinos(actual.idParada);
-
-            for(Ruta rutaVecina : vecinos){
-                double pesoArista = determinarPeso(rutaVecina, criterio);
-                double nuevaDistancia = distanciasMinimas.get(actual.idParada) + pesoArista;
-
-                // 5. Relajación: Si encontramos un atajo más corto, actualizamos los datos
-                if (nuevaDistancia < distanciasMinimas.get(rutaVecina.getIdDestino())) {
-                    distanciasMinimas.put(rutaVecina.getIdDestino(), nuevaDistancia);
-                    paradasPrevias.put(rutaVecina.getIdDestino(), actual.idParada);
-                    // Agregamos el vecino a la cola para explorarlo más adelante
-                    cola.add(new DatoCamino(rutaVecina.getIdDestino(), nuevaDistancia));
-                }
-            }
-        }
-
-        // Si el destino sigue en infinito, significa que no hay camino posible
-        if (distanciasMinimas.get(idFinal) == Double.MAX_VALUE) {
+        // Si no hay ruta original o es un viaje de una sola parada, no hay alternativa posible
+        if (rutaOriginal.isEmpty() || rutaOriginal.size() < 2) {
             return new ArrayList<>();
         }
 
-        // 6. Reconstruir el camino desde el final hacia el principio
-        return reconstruirCamino(idFinal, paradasPrevias);
-    }
+        // 2. Identificamos el primer tramo para bloquearlo (de la parada 0 a la parada 1)
+        String nodoA = rutaOriginal.get(0);
+        String nodoB = rutaOriginal.get(1);
 
-    // --- MÉTODOS AUXILIARES PARA LIMPIAR EL CÓDIGO ---
-
-    // Este método reemplaza todos los "if/else" que tenías, haciéndolo más limpio
-    private double determinarPeso(Ruta ruta, String criterio) {
-        switch (criterio.toLowerCase()) {
-            case "tiempo": return ruta.getTiempo();
-            case "costo": return ruta.getCosto();
-            case "distancia": return ruta.getDistancia();
-            case "transbordos": return 1.0;
-            default: return ruta.getDistancia();
+        // Buscamos la ruta exacta en el grafo para guardar sus datos antes de borrarla
+        Ruta rutaABloquear = null;
+        for (Ruta r : grafo.obtenerVecinos(nodoA)) {
+            if (r.getIdDestino().equals(nodoB)) {
+                rutaABloquear = r;
+                break;
+            }
         }
-    }
 
-    // Este método saca el bucle de reconstrucción para que el método principal no sea tan largo
-    private List<String> reconstruirCamino(String idFinal, HashMap<String, String> paradasPrevias) {
-        List<String> caminoFinal = new ArrayList<>();
-        String paradaActual = idFinal;
+        // Si por alguna razón no la encuentra, abortamos
+        if (rutaABloquear == null) return new ArrayList<>();
 
-        while(paradaActual != null){
-            caminoFinal.add(paradaActual);
-            paradaActual = paradasPrevias.get(paradaActual);
-        }
-        Collections.reverse(caminoFinal);
-        return caminoFinal;
+        // 3. ¡Bloqueamos la calle temporalmente!
+        grafo.eliminarRuta(nodoA, nodoB);
+
+        // 4. Recalculamos forzando al algoritmo a buscar el "Plan B"
+        List<String> rutaAlternativa = calcular(grafo, idInicio, idFinal, criterio);
+
+        // 5. Restauramos la calle para no dañar el grafo original de forma permanente
+        grafo.agregarRuta(nodoA, nodoB, rutaABloquear.getTiempo(), rutaABloquear.getCosto(), rutaABloquear.getDistancia());
+
+        // 6. Devolvemos el Plan B
+        return rutaAlternativa;
     }
 }

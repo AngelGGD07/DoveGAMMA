@@ -41,6 +41,7 @@ public class PanelVisualizacion extends StackPane {
 
         graphView.setEdgeLabelProvider(idArista -> grafica.AdaptadorVisual.getInstance().getEdgeDataAsString(idArista));
 
+        // Doble click en rutas
         graphView.setEdgeDoubleClickAction(edge -> {
             String idLogicoArista = edge.getUnderlyingEdge().element();
             String detalles = grafica.AdaptadorVisual.getInstance().getDetallesRuta(idLogicoArista);
@@ -50,6 +51,35 @@ public class PanelVisualizacion extends StackPane {
                 alerta.setTitle("Detalles del Tramo");
                 alerta.setHeaderText("Conexión: " + idLogicoArista);
                 alerta.setContentText(detalles);
+                alerta.showAndWait();
+            });
+        });
+
+        // Doble click en las paradas (Nodos visuales)
+        graphView.setVertexDoubleClickAction(vertex -> {
+            String idParada = vertex.getUnderlyingVertex().element();
+            String nombre = grafica.AdaptadorVisual.getInstance().getStopName(idParada);
+            logica.GrafoTransporte grafo = grafica.AdaptadorVisual.getInstance().getBackend();
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("Rutas de salida desde ").append(nombre).append(":\n\n");
+            boolean tieneRutas = false;
+
+            for (logica.Ruta r : grafo.obtenerVecinos(idParada)) {
+                tieneRutas = true;
+                String destName = grafica.AdaptadorVisual.getInstance().getStopName(r.getIdDestino());
+                sb.append("➡ ").append(destName)
+                        .append(" (").append(r.getTiempo()).append(" min, ")
+                        .append(r.getDistancia()).append(" km, $")
+                        .append(r.getCosto()).append(")\n");
+            }
+            if (!tieneRutas) sb.append("Ninguna ruta de salida conectada directamente.");
+
+            Platform.runLater(() -> {
+                Alert alerta = new Alert(Alert.AlertType.INFORMATION);
+                alerta.setTitle("Detalles de la Parada (En Mapa)");
+                alerta.setHeaderText("Parada: " + nombre + " (" + idParada + ")");
+                alerta.setContentText(sb.toString());
                 alerta.showAndWait();
             });
         });

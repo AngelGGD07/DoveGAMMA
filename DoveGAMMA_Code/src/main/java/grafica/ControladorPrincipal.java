@@ -6,12 +6,14 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.layout.*;
+import logica.persistencia.GestorDB;
+
+
 import java.util.List;
 import java.util.Map;
 
 
 public class ControladorPrincipal {
-
     // === Estilos de mensajes ===
     private static final String ESTILO_EXITO =
             "-fx-text-fill: #7acc7a; -fx-background-color: #0a2a0a; -fx-background-radius: 6; " +

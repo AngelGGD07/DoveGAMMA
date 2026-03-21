@@ -1,0 +1,42 @@
+package grafica;
+
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+
+// Representa una fila en la tabla de rutas
+public class FilaRuta {
+
+    private StringProperty  origen;
+    private StringProperty  destino;
+    private StringProperty  tiempo;
+    private StringProperty  distancia;
+    private StringProperty  costo;
+    private BooleanProperty transbordo;
+
+    public FilaRuta(String origen, String destino,
+                    double tiempo, double distancia, double costo,
+                    boolean transbordo) {
+        this.origen     = new SimpleStringProperty(origen);
+        this.destino    = new SimpleStringProperty(destino);
+        this.tiempo     = new SimpleStringProperty(String.format("%.1f", tiempo));
+        this.distancia  = new SimpleStringProperty(String.format("%.1f", distancia));
+        this.costo      = new SimpleStringProperty(String.format("%.2f", costo));
+        this.transbordo = new SimpleBooleanProperty(transbordo);
+    }
+
+    public StringProperty  origenProperty()     { return origen; }
+    public StringProperty  destinoProperty()    { return destino; }
+    public StringProperty  tiempoProperty()     { return tiempo; }
+    public StringProperty  distanciaProperty()  { return distancia; }
+    public StringProperty  costoProperty()      { return costo; }
+    public BooleanProperty transbordoProperty() { return transbordo; }
+
+    public String  getOrigen()     { return origen.get(); }
+    public String  getDestino()    { return destino.get(); }
+    public String  getTiempo()     { return tiempo.get(); }
+    public String  getDistancia()  { return distancia.get(); }
+    public String  getCosto()      { return costo.get(); }
+    public boolean isTransbordo()  { return transbordo.get(); }
+}

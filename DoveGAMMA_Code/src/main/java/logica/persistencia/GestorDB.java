@@ -35,12 +35,13 @@ public class GestorDB {
 
         String sqlRutas =
                 "CREATE TABLE IF NOT EXISTS rutas (" +
-                        "  origen    VARCHAR(50) NOT NULL," +
-                        "  destino   VARCHAR(50) NOT NULL," +
-                        "  tiempo    DOUBLE NOT NULL," +
-                        "  distancia DOUBLE NOT NULL," +
-                        "  costo     DOUBLE NOT NULL," +
-                        "  PRIMARY KEY (origen, destino)" +
+                        "  origen VARCHAR(50)," +
+                        "  destino VARCHAR(50)," +
+                        "  tiempo DOUBLE," +
+                        "  distancia DOUBLE," +
+                        "  costo DOUBLE," +
+                        "  transbordo BOOLEAN," +
+                        "  PRIMARY KEY(origen, destino)" +
                         ");";
 
         try (Statement stmt = conexion.createStatement()) {
@@ -80,15 +81,19 @@ public class GestorDB {
     }
 
     public void guardarRuta(String origen, String destino,
-                            double tiempo, double distancia, double costo) {
-        String sql = "INSERT INTO rutas (origen, destino, tiempo, distancia, costo) VALUES (?, ?, ?, ?, ?) " +
-                "ON DUPLICATE KEY UPDATE tiempo=VALUES(tiempo), distancia=VALUES(distancia), costo=VALUES(costo)";
+                            double tiempo, double distancia, double costo, boolean transbordo) {
+
+        // El SQL ahora incluye transbordo tanto al insertar como al actualizar
+        String sql = "INSERT INTO rutas (origen, destino, tiempo, distancia, costo, transbordo) VALUES (?, ?, ?, ?, ?, ?) " +
+                "ON DUPLICATE KEY UPDATE tiempo=VALUES(tiempo), distancia=VALUES(distancia), costo=VALUES(costo), transbordo=VALUES(transbordo)";
+
         try (PreparedStatement ps = conexion.prepareStatement(sql)) {
             ps.setString(1, origen);
             ps.setString(2, destino);
             ps.setDouble(3, tiempo);
             ps.setDouble(4, distancia);
             ps.setDouble(5, costo);
+            ps.setBoolean(6, transbordo);
             ps.executeUpdate();
         } catch (SQLException e) {
             System.out.println("Error guardando ruta: " + e.getMessage());

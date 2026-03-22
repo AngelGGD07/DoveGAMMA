@@ -1,7 +1,7 @@
 package logica;
 
 import java.util.*;
-/**
+/*
  * Estructura de datos principal del sistema. Representa la red de transporte
  * utilizando un modelo de Grafo Dirigido basado en Listas de Adyacencia.
  */
@@ -31,9 +31,9 @@ public class GrafoTransporte {
         return false;
     }
 
-    public boolean agregarRuta(String idOrigen, String idDestino, double tiempo, double costo, double dist) {
+    public boolean agregarRuta(String idOrigen, String idDestino, double tiempo, double costo, double dist, boolean transbordo) {
         if (mapaParadas.containsKey(idOrigen) && mapaParadas.containsKey(idDestino)) {
-            Ruta nuevaRuta = new Ruta(idOrigen, idDestino, tiempo, costo, dist);
+            Ruta nuevaRuta = new Ruta(idOrigen, idDestino, tiempo, costo, dist, transbordo);
             listasAdyacencia.get(idOrigen).add(nuevaRuta);
             return true;
         }
@@ -80,13 +80,13 @@ public class GrafoTransporte {
     }
 
     public boolean modificarRuta(String idOrigen, String idDestino,
-                              double tiempo, double costo, double dist) {
+                              double tiempo, double costo, double dist, boolean transbordo) {
         // Intentamos borrar la ruta vieja. Si devuelve true, es que sí existía.
         boolean sePudoEliminar = eliminarRuta(idOrigen, idDestino);
 
         // Si la borramos con éxito, creamos la nueva con los datos frescos
         if (sePudoEliminar) {
-            return agregarRuta(idOrigen, idDestino, tiempo, costo, dist);
+            return agregarRuta(idOrigen, idDestino, tiempo, costo, dist, transbordo);
         }
         // Si no se pudo eliminar (porque no existía), devolvemos false
         return false;

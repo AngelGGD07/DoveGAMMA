@@ -4,16 +4,20 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.layout.*;
-import logica.persistencia.GestorDB;
 
+// Importaciones necesarias de la lógica
+import logica.GrafoTransporte;
+import logica.CalculadorRuta;
+import logica.Ruta;
+import logica.algoritmos.CriterioOptim.CriterioOptimizacion;
+import logica.persistencia.GestorDB;
 
 import java.util.List;
 import java.util.Map;
 
-
 public class ControladorPrincipal {
+
     // === Estilos de mensajes ===
     private static final String ESTILO_EXITO =
             "-fx-text-fill: #7acc7a; -fx-background-color: #0a2a0a; -fx-background-radius: 6; " +
@@ -90,6 +94,15 @@ public class ControladorPrincipal {
     private final ObservableList<FilaParada> listaParadas = FXCollections.observableArrayList();
     private final ObservableList<FilaRuta>   listaRutas   = FXCollections.observableArrayList();
 
+    // === Nuevos Componentes Agregados FXML ===
+    @FXML private SplitPane splitPanePrincipal;
+    @FXML private VBox      panelListados;
+    @FXML private Button    btnTogglePanel;
+
+    @FXML private VBox      panelDetallesParada;
+    @FXML private Label     lblDetalleParadaTitulo;
+    @FXML private TextArea  txtDetallesRutasParada;
+
     @FXML
     public void initialize() {
         inicializarVisualizacionGrafo();
@@ -151,6 +164,31 @@ public class ControladorPrincipal {
             }
         });
         tablaRutas.setItems(listaRutas);
+
+        // Listener para detectar cuando tocas una parada en la tabla
+        tablaParadas.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+            if (newSelection != null) {
+                lblDetalleParadaTitulo.setText("Datos de la Parada: " + newSelection.getNombre());
+
+                StringBuilder detalles = new StringBuilder();
+                boolean tieneRutas = false;
+                for (logica.Ruta r : AdaptadorVisual.getInstance().getBackend().obtenerVecinos(newSelection.getId())) {
+                    tieneRutas = true;
+                    String nombreDest = AdaptadorVisual.getInstance().getStopName(r.getIdDestino());
+                    detalles.append("➡ ").append(nombreDest)
+                            .append(" (").append(r.getTiempo()).append("min, $").append(r.getCosto()).append(")\n");
+                }
+
+                if (!tieneRutas) detalles.append("No hay salidas desde esta parada.");
+
+                txtDetallesRutasParada.setText(detalles.toString());
+                panelDetallesParada.setVisible(true);
+                panelDetallesParada.setManaged(true);
+            } else {
+                panelDetallesParada.setVisible(false);
+                panelDetallesParada.setManaged(false);
+            }
+        });
     }
 
     // =====================================================
@@ -160,6 +198,20 @@ public class ControladorPrincipal {
     @FXML
     private void irACalcular() {
         tabPrincipal.getSelectionModel().select(2); // tab index 2 = Calcular
+    }
+
+    @FXML
+    private void togglePanelListados() {
+        if (splitPanePrincipal.getItems().contains(panelListados)) {
+            // Ocultar listados (pantalla completa para el grafo)
+            splitPanePrincipal.getItems().remove(panelListados);
+            btnTogglePanel.setText("Mostrar Listados");
+        } else {
+            // Mostrar listados de nuevo
+            splitPanePrincipal.getItems().add(0, panelListados);
+            splitPanePrincipal.setDividerPositions(0.60);
+            btnTogglePanel.setText("Ocultar Listados");
+        }
     }
 
     // =====================================================
@@ -510,7 +562,7 @@ public class ControladorPrincipal {
             return;
         }
 
-        logica.GrafoTransporte grafo = AdaptadorVisual.getInstance().getBackend();
+        GrafoTransporte grafo = AdaptadorVisual.getInstance().getBackend();
         if (!grafo.obtenerIdsParadas().contains(idInicio) || !grafo.obtenerIdsParadas().contains(idFin)) {
             mostrarError("El ID de inicio o fin no existe en el sistema.");
             return;
@@ -519,9 +571,11 @@ public class ControladorPrincipal {
         String resultado = AdaptadorVisual.getInstance().calcularRuta(idInicio, idFin, criterio);
         txtResultado.setText(resultado);
 
-        // resaltar en el mapa
-        logica.CalculadorRuta calc = new logica.CalculadorRuta();
-        List<String> ruta = calc.calcularDijkstra(grafo, idInicio, idFin, criterio);
+        // resaltar en el mapa invocando a la lógica correctamente
+        CalculadorRuta calc = new CalculadorRuta();
+        CriterioOptimizacion enumCriterio = CriterioOptimizacion.valueOf(criterio.toUpperCase());
+
+        List<String> ruta = calc.calcular(grafo, idInicio, idFin, enumCriterio);
         if (ruta != null && !ruta.isEmpty()) {
             AdaptadorVisual.getInstance().getVisualizationPanel().resaltarRuta(ruta);
         }
@@ -573,10 +627,10 @@ public class ControladorPrincipal {
     private void refrescarTablaRutas() {
         listaRutas.clear();
         AdaptadorVisual     ada  = AdaptadorVisual.getInstance();
-        logica.GrafoTransporte grafo = ada.getBackend();
+        GrafoTransporte grafo = ada.getBackend();
 
         for (String idParada : grafo.obtenerIdsParadas()) {
-            for (logica.Ruta ruta : grafo.obtenerVecinos(idParada)) {
+            for (Ruta ruta : grafo.obtenerVecinos(idParada)) {
                 String  idArista   = idParada + "-" + ruta.getIdDestino();
                 boolean transbordo = ada.tieneTransbordo(idArista);
                 listaRutas.add(new FilaRuta(
@@ -593,7 +647,7 @@ public class ControladorPrincipal {
     // =====================================================
 
     private void cargarDatosDesdeBD() {
-        logica.persistencia.GestorDB db = AdaptadorVisual.getInstance().getDatabaseManager();
+        GestorDB db = AdaptadorVisual.getInstance().getDatabaseManager();
         try {
             java.sql.ResultSet rsParadas = db.cargarParadas();
             while (rsParadas.next()) {

@@ -3,9 +3,10 @@ package grafica;
 import com.brunomnsilva.smartgraph.graph.Digraph;
 import com.brunomnsilva.smartgraph.graph.DigraphEdgeList;
 import logica.CalculadorRuta;
-import logica.algoritmos.Dijkstra;
 import logica.GrafoTransporte;
 import logica.Parada;
+import logica.Ruta;
+import logica.algoritmos.CriterioOptim.CriterioOptimizacion;
 import logica.persistencia.GestorDB;
 
 import java.util.Collections;
@@ -20,17 +21,17 @@ public class AdaptadorVisual {
     private static AdaptadorVisual instancia;
 
     private GrafoTransporte       logicaGrafo;
-    private logica.persistencia.GestorDB       gestorBaseDatos;
+    private GestorDB              gestorBaseDatos;
     private Digraph<String, String> grafoVisual;
     private PanelVisualizacion    panelVisualizacion;
 
     private final Map<String, String>   nombresParadas      = new HashMap<>();
-    private final Map<String, double[]> coordenadasParadas  = new HashMap<>(); // guarda x,y de cada parada
+    private final Map<String, double[]> coordenadasParadas  = new HashMap<>();
     private final Set<String>           rutasResaltadas     = new HashSet<>();
-    private final Set<String>           rutasConTransbordo  = new HashSet<>(); // "origen-destino"
+    private final Set<String>           rutasConTransbordo  = new HashSet<>();
 
     private AdaptadorVisual() {
-        this.gestorBaseDatos = new logica.persistencia.GestorDB();
+        this.gestorBaseDatos = new GestorDB();
         this.logicaGrafo     = new GrafoTransporte();
         this.grafoVisual     = new DigraphEdgeList<>();
     }
@@ -48,19 +49,16 @@ public class AdaptadorVisual {
 
     public PanelVisualizacion getVisualizationPanel() { return panelVisualizacion; }
     public GrafoTransporte    getBackend()            { return logicaGrafo; }
-    public logica.persistencia.GestorDB    getDatabaseManager()    { return gestorBaseDatos; }
+    public GestorDB           getDatabaseManager()    { return gestorBaseDatos; }
 
-    // retorna el mapa completo de ids->nombres (solo lectura)
     public Map<String, String> getNombresParadas() {
         return Collections.unmodifiableMap(nombresParadas);
     }
 
-    // retorna [x, y] de una parada
     public double[] getCoordenadas(String id) {
         return coordenadasParadas.getOrDefault(id, new double[]{0.0, 0.0});
     }
 
-    // true si esa ruta tiene transbordo
     public boolean tieneTransbordo(String idArista) {
         return rutasConTransbordo.contains(idArista);
     }
@@ -73,7 +71,7 @@ public class AdaptadorVisual {
         if (ok) {
             grafoVisual.insertVertex(id);
             nombresParadas.put(id, nombre);
-            coordenadasParadas.put(id, new double[]{x, y}); // guardamos coords
+            coordenadasParadas.put(id, new double[]{x, y});
             gestorBaseDatos.guardarParada(id, nombre, x, y);
 
             if (panelVisualizacion != null) {
@@ -103,7 +101,7 @@ public class AdaptadorVisual {
                             .findFirst().get()
             );
             nombresParadas.remove(id);
-            coordenadasParadas.remove(id); // limpiamos coords
+            coordenadasParadas.remove(id);
             gestorBaseDatos.eliminarParada(id);
 
             if (panelVisualizacion != null) panelVisualizacion.actualizarGrafico();
@@ -117,7 +115,6 @@ public class AdaptadorVisual {
         return agregarRutaConTransbordo(origen, destino, tiempo, distancia, costo, false);
     }
 
-    // versión con transbordo - úsala desde el controlador
     public boolean agregarRutaConTransbordo(String origen, String destino,
                                             double tiempo, double distancia, double costo,
                                             boolean transbordo) {
@@ -141,7 +138,6 @@ public class AdaptadorVisual {
         return modificarRutaConTransbordo(origen, destino, tiempo, distancia, costo, false);
     }
 
-    // versión con transbordo
     public boolean modificarRutaConTransbordo(String origen, String destino,
                                               double tiempo, double distancia, double costo,
                                               boolean transbordo) {
@@ -167,7 +163,7 @@ public class AdaptadorVisual {
                     .findFirst()
                     .ifPresent(edge -> grafoVisual.removeEdge(edge));
 
-            rutasConTransbordo.remove(idArista); // limpiamos transbordo si tenía
+            rutasConTransbordo.remove(idArista);
             gestorBaseDatos.eliminarRuta(origen, destino);
 
             if (panelVisualizacion != null) panelVisualizacion.actualizarGrafico();
@@ -178,7 +174,10 @@ public class AdaptadorVisual {
 
     public String calcularRuta(String idInicio, String idFin, String criterio) {
         CalculadorRuta calculador = new CalculadorRuta();
-        List<String> camino = logica.algoritmos.Dijkstra(logicaGrafo, idInicio, idFin, criterio);
+
+        // CORRECCIÓN: Usando la importación en lugar de la ruta calificada directa
+        CriterioOptimizacion enumCriterio = CriterioOptimizacion.valueOf(criterio.toUpperCase());
+        List<String> camino = calculador.calcular(logicaGrafo, idInicio, idFin, enumCriterio);
 
         rutasResaltadas.clear();
 
@@ -200,7 +199,7 @@ public class AdaptadorVisual {
                 String idArista   = actual + "-" + siguiente;
                 rutasResaltadas.add(idArista);
 
-                for (logica.Ruta r : logicaGrafo.obtenerVecinos(actual)) {
+                for (Ruta r : logicaGrafo.obtenerVecinos(actual)) {
                     if (r.getIdDestino().equals(siguiente)) {
                         totalTiempo     += r.getTiempo();
                         totalDistancia  += r.getDistancia();
@@ -238,7 +237,7 @@ public class AdaptadorVisual {
         if (partes.length == 2) {
             String origen  = partes[0];
             String destino = partes[1];
-            for (logica.Ruta r : logicaGrafo.obtenerVecinos(origen)) {
+            for (Ruta r : logicaGrafo.obtenerVecinos(origen)) {
                 if (r.getIdDestino().equals(destino)) {
                     return r.getTiempo() + " min | " + r.getDistancia() + " km | $" + r.getCosto();
                 }

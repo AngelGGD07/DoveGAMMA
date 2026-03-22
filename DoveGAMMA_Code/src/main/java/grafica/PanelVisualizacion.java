@@ -10,19 +10,20 @@ import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.layout.StackPane;
 
+// CORRECCIÓN: Importaciones añadidas
+import logica.GrafoTransporte;
+import logica.Ruta;
+
 import java.util.List;
 
 public class PanelVisualizacion extends StackPane {
 
     private SmartGraphPanel<String, String> graphView;
+    private Digraph<String, String> grafoBase;
 
-    /*
-       Función: PanelVisualizacion
-       Argumentos: (Digraph<String, String>) grafoVisual: el grafo lógico base.
-       Objetivo: Inicializar el panel gráfico inyectando Nombres de Paradas, filtrando etiquetas de rutas y configurando el doble clic.
-       Retorno: (void): Constructor.
-    */
     public PanelVisualizacion(Digraph<String, String> grafoVisual) {
+        this.grafoBase = grafoVisual;
+
         SmartPlacementStrategy strategy = new SmartCircularSortedPlacementStrategy();
         com.brunomnsilva.smartgraph.graphview.SmartGraphProperties properties = new com.brunomnsilva.smartgraph.graphview.SmartGraphProperties();
 
@@ -37,14 +38,13 @@ public class PanelVisualizacion extends StackPane {
 
         graphView = new SmartGraphPanel<>(grafoVisual, properties, strategy, cssUri);
 
-        graphView.setVertexLabelProvider(id -> grafica.AdaptadorVisual.getInstance().getStopName(id));
+        graphView.setVertexLabelProvider(id -> AdaptadorVisual.getInstance().getStopName(id));
 
-        graphView.setEdgeLabelProvider(idArista -> grafica.AdaptadorVisual.getInstance().getEdgeDataAsString(idArista));
+        graphView.setEdgeLabelProvider(idArista -> AdaptadorVisual.getInstance().getEdgeDataAsString(idArista));
 
-        // Doble click en rutas
         graphView.setEdgeDoubleClickAction(edge -> {
             String idLogicoArista = edge.getUnderlyingEdge().element();
-            String detalles = grafica.AdaptadorVisual.getInstance().getDetallesRuta(idLogicoArista);
+            String detalles = AdaptadorVisual.getInstance().getDetallesRuta(idLogicoArista);
 
             Platform.runLater(() -> {
                 Alert alerta = new Alert(Alert.AlertType.INFORMATION);
@@ -55,19 +55,18 @@ public class PanelVisualizacion extends StackPane {
             });
         });
 
-        // Doble click en las paradas (Nodos visuales)
         graphView.setVertexDoubleClickAction(vertex -> {
             String idParada = vertex.getUnderlyingVertex().element();
-            String nombre = grafica.AdaptadorVisual.getInstance().getStopName(idParada);
-            logica.GrafoTransporte grafo = grafica.AdaptadorVisual.getInstance().getBackend();
+            String nombre = AdaptadorVisual.getInstance().getStopName(idParada);
+            GrafoTransporte grafo = AdaptadorVisual.getInstance().getBackend();
 
             StringBuilder sb = new StringBuilder();
             sb.append("Rutas de salida desde ").append(nombre).append(":\n\n");
             boolean tieneRutas = false;
 
-            for (logica.Ruta r : grafo.obtenerVecinos(idParada)) {
+            for (Ruta r : grafo.obtenerVecinos(idParada)) {
                 tieneRutas = true;
-                String destName = grafica.AdaptadorVisual.getInstance().getStopName(r.getIdDestino());
+                String destName = AdaptadorVisual.getInstance().getStopName(r.getIdDestino());
                 sb.append("➡ ").append(destName)
                         .append(" (").append(r.getTiempo()).append(" min, ")
                         .append(r.getDistancia()).append(" km, $")
@@ -88,39 +87,18 @@ public class PanelVisualizacion extends StackPane {
         this.getChildren().add(graphView);
     }
 
-    /*
-       Función: iniciarVisualizacion
-       Argumentos: Ninguno
-       Objetivo: Ejecutar el renderizado inicial de la librería gráfica una vez que el panel está agregado en la escena.
-       Retorno: (void): Solo ejecuta una instrucción en el hilo gráfico de JavaFX.
-    */
     public void iniciarVisualizacion() {
         Platform.runLater(() -> {
             graphView.init();
         });
     }
 
-    /*
-       Función: actualizarGrafico
-       Argumentos: Ninguno
-       Objetivo: Refrescar la vista para repintar etiquetas y aplicar cambios de nodos.
-       Retorno: (void): Modifica el estado del panel sin devolver datos.
-    */
     public void actualizarGrafico() {
         Platform.runLater(() -> {
             graphView.update();
         });
     }
 
-    /*
-       Función: fijarCoordenadasNodo
-       Argumentos:
-             (String) idNodo: el identificador único del nodo que se desea mover.
-             (double) x: la coordenada horizontal objetivo en pantalla.
-             (double) y: la coordenada vertical objetivo en pantalla.
-       Objetivo: Posicionar un nodo específico en unas coordenadas exactas en la pantalla de la interfaz.
-       Retorno: (void): Modifica atributos visuales.
-    */
     public void fijarCoordenadasNodo(String idNodo, double x, double y) {
         Platform.runLater(() -> {
             SmartStylableNode nodo = graphView.getStylableVertex(idNodo);
@@ -131,17 +109,21 @@ public class PanelVisualizacion extends StackPane {
         });
     }
 
-    /*
-       Función: resaltarRuta
-       Argumentos: (List<String>) idsParadas: la lista ordenada con los identificadores de los nodos que conforman la ruta calculada.
-       Objetivo: Alterar las clases CSS de los nodos y aristas específicos para destacar visualmente el camino más corto en el mapa.
-       Retorno: (void): Altera visualmente la aplicación sin devolver datos al controlador.
-    */
     public void resaltarRuta(List<String> idsParadas) {
         Platform.runLater(() -> {
+            grafoBase.vertices().forEach(v -> {
+                SmartStylableNode nodo = graphView.getStylableVertex(v.element());
+                if (nodo != null) {
+                    nodo.setStyleClass("vertex");
+                }
+            });
 
-            graphView.getSmartVertices().forEach(v -> v.setStyleClass("vertex"));
-            graphView.getSmartEdges().forEach(e -> e.setStyleClass("edge"));
+            grafoBase.edges().forEach(e -> {
+                SmartStylableNode arista = graphView.getStylableEdge(e.element());
+                if (arista != null) {
+                    arista.setStyleClass("edge");
+                }
+            });
 
             if (idsParadas == null || idsParadas.isEmpty()) return;
 
@@ -166,12 +148,6 @@ public class PanelVisualizacion extends StackPane {
         });
     }
 
-    /*
-       Función: clearAll
-       Argumentos: Ninguno
-       Objetivo: Cumplir con la interfaz o métodos anteriores de limpieza.
-       Retorno: (void): No retorna valores.
-    */
     public void clearAll() {
     }
 }

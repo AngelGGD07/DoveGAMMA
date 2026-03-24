@@ -6,19 +6,14 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 
-// Importaciones necesarias de la lógica
 import logica.GrafoTransporte;
-import logica.CalculadorRuta;
 import logica.Ruta;
-import logica.algoritmos.CriterioOptim.CriterioOptimizacion;
 import logica.persistencia.GestorDB;
 
-import java.util.List;
 import java.util.Map;
 
 public class ControladorPrincipal {
 
-    // === Estilos de mensajes ===
     private static final String ESTILO_EXITO =
             "-fx-text-fill: #7acc7a; -fx-background-color: #0a2a0a; -fx-background-radius: 6; " +
                     "-fx-padding: 8; -fx-font-size: 11; -fx-font-family: 'Segoe UI';";
@@ -27,29 +22,26 @@ public class ControladorPrincipal {
             "-fx-text-fill: #e07070; -fx-background-color: #2a0a0a; -fx-background-radius: 6; " +
                     "-fx-padding: 8; -fx-font-size: 11; -fx-font-family: 'Segoe UI';";
 
-    private static final String[] CRITERIOS_RUTA = {"tiempo", "distancia", "costo", "transbordos"};
-
-    // === Componentes del TabPane ===
+    // Tabs
     @FXML private TabPane  tabPrincipal;
-    @FXML private Button   btnNavCalcular;
 
-    // === Tabla Paradas ===
+    // Tabla Paradas
     @FXML private TableView<FilaParada>           tablaParadas;
     @FXML private TableColumn<FilaParada, String> colParadaId;
     @FXML private TableColumn<FilaParada, String> colParadaNombre;
     @FXML private TableColumn<FilaParada, String> colParadaX;
     @FXML private TableColumn<FilaParada, String> colParadaY;
 
-    // === Tabla Rutas ===
-    @FXML private TableView<FilaRuta>              tablaRutas;
-    @FXML private TableColumn<FilaRuta, String>    colRutaOrigen;
-    @FXML private TableColumn<FilaRuta, String>    colRutaDestino;
-    @FXML private TableColumn<FilaRuta, String>    colRutaTiempo;
-    @FXML private TableColumn<FilaRuta, String>    colRutaDistancia;
-    @FXML private TableColumn<FilaRuta, String>    colRutaCosto;
-    @FXML private TableColumn<FilaRuta, Boolean>   colRutaTransbordo;
+    // Tabla Rutas
+    @FXML private TableView<FilaRuta>             tablaRutas;
+    @FXML private TableColumn<FilaRuta, String>   colRutaOrigen;
+    @FXML private TableColumn<FilaRuta, String>   colRutaDestino;
+    @FXML private TableColumn<FilaRuta, String>   colRutaTiempo;
+    @FXML private TableColumn<FilaRuta, String>   colRutaDistancia;
+    @FXML private TableColumn<FilaRuta, String>   colRutaCosto;
+    @FXML private TableColumn<FilaRuta, Boolean>  colRutaTransbordo;
 
-    // === Forms de Paradas ===
+    // Forms Paradas
     @FXML private VBox      formAgregarParada;
     @FXML private TextField txtIdParada;
     @FXML private TextField txtNombreParada;
@@ -60,7 +52,7 @@ public class ControladorPrincipal {
     @FXML private TextField txtModIdParada;
     @FXML private TextField txtModNombreParada;
 
-    // === Forms de Rutas ===
+    // Forms Rutas
     @FXML private VBox      formAgregarRuta;
     @FXML private TextField txtOrigenRuta;
     @FXML private TextField txtDestinoRuta;
@@ -77,38 +69,31 @@ public class ControladorPrincipal {
     @FXML private TextField txtModCostoRuta;
     @FXML private CheckBox  chkModTransbordoRuta;
 
-    // === Calcular ===
-    @FXML private TextField txtCalcInicio;
-    @FXML private TextField txtCalcFin;
-    @FXML private ComboBox<String> cmbCriterio;
-    @FXML private TextArea  txtResultado;
-    @FXML private VBox      panelResultado;
-
-    // === Mensaje global ===
+    // Mensaje global
     @FXML private Label     lblMensaje;
 
-    // === Grafo ===
+    // Contenedor del grafo
     @FXML private StackPane contenedorGrafo;
 
-    // Listas que alimentan las tablas
-    private final ObservableList<FilaParada> listaParadas = FXCollections.observableArrayList();
-    private final ObservableList<FilaRuta>   listaRutas   = FXCollections.observableArrayList();
-
-    // === Nuevos Componentes Agregados FXML ===
-    @FXML private SplitPane splitPanePrincipal;
+    // Los dos paneles que se alternan
     @FXML private VBox      panelListados;
+    @FXML private StackPane panelGrafo;
+
+    // Botón del sidebar
     @FXML private Button    btnTogglePanel;
 
+    // Detalles de parada (panel inferior al seleccionar en tabla)
     @FXML private VBox      panelDetallesParada;
     @FXML private Label     lblDetalleParadaTitulo;
     @FXML private TextArea  txtDetallesRutasParada;
+
+    private final ObservableList<FilaParada> listaParadas = FXCollections.observableArrayList();
+    private final ObservableList<FilaRuta>   listaRutas   = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
         inicializarVisualizacionGrafo();
         configurarTablas();
-        cmbCriterio.setItems(FXCollections.observableArrayList(CRITERIOS_RUTA));
-        cmbCriterio.getSelectionModel().selectFirst();
         cargarDatosDesdeBD();
     }
 
@@ -130,21 +115,18 @@ public class ControladorPrincipal {
     }
 
     private void configurarTablas() {
-        // columnas de paradas
         colParadaId.setCellValueFactory(data -> data.getValue().idProperty());
         colParadaNombre.setCellValueFactory(data -> data.getValue().nombreProperty());
         colParadaX.setCellValueFactory(data -> data.getValue().xProperty());
         colParadaY.setCellValueFactory(data -> data.getValue().yProperty());
         tablaParadas.setItems(listaParadas);
 
-        // columnas de rutas
         colRutaOrigen.setCellValueFactory(data -> data.getValue().origenProperty());
         colRutaDestino.setCellValueFactory(data -> data.getValue().destinoProperty());
         colRutaTiempo.setCellValueFactory(data -> data.getValue().tiempoProperty());
         colRutaDistancia.setCellValueFactory(data -> data.getValue().distanciaProperty());
         colRutaCosto.setCellValueFactory(data -> data.getValue().costoProperty());
 
-        // columna transbordo con checkbox deshabilitado (solo lectura)
         colRutaTransbordo.setCellValueFactory(data -> data.getValue().transbordoProperty().asObject());
         colRutaTransbordo.setCellFactory(col -> new TableCell<FilaRuta, Boolean>() {
             private final CheckBox cb = new CheckBox();
@@ -165,20 +147,18 @@ public class ControladorPrincipal {
         });
         tablaRutas.setItems(listaRutas);
 
-        // Listener para detectar cuando tocas una parada en la tabla
-        tablaParadas.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-            if (newSelection != null) {
-                lblDetalleParadaTitulo.setText("Datos de la Parada: " + newSelection.getNombre());
+        tablaParadas.getSelectionModel().selectedItemProperty().addListener((obs, oldSel, newSel) -> {
+            if (newSel != null) {
+                lblDetalleParadaTitulo.setText("Datos de la Parada: " + newSel.getNombre());
 
                 StringBuilder detalles = new StringBuilder();
                 boolean tieneRutas = false;
-                for (logica.Ruta r : AdaptadorVisual.getInstance().getBackend().obtenerVecinos(newSelection.getId())) {
+                for (Ruta r : AdaptadorVisual.getInstance().getBackend().obtenerVecinos(newSel.getId())) {
                     tieneRutas = true;
                     String nombreDest = AdaptadorVisual.getInstance().getStopName(r.getIdDestino());
                     detalles.append("➡ ").append(nombreDest)
                             .append(" (").append(r.getTiempo()).append("min, $").append(r.getCosto()).append(")\n");
                 }
-
                 if (!tieneRutas) detalles.append("No hay salidas desde esta parada.");
 
                 txtDetallesRutasParada.setText(detalles.toString());
@@ -196,22 +176,14 @@ public class ControladorPrincipal {
     // =====================================================
 
     @FXML
-    private void irACalcular() {
-        tabPrincipal.getSelectionModel().select(2); // tab index 2 = Calcular
-    }
-
-    @FXML
     private void togglePanelListados() {
-        if (splitPanePrincipal.getItems().contains(panelListados)) {
-            // Ocultar listados (pantalla completa para el grafo)
-            splitPanePrincipal.getItems().remove(panelListados);
-            btnTogglePanel.setText("Mostrar Listados");
-        } else {
-            // Mostrar listados de nuevo
-            splitPanePrincipal.getItems().add(0, panelListados);
-            splitPanePrincipal.setDividerPositions(0.60);
-            btnTogglePanel.setText("Ocultar Listados");
-        }
+        // alterna entre ver listas o ver el grafo, uno a la vez
+        boolean mostrandoListados = panelListados.isVisible();
+
+        panelListados.setVisible(!mostrandoListados);
+        panelGrafo.setVisible(mostrandoListados);
+
+        btnTogglePanel.setText(mostrandoListados ? "Mostrar Listados" : "Mostrar Grafo");
     }
 
     // =====================================================
@@ -239,7 +211,6 @@ public class ControladorPrincipal {
             return;
         }
 
-        // pre-llenar con los datos de la fila seleccionada
         txtModIdParada.setText(fila.getId());
         txtModNombreParada.setText(fila.getNombre());
 
@@ -289,7 +260,6 @@ public class ControladorPrincipal {
             return;
         }
 
-        // pre-llenar con los datos de la fila seleccionada
         txtModOrigenRuta.setText(fila.getOrigen());
         txtModDestinoRuta.setText(fila.getDestino());
         txtModTiempoRuta.setText(fila.getTiempo());
@@ -325,10 +295,10 @@ public class ControladorPrincipal {
 
     @FXML
     private void agregarParada() {
-        String id      = txtIdParada.getText().trim();
-        String nombre  = txtNombreParada.getText().trim();
-        String valX    = txtXParada.getText().trim();
-        String valY    = txtYParada.getText().trim();
+        String id     = txtIdParada.getText().trim();
+        String nombre = txtNombreParada.getText().trim();
+        String valX   = txtXParada.getText().trim();
+        String valY   = txtYParada.getText().trim();
 
         if (camposVacios(id, nombre, valX, valY)) {
             mostrarError("Todos los campos son obligatorios.");
@@ -363,7 +333,7 @@ public class ControladorPrincipal {
 
     @FXML
     private void modificarParada() {
-        String id         = txtModIdParada.getText().trim();
+        String id          = txtModIdParada.getText().trim();
         String nuevoNombre = txtModNombreParada.getText().trim();
 
         if (camposVacios(id, nuevoNombre)) {
@@ -397,18 +367,17 @@ public class ControladorPrincipal {
             return;
         }
 
-        // Confirmación antes de borrar
         Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
         confirmacion.setTitle("Confirmar eliminación");
         confirmacion.setHeaderText("¿Eliminar la parada \"" + fila.getNombre() + "\"?");
-        confirmacion.setContentText("Se eliminarán también todas las rutas conectadas a esta parada. Esta acción no se puede deshacer.");
+        confirmacion.setContentText("Se eliminarán también todas las rutas conectadas. No se puede deshacer.");
 
         confirmacion.showAndWait().ifPresent(tipo -> {
             if (tipo == ButtonType.OK) {
                 boolean ok = AdaptadorVisual.getInstance().eliminarParada(fila.getId());
                 if (ok) {
                     refrescarTablaParadas();
-                    refrescarTablaRutas(); // las rutas de esa parada desaparecen
+                    refrescarTablaRutas();
                     AdaptadorVisual.getInstance().refrescarVisualizacion();
                     mostrarExito("✔  Parada eliminada: " + fila.getId());
                 } else {
@@ -543,49 +512,6 @@ public class ControladorPrincipal {
     }
 
     // =====================================================
-    // CALCULAR RUTA (Dijkstra)
-    // =====================================================
-
-    @FXML
-    private void calcularRuta() {
-        String idInicio = txtCalcInicio.getText().trim();
-        String idFin    = txtCalcFin.getText().trim();
-        String criterio = cmbCriterio.getValue();
-
-        if (camposVacios(idInicio, idFin)) {
-            mostrarError("Escribe el ID de inicio y fin.");
-            return;
-        }
-
-        if (idInicio.equals(idFin)) {
-            mostrarError("Inicio y fin deben ser diferentes.");
-            return;
-        }
-
-        GrafoTransporte grafo = AdaptadorVisual.getInstance().getBackend();
-        if (!grafo.obtenerIdsParadas().contains(idInicio) || !grafo.obtenerIdsParadas().contains(idFin)) {
-            mostrarError("El ID de inicio o fin no existe en el sistema.");
-            return;
-        }
-
-        String resultado = AdaptadorVisual.getInstance().calcularRuta(idInicio, idFin, criterio);
-        txtResultado.setText(resultado);
-
-        // resaltar en el mapa invocando a la lógica correctamente
-        CalculadorRuta calc = new CalculadorRuta();
-        CriterioOptimizacion enumCriterio = CriterioOptimizacion.valueOf(criterio.toUpperCase());
-
-        List<String> ruta = calc.calcular(grafo, idInicio, idFin, enumCriterio);
-        if (ruta != null && !ruta.isEmpty()) {
-            AdaptadorVisual.getInstance().getVisualizationPanel().resaltarRuta(ruta);
-        }
-
-        panelResultado.setVisible(true);
-        panelResultado.setManaged(true);
-        ocultarMensaje();
-    }
-
-    // =====================================================
     // LIMPIAR TODO
     // =====================================================
 
@@ -594,7 +520,7 @@ public class ControladorPrincipal {
         Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
         confirmacion.setTitle("Confirmar limpieza");
         confirmacion.setHeaderText("¿Limpiar todo el grafo?");
-        confirmacion.setContentText("Se eliminarán todas las paradas y rutas de la sesión actual.");
+        confirmacion.setContentText("Se eliminarán todas las paradas y rutas de la sesión.");
 
         confirmacion.showAndWait().ifPresent(tipo -> {
             if (tipo == ButtonType.OK) {
@@ -602,9 +528,6 @@ public class ControladorPrincipal {
                 inicializarVisualizacionGrafo();
                 listaParadas.clear();
                 listaRutas.clear();
-                txtResultado.clear();
-                panelResultado.setVisible(false);
-                panelResultado.setManaged(false);
                 mostrarExito("✔  Grafo limpiado.");
             }
         });
@@ -626,7 +549,7 @@ public class ControladorPrincipal {
 
     private void refrescarTablaRutas() {
         listaRutas.clear();
-        AdaptadorVisual     ada  = AdaptadorVisual.getInstance();
+        AdaptadorVisual ada   = AdaptadorVisual.getInstance();
         GrafoTransporte grafo = ada.getBackend();
 
         for (String idParada : grafo.obtenerIdsParadas()) {

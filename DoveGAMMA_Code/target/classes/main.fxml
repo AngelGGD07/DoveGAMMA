@@ -39,7 +39,7 @@
             <Separator style="-fx-background-color: #2a1040;"/>
 
             <VBox spacing="4" style="-fx-padding: 16 8 8 8;">
-                <Button fx:id="btnTogglePanel" text="Ocultar Listados" alignment="CENTER_LEFT"
+                <Button fx:id="btnTogglePanel" text="Mostrar Grafo" alignment="CENTER_LEFT"
                         graphicTextGap="12" onAction="#togglePanelListados"
                         maxWidth="Infinity" prefHeight="44"
                         style="-fx-background-color: #2a1a40; -fx-text-fill: #d4a574; -fx-padding: 0 0 0 16;
@@ -71,17 +71,25 @@
         </VBox>
     </left>
 
+    <!--
+        Ahora el center es un StackPane simple.
+        panelListados y panelGrafo se pisan uno al otro —
+        solo uno está visible a la vez, el que toca.
+    -->
     <center>
-        <SplitPane fx:id="splitPanePrincipal" dividerPositions="0.60"
-                   style="-fx-background-color: #0a0714; -fx-padding: 0; -fx-box-border: transparent;">
+        <StackPane>
 
-            <VBox fx:id="panelListados" minWidth="600" style="-fx-background-color: #0e0b1a;">
+            <!-- ====== PANEL LISTADOS (arranca visible) ====== -->
+            <VBox fx:id="panelListados"
+                  maxWidth="Infinity" maxHeight="Infinity"
+                  style="-fx-background-color: #0e0b1a;">
 
                 <TabPane fx:id="tabPrincipal"
                          tabClosingPolicy="UNAVAILABLE"
                          VBox.vgrow="ALWAYS"
                          style="-fx-background-color: #0e0b1a;">
 
+                    <!-- TAB: PARADAS -->
                     <Tab text="Paradas">
                         <VBox style="-fx-background-color: #0e0b1a; -fx-padding: 8 8 4 8;"
                               VBox.vgrow="ALWAYS" spacing="8">
@@ -240,6 +248,7 @@
                         </VBox>
                     </Tab>
 
+                    <!-- TAB: RUTAS -->
                     <Tab text="Rutas">
                         <VBox style="-fx-background-color: #0e0b1a; -fx-padding: 8 8 4 8;"
                               VBox.vgrow="ALWAYS" spacing="8">
@@ -431,69 +440,25 @@
 
             </VBox>
 
-            <StackPane style="-fx-background-color: #0a0714;">
+            <!-- ====== PANEL GRAFO (arranca oculto) ====== -->
+            <!--
+                El grafo empieza invisible. PanelVisualizacion
+                pone sus propios overlays encima del grafo
+                (el label de estado + los popups de criterios).
+            -->
+            <StackPane fx:id="panelGrafo"
+                       maxWidth="Infinity" maxHeight="Infinity"
+                       visible="false"
+                       style="-fx-background-color: #0a0714;">
                 <ScrollPane style="-fx-background-color: #0a0714; -fx-background: #0a0714;"
                             fitToWidth="true" fitToHeight="true" pannable="true">
                     <content>
                         <StackPane fx:id="contenedorGrafo" style="-fx-background-color: #0a0714;"/>
                     </content>
                 </ScrollPane>
-
-                <VBox maxWidth="280" maxHeight="450" spacing="10"
-                      StackPane.alignment="TOP_RIGHT"
-                      style="-fx-background-color: rgba(14, 11, 26, 0.85); -fx-padding: 15;
-                             -fx-background-radius: 10; -fx-border-color: #3a1a50; -fx-border-radius: 10;
-                             -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 10, 0, 0, 5);
-                             -fx-translate-x: -20; -fx-translate-y: 20;">
-
-                    <Label text="Calcular Ruta"
-                           style="-fx-font-size: 14; -fx-font-weight: BOLD;
-                                  -fx-text-fill: #d4a574; -fx-font-family: 'Segoe UI';"/>
-
-                    <Label text="ID Inicio:" style="-fx-text-fill: #9a7a5a; -fx-font-size: 11;"/>
-                    <TextField fx:id="txtCalcInicio" promptText="Ej: P1"
-                               style="-fx-background-color: #1e1030; -fx-text-fill: #e8c9a8;
-                                      -fx-prompt-text-fill: #4a3a5a; -fx-background-radius: 6;
-                                      -fx-border-color: #3a1a50; -fx-border-radius: 6; -fx-padding: 7;"/>
-
-                    <Label text="ID Destino:" style="-fx-text-fill: #9a7a5a; -fx-font-size: 11;"/>
-                    <TextField fx:id="txtCalcFin" promptText="Ej: P4"
-                               style="-fx-background-color: #1e1030; -fx-text-fill: #e8c9a8;
-                                      -fx-prompt-text-fill: #4a3a5a; -fx-background-radius: 6;
-                                      -fx-border-color: #3a1a50; -fx-border-radius: 6; -fx-padding: 7;"/>
-
-                    <Label text="Criterio:" style="-fx-text-fill: #9a7a5a; -fx-font-size: 11;"/>
-                    <ComboBox fx:id="cmbCriterio" maxWidth="Infinity"
-                              style="-fx-background-color: #1e1030; -fx-mark-color: #d4a574;
-                                     -fx-base: #1e1030; -fx-background-radius: 6;"/>
-
-                    <Button text="Calcular" onAction="#calcularRuta"
-                            alignment="CENTER" graphicTextGap="8"
-                            maxWidth="Infinity" prefHeight="36"
-                            style="-fx-background-color: #a65d48; -fx-text-fill: #e8c9a8;
-                                   -fx-font-weight: BOLD; -fx-font-size: 12;
-                                   -fx-background-radius: 8; -fx-cursor: hand;">
-                        <graphic>
-                            <SVGPath content="M21.71 11.29l-9-9c-.39-.39-1.02-.39-1.41 0l-9 9c-.39.39-.39 1.02 0 1.41l9 9c.39.39 1.02.39 1.41 0l9-9c.39-.38.39-1.01 0-1.41zM14 14.5V12h-4v3H8v-4c0-.55.45-1 1-1h5V7.5l3.5 3.5-3.5 3.5z"
-                                     fill="#e8c9a8" scaleX="0.75" scaleY="0.75"/>
-                        </graphic>
-                    </Button>
-
-                    <VBox fx:id="panelResultado" spacing="6" visible="false" managed="false" VBox.vgrow="ALWAYS">
-                        <Separator style="-fx-background-color: #2a1040;"/>
-                        <Label text="Resultado:"
-                               style="-fx-text-fill: #d4a574; -fx-font-weight: BOLD; -fx-font-size: 11;"/>
-                        <TextArea fx:id="txtResultado" editable="false" wrapText="true"
-                                  VBox.vgrow="ALWAYS"
-                                  style="-fx-control-inner-background: #160e28; -fx-background-color: #160e28;
-                                         -fx-text-fill: #e8c9a8; -fx-font-family: 'Consolas';
-                                         -fx-font-size: 11; -fx-border-color: #2a1040;
-                                         -fx-border-radius: 6; -fx-background-radius: 6;"/>
-                    </VBox>
-                </VBox>
             </StackPane>
 
-        </SplitPane>
+        </StackPane>
     </center>
 
 </BorderPane>

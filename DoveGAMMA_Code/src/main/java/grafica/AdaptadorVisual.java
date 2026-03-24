@@ -111,7 +111,7 @@ public class AdaptadorVisual {
     }
 
     public boolean agregarRuta(String origen, String destino,
-                               double tiempo, double distancia, double costo) {
+                               double tiempo, double distancia, double costo, boolean transbordo) {
         return agregarRutaConTransbordo(origen, destino, tiempo, distancia, costo, false);
     }
 
@@ -120,10 +120,10 @@ public class AdaptadorVisual {
                                             boolean transbordo) {
         if (!nombresParadas.containsKey(origen) || !nombresParadas.containsKey(destino)) return false;
 
-        if (logicaGrafo.agregarRuta(origen, destino, tiempo, costo, distancia)) {
+        if (logicaGrafo.agregarRuta(origen, destino, tiempo, costo, distancia, transbordo)) {
             String idArista = origen + "-" + destino;
             grafoVisual.insertEdge(origen, destino, idArista);
-            gestorBaseDatos.guardarRuta(origen, destino, tiempo, distancia, costo);
+            gestorBaseDatos.guardarRuta(origen, destino, tiempo, distancia, costo, transbordo);
 
             if (transbordo) rutasConTransbordo.add(idArista);
 
@@ -141,8 +141,8 @@ public class AdaptadorVisual {
     public boolean modificarRutaConTransbordo(String origen, String destino,
                                               double tiempo, double distancia, double costo,
                                               boolean transbordo) {
-        if (logicaGrafo.modificarRuta(origen, destino, tiempo, costo, distancia)) {
-            gestorBaseDatos.guardarRuta(origen, destino, tiempo, distancia, costo);
+        if (logicaGrafo.modificarRuta(origen, destino, tiempo, costo, distancia, transbordo)) {
+            gestorBaseDatos.guardarRuta(origen, destino, tiempo, distancia, costo, transbordo);
 
             String idArista = origen + "-" + destino;
             if (transbordo) {

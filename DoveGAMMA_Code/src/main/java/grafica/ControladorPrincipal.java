@@ -666,7 +666,8 @@ public class ControladorPrincipal {
                         rsRutas.getString("destino"),
                         rsRutas.getDouble("tiempo"),
                         rsRutas.getDouble("distancia"),
-                        rsRutas.getDouble("costo")
+                        rsRutas.getDouble("costo"),
+                        rsRutas.getBoolean("transbordo")
                 );
             }
 

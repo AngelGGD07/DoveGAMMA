@@ -299,7 +299,6 @@ public class PanelVisualizacion extends StackPane {
             else       rowVehiculo2.getChildren().add(card);
         }
 
-        // --- sección criterio
         Label lblSecCriterio = crearLabelSeccion("CRITERIO DE OPTIMIZACIÓN");
 
         String[][] criteriosDatos = {
@@ -550,10 +549,6 @@ public class PanelVisualizacion extends StackPane {
         resultStage.show();
     }
 
-    // =====================================================
-    // Helpers de construcción UI
-    // =====================================================
-
     private void cancelarSeleccion() {
         if (paradaOrigen != null) {
             SmartStylableNode nodo = graphView.getStylableVertex(paradaOrigen);
@@ -626,7 +621,6 @@ public class PanelVisualizacion extends StackPane {
         return card;
     }
 
-    // card de vehículo con SVGPath y nombre
     private VBox crearCardVehiculo(String nombre, String svgPath, String colorHex) {
         SVGPath icono = new SVGPath();
         icono.setContent(svgPath);
@@ -675,7 +669,6 @@ public class PanelVisualizacion extends StackPane {
                 "-fx-border-color: " + borde + "; -fx-border-radius: 7; -fx-border-width: " + ancho + ";";
     }
 
-    // chip de contexto en el resultado
     private Label crearChip(String texto, String colorHex) {
         Label chip = new Label(texto);
         chip.setStyle(
@@ -687,7 +680,6 @@ public class PanelVisualizacion extends StackPane {
         return chip;
     }
 
-    // retorna el SVG correcto según el clima
     private String svgPathClima(SimuladorCondiciones.Clima clima) {
         switch (clima) {
             case SOLEADO:  return SVG_SOL;
@@ -697,10 +689,6 @@ public class PanelVisualizacion extends StackPane {
             default:       return SVG_NUBLADO;
         }
     }
-
-    // =====================================================
-    // Métodos públicos
-    // =====================================================
 
     public void iniciarVisualizacion() {
         Platform.runLater(() -> graphView.init());
@@ -740,8 +728,5 @@ public class PanelVisualizacion extends StackPane {
                 }
             }
         });
-    }
-
-    public void clearAll() {
     }
 }

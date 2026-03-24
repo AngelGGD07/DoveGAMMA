@@ -17,18 +17,6 @@ public class DatoCamino implements Comparable<DatoCamino> {
         return idParada;
     }
 
-    public void setIdParada(String idParada) {
-        this.idParada = idParada;
-    }
-
-    public double getPesoAcumulado() {
-        return pesoAcumulado;
-    }
-
-    public void setPesoAcumulado(double pesoAcumulado) {
-        this.pesoAcumulado = pesoAcumulado;
-    }
-
     @Override
     public int compareTo(DatoCamino otro) {
         return Double.compare(this.pesoAcumulado, otro.pesoAcumulado);

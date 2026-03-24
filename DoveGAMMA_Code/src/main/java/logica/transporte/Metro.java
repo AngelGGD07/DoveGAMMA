@@ -8,7 +8,6 @@ public class Metro extends VehiculoTransporte {
         this.factorLluvia = 0.0;
     }
 
-    @Override public String getAbreviatura()        { return "M"; }
     @Override public String getColorHex()           { return "#a060f0"; }
 
     /*

@@ -5,7 +5,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
-// Representa una fila en la tabla de rutas
 public class FilaRuta {
 
     private StringProperty  origen;

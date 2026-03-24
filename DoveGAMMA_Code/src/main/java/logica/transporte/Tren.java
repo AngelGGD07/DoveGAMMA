@@ -8,7 +8,6 @@ public class Tren extends VehiculoTransporte {
         this.factorLluvia = 0.0;
     }
 
-    @Override public String getAbreviatura()        { return "TR"; }
     @Override public String getColorHex()           { return "#6090f0"; }
 
     /*

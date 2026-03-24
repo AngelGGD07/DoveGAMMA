@@ -79,7 +79,6 @@
     <center>
         <StackPane>
 
-            <!-- ====== PANEL LISTADOS (arranca visible) ====== -->
             <VBox fx:id="panelListados"
                   maxWidth="Infinity" maxHeight="Infinity"
                   style="-fx-background-color: #0e0b1a;">
@@ -89,7 +88,6 @@
                          VBox.vgrow="ALWAYS"
                          style="-fx-background-color: #0e0b1a;">
 
-                    <!-- TAB: PARADAS -->
                     <Tab text="Paradas">
                         <VBox style="-fx-background-color: #0e0b1a; -fx-padding: 8 8 4 8;"
                               VBox.vgrow="ALWAYS" spacing="8">
@@ -248,7 +246,6 @@
                         </VBox>
                     </Tab>
 
-                    <!-- TAB: RUTAS -->
                     <Tab text="Rutas">
                         <VBox style="-fx-background-color: #0e0b1a; -fx-padding: 8 8 4 8;"
                               VBox.vgrow="ALWAYS" spacing="8">
@@ -440,12 +437,6 @@
 
             </VBox>
 
-            <!-- ====== PANEL GRAFO (arranca oculto) ====== -->
-            <!--
-                El grafo empieza invisible. PanelVisualizacion
-                pone sus propios overlays encima del grafo
-                (el label de estado + los popups de criterios).
-            -->
             <StackPane fx:id="panelGrafo"
                        maxWidth="Infinity" maxHeight="Infinity"
                        visible="false"

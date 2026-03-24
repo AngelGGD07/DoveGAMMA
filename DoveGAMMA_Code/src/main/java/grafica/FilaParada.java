@@ -3,7 +3,6 @@ package grafica;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
-// Representa una fila en la tabla de paradas
 public class FilaParada {
 
     private StringProperty id;
@@ -25,6 +24,5 @@ public class FilaParada {
 
     public String getId()     { return id.get(); }
     public String getNombre() { return nombre.get(); }
-    public String getX()      { return x.get(); }
     public String getY()      { return y.get(); }
 }

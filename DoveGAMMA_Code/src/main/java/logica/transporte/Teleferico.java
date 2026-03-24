@@ -8,7 +8,6 @@ public class Teleferico extends VehiculoTransporte {
         this.factorLluvia = 0.6;
     }
 
-    @Override public String getAbreviatura()        { return "TF"; }
     @Override public String getColorHex()           { return "#40b09a"; }
 
     /*

@@ -10,9 +10,6 @@ public abstract class VehiculoTransporte {
     public double getFactorPico()   { return factorPico; }
     public double getFactorLluvia() { return factorLluvia; }
 
-    // sigla que va dentro del badge visual
-    public abstract String getAbreviatura();
-
     // color hex del badge y borde de la card
     public abstract String getColorHex();
 

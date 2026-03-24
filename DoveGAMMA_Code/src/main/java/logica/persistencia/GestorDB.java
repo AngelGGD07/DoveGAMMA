@@ -114,12 +114,4 @@ public class GestorDB {
     public ResultSet cargarRutas() throws SQLException {
         return conexion.createStatement().executeQuery("SELECT * FROM rutas");
     }
-
-    public void cerrar() {
-        try {
-            if (conexion != null) conexion.close();
-        } catch (SQLException e) {
-            System.out.println("Error cerrando BD: " + e.getMessage());
-        }
-    }
 }

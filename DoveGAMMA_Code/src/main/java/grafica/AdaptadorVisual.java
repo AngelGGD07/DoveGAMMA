@@ -133,11 +133,6 @@ public class AdaptadorVisual {
         return false;
     }
 
-    public boolean modificarRuta(String origen, String destino,
-                                 double tiempo, double distancia, double costo) {
-        return modificarRutaConTransbordo(origen, destino, tiempo, distancia, costo, false);
-    }
-
     public boolean modificarRutaConTransbordo(String origen, String destino,
                                               double tiempo, double distancia, double costo,
                                               boolean transbordo) {

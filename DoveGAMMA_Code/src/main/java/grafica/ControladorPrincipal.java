@@ -22,17 +22,14 @@ public class ControladorPrincipal {
             "-fx-text-fill: #e07070; -fx-background-color: #2a0a0a; -fx-background-radius: 6; " +
                     "-fx-padding: 8; -fx-font-size: 11; -fx-font-family: 'Segoe UI';";
 
-    // Tabs
     @FXML private TabPane  tabPrincipal;
 
-    // Tabla Paradas
     @FXML private TableView<FilaParada>           tablaParadas;
     @FXML private TableColumn<FilaParada, String> colParadaId;
     @FXML private TableColumn<FilaParada, String> colParadaNombre;
     @FXML private TableColumn<FilaParada, String> colParadaX;
     @FXML private TableColumn<FilaParada, String> colParadaY;
 
-    // Tabla Rutas
     @FXML private TableView<FilaRuta>             tablaRutas;
     @FXML private TableColumn<FilaRuta, String>   colRutaOrigen;
     @FXML private TableColumn<FilaRuta, String>   colRutaDestino;
@@ -41,7 +38,6 @@ public class ControladorPrincipal {
     @FXML private TableColumn<FilaRuta, String>   colRutaCosto;
     @FXML private TableColumn<FilaRuta, Boolean>  colRutaTransbordo;
 
-    // Forms Paradas
     @FXML private VBox      formAgregarParada;
     @FXML private TextField txtIdParada;
     @FXML private TextField txtNombreParada;
@@ -52,7 +48,6 @@ public class ControladorPrincipal {
     @FXML private TextField txtModIdParada;
     @FXML private TextField txtModNombreParada;
 
-    // Forms Rutas
     @FXML private VBox      formAgregarRuta;
     @FXML private TextField txtOrigenRuta;
     @FXML private TextField txtDestinoRuta;
@@ -69,20 +64,15 @@ public class ControladorPrincipal {
     @FXML private TextField txtModCostoRuta;
     @FXML private CheckBox  chkModTransbordoRuta;
 
-    // Mensaje global
     @FXML private Label     lblMensaje;
 
-    // Contenedor del grafo
     @FXML private StackPane contenedorGrafo;
 
-    // Los dos paneles que se alternan
     @FXML private VBox      panelListados;
     @FXML private StackPane panelGrafo;
 
-    // Botón del sidebar
     @FXML private Button    btnTogglePanel;
 
-    // Detalles de parada (panel inferior al seleccionar en tabla)
     @FXML private VBox      panelDetallesParada;
     @FXML private Label     lblDetalleParadaTitulo;
     @FXML private TextArea  txtDetallesRutasParada;
@@ -96,10 +86,6 @@ public class ControladorPrincipal {
         configurarTablas();
         cargarDatosDesdeBD();
     }
-
-    // =====================================================
-    // SETUP
-    // =====================================================
 
     private void inicializarVisualizacionGrafo() {
         AdaptadorVisual.getInstance().inicializarPanel();
@@ -171,13 +157,8 @@ public class ControladorPrincipal {
         });
     }
 
-    // =====================================================
-    // NAVEGACIÓN
-    // =====================================================
-
     @FXML
     private void togglePanelListados() {
-        // alterna entre ver listas o ver el grafo, uno a la vez
         boolean mostrandoListados = panelListados.isVisible();
 
         panelListados.setVisible(!mostrandoListados);
@@ -185,10 +166,6 @@ public class ControladorPrincipal {
 
         btnTogglePanel.setText(mostrandoListados ? "Mostrar Listados" : "Mostrar Grafo");
     }
-
-    // =====================================================
-    // TOGGLE FORMULARIOS - Paradas
-    // =====================================================
 
     @FXML
     private void toggleFormAgregarParada() {
@@ -233,10 +210,6 @@ public class ControladorPrincipal {
                 txtModIdParada, txtModNombreParada);
         ocultarMensaje();
     }
-
-    // =====================================================
-    // TOGGLE FORMULARIOS - Rutas
-    // =====================================================
 
     @FXML
     private void toggleFormAgregarRuta() {
@@ -288,10 +261,6 @@ public class ControladorPrincipal {
                 txtModDistanciaRuta, txtModCostoRuta);
         ocultarMensaje();
     }
-
-    // =====================================================
-    // CRUD - Paradas
-    // =====================================================
 
     @FXML
     private void agregarParada() {
@@ -386,10 +355,6 @@ public class ControladorPrincipal {
             }
         });
     }
-
-    // =====================================================
-    // CRUD - Rutas
-    // =====================================================
 
     @FXML
     private void agregarRuta() {
@@ -511,10 +476,6 @@ public class ControladorPrincipal {
         });
     }
 
-    // =====================================================
-    // LIMPIAR TODO
-    // =====================================================
-
     @FXML
     private void limpiarTodo() {
         Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
@@ -532,10 +493,6 @@ public class ControladorPrincipal {
             }
         });
     }
-
-    // =====================================================
-    // HELPERS - tablas
-    // =====================================================
 
     private void refrescarTablaParadas() {
         listaParadas.clear();
@@ -564,10 +521,6 @@ public class ControladorPrincipal {
             }
         }
     }
-
-    // =====================================================
-    // CARGA DESDE BD
-    // =====================================================
 
     private void cargarDatosDesdeBD() {
         GestorDB db = AdaptadorVisual.getInstance().getDatabaseManager();
@@ -601,10 +554,6 @@ public class ControladorPrincipal {
             System.out.println("Error cargando BD: " + e.getMessage());
         }
     }
-
-    // =====================================================
-    // HELPERS - UI
-    // =====================================================
 
     private void mostrarExito(String msg) {
         lblMensaje.setText(msg);

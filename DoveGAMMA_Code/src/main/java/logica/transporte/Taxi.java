@@ -8,7 +8,6 @@ public class Taxi extends VehiculoTransporte {
         this.factorLluvia = 0.25;
     }
 
-    @Override public String getAbreviatura()        { return "TX"; }
     @Override public String getColorHex()           { return "#e09040"; }
 
     /*

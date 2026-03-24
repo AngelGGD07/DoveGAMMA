@@ -21,7 +21,6 @@ public class Parada {
     public String getNombre() {
         return nombre;
     }
-    public double getX() { return x; }
     public double getY() { return y; }
 
     public void setNombre(String nuevoNombre) {

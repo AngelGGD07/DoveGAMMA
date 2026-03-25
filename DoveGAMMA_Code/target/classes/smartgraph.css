@@ -195,3 +195,26 @@
     -fx-effect: dropshadow(gaussian, rgba(50, 220, 100, 0.8), 20, 0.65, 0, 0);
     -fx-cursor: hand;
 }
+
+/* Nodo seleccionado como ORIGEN (primer click) */
+.vertex-origen {
+    -fx-fill: linear-gradient(to bottom right, #33dd77, #1a7a40);
+    -fx-stroke: #ffffff;
+    -fx-stroke-width: 3;
+    -fx-effect: dropshadow(gaussian, rgba(50,220,100,0.8), 20, 0.65, 0, 0);
+    -fx-cursor: hand;
+}
+
+/* Ruta ALTERNATIVA (azul/índigo, distinta de la principal naranja) */
+.vertex-alternativa {
+    -fx-fill: linear-gradient(to bottom right, #5588ff, #2233bb);
+    -fx-stroke: #ffffff;
+    -fx-stroke-width: 3;
+    -fx-effect: dropshadow(gaussian, #4466ff, 20, 0.7, 0, 0);
+}
+.edge-alternativa {
+    -fx-stroke: #5588ff;
+    -fx-stroke-width: 6;
+    -fx-opacity: 1.0;
+    -fx-effect: dropshadow(gaussian, #4466ff, 10, 0.6, 0, 0);
+}

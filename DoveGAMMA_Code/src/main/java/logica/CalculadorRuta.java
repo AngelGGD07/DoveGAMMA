@@ -1,6 +1,8 @@
 package logica;
 
 import logica.algoritmos.AlgoritmoRuta;
+import logica.algoritmos.BFS;
+import logica.algoritmos.BellmanFord;
 import logica.algoritmos.Dijkstra;
 import logica.algoritmos.CriterioOptim.CriterioOptimizacion;
 
@@ -40,14 +42,30 @@ public class CalculadorRuta {
      * Calcula la ruta óptima principal usando la estrategia actual.
      */
     public List<String> calcular(GrafoTransporte grafo, String idInicio, String idFinal, CriterioOptimizacion criterio) {
+
+        // --- NUEVA LÓGICA INTELIGENTE ---
+        // Elegimos el algoritmo perfecto según lo que pidió el usuario en la interfaz
+        switch (criterio) {
+            case TRANSBORDOS:
+                this.algoritmoActual = new BFS(); // BFS garantiza la menor cantidad de saltos
+                break;
+            case COSTO:
+                this.algoritmoActual = new BellmanFord(); // Bellman-Ford por si manejan descuentos (pesos negativos)
+                break;
+            case TIEMPO:
+            case DISTANCIA:
+            default:
+                this.algoritmoActual = new Dijkstra(); // Dijkstra es el más rápido para pesos normales
+                break;
+        }
+
         if (this.algoritmoActual == null) {
             throw new IllegalStateException("¡Error! No se ha definido un algoritmo de búsqueda.");
         }
 
-        // El "Gerente" simplemente le pasa el trabajo al algoritmo seleccionado
+        // El "Gerente" le pasa el trabajo al algoritmo que acaba de seleccionar
         return this.algoritmoActual.calcularRuta(grafo, idInicio, idFinal, criterio);
     }
-
     /*
      * Calcula una "Ruta Alternativa" (Plan B) bloqueando temporalmente
      * el primer tramo de la ruta óptima original.

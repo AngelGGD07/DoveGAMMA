@@ -99,4 +99,22 @@ public class GrafoTransporte {
         }
         return todas;
     }
+    /*
+     * Verifica si existe una conexión directa (arista) entre dos paradas.
+     * Requerido para el análisis asintótico del proyecto.
+     */
+    public boolean existeArista(String idOrigen, String idDestino) {
+        // 1. Si el origen no existe, la arista tampoco
+        if (!listasAdyacencia.containsKey(idOrigen)) {
+            return false;
+        }
+
+        // 2. Recorremos los vecinos buscando el destino
+        for (Ruta ruta : listasAdyacencia.get(idOrigen)) {
+            if (ruta.getIdDestino().equals(idDestino)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

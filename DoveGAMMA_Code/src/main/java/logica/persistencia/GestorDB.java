@@ -40,7 +40,7 @@ public class GestorDB {
                         "  tiempo DOUBLE," +
                         "  distancia DOUBLE," +
                         "  costo DOUBLE," +
-                        "  transbordo BOOLEAN," +
+                        "  transbordo INT," +
                         "  PRIMARY KEY(origen, destino)" +
                         ");";
 
@@ -81,7 +81,7 @@ public class GestorDB {
     }
 
     public void guardarRuta(String origen, String destino,
-                            double tiempo, double distancia, double costo, boolean transbordo) {
+                            double tiempo, double distancia, double costo, int transbordo) {
 
         // El SQL ahora incluye transbordo tanto al insertar como al actualizar
         String sql = "INSERT INTO rutas (origen, destino, tiempo, distancia, costo, transbordo) VALUES (?, ?, ?, ?, ?, ?) " +
@@ -93,7 +93,7 @@ public class GestorDB {
             ps.setDouble(3, tiempo);
             ps.setDouble(4, distancia);
             ps.setDouble(5, costo);
-            ps.setBoolean(6, transbordo);
+            ps.setInt(6, transbordo);
             ps.executeUpdate();
         } catch (SQLException e) {
             System.out.println("Error guardando ruta: " + e.getMessage());

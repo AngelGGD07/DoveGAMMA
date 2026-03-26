@@ -20,7 +20,7 @@ public interface AlgoritmoRuta {
         switch (criterio) {
             case TIEMPO: return ruta.getTiempo();
             case COSTO: return ruta.getCosto();
-            case TRANSBORDOS: return ruta.isTransbordo() ? 1.0: 0.0;
+            case TRANSBORDOS: return ruta.getTransbordo();
             case DISTANCIA:
             default: return ruta.getDistancia();
         }

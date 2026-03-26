@@ -8,9 +8,9 @@ public class Ruta {
     private double tiempo;
     private double costo;
     private double distancia;
-    private boolean transbordo;
+    private int transbordo;
 
-    public Ruta(String idOrigen, String idDestino, double tiempo, double costo, double distancia, boolean transbordo) {
+    public Ruta(String idOrigen, String idDestino, double tiempo, double costo, double distancia, int transbordo) {
         this.idOrigen = idOrigen;
         this.idDestino = idDestino;
         this.tiempo = tiempo;
@@ -23,8 +23,12 @@ public class Ruta {
         this.tiempo = tiempo;
     }
 
-    public boolean isTransbordo() {
+    public int getTransbordo() {
         return transbordo;
+    }
+
+    public void setTransbordo(int transbordo) {
+        this.transbordo = transbordo;
     }
 
     public String getIdDestino() {

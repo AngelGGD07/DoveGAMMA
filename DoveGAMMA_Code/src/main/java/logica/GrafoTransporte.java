@@ -31,7 +31,7 @@ public class GrafoTransporte {
         return false;
     }
 
-    public boolean agregarRuta(String idOrigen, String idDestino, double tiempo, double costo, double dist, boolean transbordo) {
+    public boolean agregarRuta(String idOrigen, String idDestino, double tiempo, double costo, double dist, int transbordo) {
         if (mapaParadas.containsKey(idOrigen) && mapaParadas.containsKey(idDestino)) {
             Ruta nuevaRuta = new Ruta(idOrigen, idDestino, tiempo, costo, dist, transbordo);
             listasAdyacencia.get(idOrigen).add(nuevaRuta);
@@ -80,7 +80,7 @@ public class GrafoTransporte {
     }
 
     public boolean modificarRuta(String idOrigen, String idDestino,
-                              double tiempo, double costo, double dist, boolean transbordo) {
+                              double tiempo, double costo, double dist, int transbordo) {
         // Intentamos borrar la ruta vieja. Si devuelve true, es que sí existía.
         boolean sePudoEliminar = eliminarRuta(idOrigen, idDestino);
 
@@ -101,7 +101,6 @@ public class GrafoTransporte {
     }
     /*
      * Verifica si existe una conexión directa (arista) entre dos paradas.
-     * Requerido para el análisis asintótico del proyecto.
      */
     public boolean existeArista(String idOrigen, String idDestino) {
         // 1. Si el origen no existe, la arista tampoco

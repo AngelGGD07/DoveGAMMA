@@ -135,7 +135,7 @@ public class AdaptadorVisual {
 
     public boolean modificarRutaConTransbordo(String origen, String destino,
                                               double tiempo, double distancia, double costo,
-                                              boolean transbordo) {
+                                              int transbordo) {
         if (logicaGrafo.modificarRuta(origen, destino, tiempo, costo, distancia, transbordo)) {
             gestorBaseDatos.guardarRuta(origen, destino, tiempo, distancia, costo, transbordo);
 

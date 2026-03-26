@@ -22,7 +22,7 @@ public class ControladorPrincipal {
             "-fx-text-fill: #e07070; -fx-background-color: #2a0a0a; -fx-background-radius: 6; " +
                     "-fx-padding: 8; -fx-font-size: 11; -fx-font-family: 'Segoe UI';";
 
-    @FXML private TabPane  tabPrincipal;
+    @FXML private TabPane tabPrincipal;
 
     @FXML private TableView<FilaParada>           tablaParadas;
     @FXML private TableColumn<FilaParada, String> colParadaId;
@@ -36,7 +36,7 @@ public class ControladorPrincipal {
     @FXML private TableColumn<FilaRuta, String>   colRutaTiempo;
     @FXML private TableColumn<FilaRuta, String>   colRutaDistancia;
     @FXML private TableColumn<FilaRuta, String>   colRutaCosto;
-    @FXML private TableColumn<FilaRuta, Boolean>  colRutaTransbordo;
+    @FXML private TableColumn<FilaRuta, String>   colRutaTransbordo;
 
     @FXML private VBox      formAgregarParada;
     @FXML private TextField txtIdParada;
@@ -54,7 +54,7 @@ public class ControladorPrincipal {
     @FXML private TextField txtTiempoRuta;
     @FXML private TextField txtDistanciaRuta;
     @FXML private TextField txtCostoRuta;
-    @FXML private CheckBox  chkTransbordoRuta;
+    @FXML private TextField txtTransbordoRuta;
 
     @FXML private VBox      formModRuta;
     @FXML private TextField txtModOrigenRuta;
@@ -62,7 +62,7 @@ public class ControladorPrincipal {
     @FXML private TextField txtModTiempoRuta;
     @FXML private TextField txtModDistanciaRuta;
     @FXML private TextField txtModCostoRuta;
-    @FXML private CheckBox  chkModTransbordoRuta;
+    @FXML private TextField txtModTransbordoRuta;
 
     @FXML private Label     lblMensaje;
 
@@ -73,9 +73,9 @@ public class ControladorPrincipal {
 
     @FXML private Button    btnTogglePanel;
 
-    @FXML private VBox      panelDetallesParada;
-    @FXML private Label     lblDetalleParadaTitulo;
-    @FXML private TextArea  txtDetallesRutasParada;
+    @FXML private VBox  panelDetallesParada;
+    @FXML private Label lblDetalleParadaTitulo;
+    @FXML private TextArea txtDetallesRutasParada;
 
     private final ObservableList<FilaParada> listaParadas = FXCollections.observableArrayList();
     private final ObservableList<FilaRuta>   listaRutas   = FXCollections.observableArrayList();
@@ -112,25 +112,7 @@ public class ControladorPrincipal {
         colRutaTiempo.setCellValueFactory(data -> data.getValue().tiempoProperty());
         colRutaDistancia.setCellValueFactory(data -> data.getValue().distanciaProperty());
         colRutaCosto.setCellValueFactory(data -> data.getValue().costoProperty());
-
-        colRutaTransbordo.setCellValueFactory(data -> data.getValue().transbordoProperty().asObject());
-        colRutaTransbordo.setCellFactory(col -> new TableCell<FilaRuta, Boolean>() {
-            private final CheckBox cb = new CheckBox();
-            {
-                cb.setDisable(true);
-                cb.setStyle("-fx-opacity: 0.8;");
-            }
-            @Override
-            protected void updateItem(Boolean valor, boolean vacio) {
-                super.updateItem(valor, vacio);
-                if (vacio || valor == null) {
-                    setGraphic(null);
-                } else {
-                    cb.setSelected(valor);
-                    setGraphic(cb);
-                }
-            }
-        });
+        colRutaTransbordo.setCellValueFactory(data -> data.getValue().transbordoProperty());
         tablaRutas.setItems(listaRutas);
 
         tablaParadas.getSelectionModel().selectedItemProperty().addListener((obs, oldSel, newSel) -> {
@@ -221,7 +203,7 @@ public class ControladorPrincipal {
         formAgregarRuta.setManaged(mostrar);
 
         if (!mostrar) limpiarCampos(txtOrigenRuta, txtDestinoRuta, txtTiempoRuta,
-                txtDistanciaRuta, txtCostoRuta);
+                txtDistanciaRuta, txtCostoRuta, txtTransbordoRuta);
         ocultarMensaje();
     }
 
@@ -238,7 +220,7 @@ public class ControladorPrincipal {
         txtModTiempoRuta.setText(fila.getTiempo());
         txtModDistanciaRuta.setText(fila.getDistancia());
         txtModCostoRuta.setText(fila.getCosto());
-        chkModTransbordoRuta.setSelected(fila.isTransbordo());
+        txtModTransbordoRuta.setText(String.valueOf(fila.getTransbordo()));
 
         formAgregarRuta.setVisible(false);
         formAgregarRuta.setManaged(false);
@@ -256,9 +238,9 @@ public class ControladorPrincipal {
         formModRuta.setVisible(false);
         formModRuta.setManaged(false);
         limpiarCampos(txtOrigenRuta, txtDestinoRuta, txtTiempoRuta,
-                txtDistanciaRuta, txtCostoRuta,
+                txtDistanciaRuta, txtCostoRuta, txtTransbordoRuta,
                 txtModOrigenRuta, txtModDestinoRuta, txtModTiempoRuta,
-                txtModDistanciaRuta, txtModCostoRuta);
+                txtModDistanciaRuta, txtModCostoRuta, txtModTransbordoRuta);
         ocultarMensaje();
     }
 
@@ -363,8 +345,9 @@ public class ControladorPrincipal {
         String valTiempo = txtTiempoRuta.getText().trim();
         String valDist   = txtDistanciaRuta.getText().trim();
         String valCosto  = txtCostoRuta.getText().trim();
+        String valTrans  = txtTransbordoRuta.getText().trim();
 
-        if (camposVacios(origen, destino, valTiempo, valDist, valCosto)) {
+        if (camposVacios(origen, destino, valTiempo, valDist, valCosto, valTrans)) {
             mostrarError("Todos los campos son obligatorios.");
             return;
         }
@@ -375,24 +358,28 @@ public class ControladorPrincipal {
         }
 
         try {
-            double tiempo    = Double.parseDouble(valTiempo);
-            double distancia = Double.parseDouble(valDist);
-            double costo     = Double.parseDouble(valCosto);
+            double tiempo     = Double.parseDouble(valTiempo);
+            double distancia  = Double.parseDouble(valDist);
+            double costo      = Double.parseDouble(valCosto);
+            int    transbordo = Integer.parseInt(valTrans);
 
             if (tiempo <= 0 || distancia <= 0 || costo <= 0) {
                 mostrarError("Tiempo, distancia y costo deben ser mayores que 0.");
                 return;
             }
 
-            boolean transbordo = chkTransbordoRuta.isSelected();
+            if (transbordo < 0) {
+                mostrarError("Los transbordos no pueden ser negativos.");
+                return;
+            }
+
             boolean ok = AdaptadorVisual.getInstance()
                     .agregarRutaConTransbordo(origen, destino, tiempo, distancia, costo, transbordo);
 
             if (ok) {
                 refrescarTablaRutas();
                 limpiarCampos(txtOrigenRuta, txtDestinoRuta, txtTiempoRuta,
-                        txtDistanciaRuta, txtCostoRuta);
-                chkTransbordoRuta.setSelected(false);
+                        txtDistanciaRuta, txtCostoRuta, txtTransbordoRuta);
                 formAgregarRuta.setVisible(false);
                 formAgregarRuta.setManaged(false);
                 mostrarExito("✔  Ruta creada: " + origen + " → " + destino);
@@ -401,7 +388,7 @@ public class ControladorPrincipal {
             }
 
         } catch (NumberFormatException e) {
-            mostrarError("Tiempo, distancia y costo deben ser números válidos.");
+            mostrarError("Revisa que los valores sean números válidos.");
         }
     }
 
@@ -412,23 +399,29 @@ public class ControladorPrincipal {
         String valTiempo = txtModTiempoRuta.getText().trim();
         String valDist   = txtModDistanciaRuta.getText().trim();
         String valCosto  = txtModCostoRuta.getText().trim();
+        String valTrans  = txtModTransbordoRuta.getText().trim();
 
-        if (camposVacios(origen, destino, valTiempo, valDist, valCosto)) {
+        if (camposVacios(origen, destino, valTiempo, valDist, valCosto, valTrans)) {
             mostrarError("Todos los campos son obligatorios.");
             return;
         }
 
         try {
-            double tiempo    = Double.parseDouble(valTiempo);
-            double distancia = Double.parseDouble(valDist);
-            double costo     = Double.parseDouble(valCosto);
+            double tiempo     = Double.parseDouble(valTiempo);
+            double distancia  = Double.parseDouble(valDist);
+            double costo      = Double.parseDouble(valCosto);
+            int    transbordo = Integer.parseInt(valTrans);
 
             if (tiempo <= 0 || distancia <= 0 || costo <= 0) {
                 mostrarError("Los valores deben ser mayores que 0.");
                 return;
             }
 
-            boolean transbordo = chkModTransbordoRuta.isSelected();
+            if (transbordo < 0) {
+                mostrarError("Los transbordos no pueden ser negativos.");
+                return;
+            }
+
             boolean ok = AdaptadorVisual.getInstance()
                     .modificarRutaConTransbordo(origen, destino, tiempo, distancia, costo, transbordo);
 
@@ -437,14 +430,14 @@ public class ControladorPrincipal {
                 formModRuta.setVisible(false);
                 formModRuta.setManaged(false);
                 limpiarCampos(txtModOrigenRuta, txtModDestinoRuta,
-                        txtModTiempoRuta, txtModDistanciaRuta, txtModCostoRuta);
+                        txtModTiempoRuta, txtModDistanciaRuta, txtModCostoRuta, txtModTransbordoRuta);
                 mostrarExito("✔  Ruta actualizada: " + origen + " → " + destino);
             } else {
                 mostrarError("Ruta no encontrada.");
             }
 
         } catch (NumberFormatException e) {
-            mostrarError("Tiempo, distancia y costo deben ser números válidos.");
+            mostrarError("Revisa que los valores sean números válidos.");
         }
     }
 
@@ -511,8 +504,8 @@ public class ControladorPrincipal {
 
         for (String idParada : grafo.obtenerIdsParadas()) {
             for (Ruta ruta : grafo.obtenerVecinos(idParada)) {
-                String  idArista   = idParada + "-" + ruta.getIdDestino();
-                boolean transbordo = ada.tieneTransbordo(idArista);
+                String idArista   = idParada + "-" + ruta.getIdDestino();
+                int    transbordo = ada.getCantidadTransbordo(idArista);
                 listaRutas.add(new FilaRuta(
                         idParada, ruta.getIdDestino(),
                         ruta.getTiempo(), ruta.getDistancia(), ruta.getCosto(),
@@ -543,7 +536,7 @@ public class ControladorPrincipal {
                         rsRutas.getDouble("tiempo"),
                         rsRutas.getDouble("distancia"),
                         rsRutas.getDouble("costo"),
-                        rsRutas.getBoolean("transbordo")
+                        rsRutas.getInt("transbordo")
                 );
             }
 

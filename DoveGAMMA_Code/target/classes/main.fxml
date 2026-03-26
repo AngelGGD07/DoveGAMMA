@@ -71,11 +71,6 @@
         </VBox>
     </left>
 
-    <!--
-        Ahora el center es un StackPane simple.
-        panelListados y panelGrafo se pisan uno al otro —
-        solo uno está visible a la vez, el que toca.
-    -->
     <center>
         <StackPane>
 
@@ -331,8 +326,14 @@
                                                           -fx-border-color: #3a1a50; -fx-border-radius: 5; -fx-padding: 6;"/>
                                     </VBox>
                                 </HBox>
-                                <CheckBox fx:id="chkTransbordoRuta" text="Requiere transbordo"
-                                          style="-fx-text-fill: #d4a574; -fx-font-size: 11; -fx-font-family: 'Segoe UI';"/>
+                                <HBox spacing="6" alignment="CENTER_LEFT">
+                                    <Label text="Transbordos:"
+                                           style="-fx-text-fill: #9a7a5a; -fx-font-size: 10; -fx-font-family: 'Segoe UI';"/>
+                                    <TextField fx:id="txtTransbordoRuta" promptText="0" prefWidth="70"
+                                               style="-fx-background-color: #1e1030; -fx-text-fill: #e8c9a8;
+                                                      -fx-prompt-text-fill: #4a3a5a; -fx-background-radius: 5;
+                                                      -fx-border-color: #3a1a50; -fx-border-radius: 5; -fx-padding: 6;"/>
+                                </HBox>
                                 <HBox spacing="6">
                                     <Button text="Confirmar" onAction="#agregarRuta"
                                             HBox.hgrow="ALWAYS" maxWidth="Infinity" prefHeight="30"
@@ -392,8 +393,14 @@
                                                           -fx-border-color: #3a1a50; -fx-border-radius: 5; -fx-padding: 6;"/>
                                     </VBox>
                                 </HBox>
-                                <CheckBox fx:id="chkModTransbordoRuta" text="Requiere transbordo"
-                                          style="-fx-text-fill: #d4a574; -fx-font-size: 11; -fx-font-family: 'Segoe UI';"/>
+                                <HBox spacing="6" alignment="CENTER_LEFT">
+                                    <Label text="Transbordos:"
+                                           style="-fx-text-fill: #9a7a5a; -fx-font-size: 10; -fx-font-family: 'Segoe UI';"/>
+                                    <TextField fx:id="txtModTransbordoRuta" promptText="0" prefWidth="70"
+                                               style="-fx-background-color: #1e1030; -fx-text-fill: #e8c9a8;
+                                                      -fx-prompt-text-fill: #4a3a5a; -fx-background-radius: 5;
+                                                      -fx-border-color: #3a1a50; -fx-border-radius: 5; -fx-padding: 6;"/>
+                                </HBox>
                                 <HBox spacing="6">
                                     <Button text="Guardar" onAction="#modificarRuta"
                                             HBox.hgrow="ALWAYS" maxWidth="Infinity" prefHeight="30"
@@ -417,7 +424,7 @@
                                     <TableColumn fx:id="colRutaTiempo"     text="Tiempo (min)"/>
                                     <TableColumn fx:id="colRutaDistancia"  text="Dist (km)"/>
                                     <TableColumn fx:id="colRutaCosto"      text="Costo ($)"/>
-                                    <TableColumn fx:id="colRutaTransbordo" text="Transbordo" />
+                                    <TableColumn fx:id="colRutaTransbordo" text="Transbordos" />
                                 </columns>
                                 <placeholder>
                                     <Label text="No hay rutas todavía"

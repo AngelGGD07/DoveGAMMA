@@ -39,7 +39,6 @@ import java.util.List;
 
 public class PanelVisualizacion extends StackPane {
 
-    // SVG paths de clima (Material Design, viewBox 24x24)
     private static final String SVG_SOL =
             "M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.79 1.42-1.41zM4 10.5H1v2h3v-2zm9-9.95h-2V3.5h2V.55z" +
                     "m7.45 3.91l-1.41-1.41-1.79 1.79 1.41 1.41 1.79-1.79zm-3.21 13.7l1.79 1.8 1.41-1.41-1.8-1.79-1.4 1.4z" +
@@ -57,7 +56,6 @@ public class PanelVisualizacion extends StackPane {
     private static final String SVG_TORMENTA =
             "M7 2v11h3v9l7-12h-4l4-8z";
 
-    // SVG paths de vehículos (Material Design, viewBox 24x24)
     private static final String SVG_TREN =
             "M12 2c-4 0-8 .5-8 4v9.5C4 17.43 5.57 19 7.5 19L6 20.5V21h12v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V6" +
                     "c0-3.5-3.58-4-8-4zm0 14.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM6 10V7h12v3H6z";
@@ -77,10 +75,9 @@ public class PanelVisualizacion extends StackPane {
                     "S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5" +
                     "-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z";
 
-    // ancho base del menú — se usa en cards y botones pa' que todo cuadre
     private static final double ANCHO_MENU   = 500;
-    private static final double ANCHO_BODY   = ANCHO_MENU - 40; // padding 20 c/lado
-    private static final double ANCHO_CARD   = (ANCHO_BODY - 10) / 2.0; // 2 columnas con gap de 10
+    private static final double ANCHO_BODY   = ANCHO_MENU - 40;
+    private static final double ANCHO_CARD   = (ANCHO_BODY - 10) / 2.0;
     private static final double ANCHO_RESULT = 460;
 
     private SmartGraphPanel<String, String> graphView;
@@ -90,12 +87,14 @@ public class PanelVisualizacion extends StackPane {
     private Label  lblEstado;
     private Button btnVerUltimoResultado;
 
-    private String               ultimoResultado    = null;
-    private String               ultimoOrigen       = null;
-    private String               ultimoDestino      = null;
-    private String               ultimoCriterio     = null;
-    private VehiculoTransporte   ultimoVehiculo     = null;
-    private SimuladorCondiciones ultimasCondiciones = null;
+    private String               ultimoResultado            = null;
+    private String               ultimoResultadoAlternativa = null; // guarda el texto de la alternativa
+    private boolean              ultimaFueAlternativa       = false; // cuál popup vio el usuario al último
+    private String               ultimoOrigen               = null;
+    private String               ultimoDestino              = null;
+    private String               ultimoCriterio             = null;
+    private VehiculoTransporte   ultimoVehiculo             = null;
+    private SimuladorCondiciones ultimasCondiciones         = null;
 
     public PanelVisualizacion(Digraph<String, String> grafoVisual) {
         this.grafoBase = grafoVisual;
@@ -150,12 +149,18 @@ public class PanelVisualizacion extends StackPane {
                         "-fx-border-color: #3a1a50; -fx-border-radius: 6; -fx-border-width: 1;"
         );
         btnVerUltimoResultado.setVisible(false);
+
+        // abre el último popup que el usuario estaba viendo — principal o alternativa
         btnVerUltimoResultado.setOnAction(e -> {
-            if (ultimoResultado != null) {
+            if (ultimaFueAlternativa && ultimoResultadoAlternativa != null) {
+                mostrarResultadoAlternativa(ultimoResultadoAlternativa, ultimoOrigen, ultimoDestino,
+                        ultimoCriterio, ultimoVehiculo, ultimasCondiciones);
+            } else if (ultimoResultado != null) {
                 mostrarResultado(ultimoResultado, ultimoOrigen, ultimoDestino,
                         ultimoCriterio, ultimoVehiculo, ultimasCondiciones);
             }
         });
+
         StackPane.setAlignment(btnVerUltimoResultado, Pos.BOTTOM_RIGHT);
         StackPane.setMargin(btnVerUltimoResultado, new Insets(0, 20, 16, 0));
         this.getChildren().add(btnVerUltimoResultado);
@@ -216,7 +221,6 @@ public class PanelVisualizacion extends StackPane {
                         "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.95), 32, 0, 0, 8);"
         );
 
-        // cabecera
         VBox header = new VBox(4);
         header.setAlignment(Pos.CENTER);
         header.setStyle(
@@ -230,46 +234,36 @@ public class PanelVisualizacion extends StackPane {
         lblRuta.setStyle("-fx-text-fill: #5a3a7a; -fx-font-family: 'Segoe UI'; -fx-font-size: 11;");
         header.getChildren().addAll(lblTitulo, lblRuta);
 
-        // cuerpo
         VBox body = new VBox(14);
         body.setStyle("-fx-padding: 18 20 20 20;");
 
-        // --- condiciones actuales
         Label lblSecCondiciones = crearLabelSeccion("CONDICIONES ACTUALES");
 
         HBox rowCondiciones = new HBox(10);
         rowCondiciones.setAlignment(Pos.CENTER_LEFT);
 
         SimuladorCondiciones.Clima clima = condiciones.getClima();
-        VBox cardClima = crearCardCondicion(
-                svgPathClima(clima), clima.getColorHex(), clima.getDescripcion(), "Clima"
-        );
-        VBox cardTrafico = crearCardCondicion(
-                null, condiciones.getColorHorario(), condiciones.getDescripcionHorario(), "Tráfico"
-        );
+        VBox cardClima   = crearCardCondicion(svgPathClima(clima), clima.getColorHex(), clima.getDescripcion(), "Clima");
+        VBox cardTrafico = crearCardCondicion(null, condiciones.getColorHorario(), condiciones.getDescripcionHorario(), "Tráfico");
         rowCondiciones.getChildren().addAll(cardClima, cardTrafico);
 
-        // --- vehículo
         Label lblSecVehiculo = crearLabelSeccion("MODO DE TRANSPORTE");
 
-        VehiculoTransporte[] opciones    = {new Tren(), new Metro(), new Teleferico(), new Taxi()};
-        String[]             svgsV       = {SVG_TREN, SVG_METRO, SVG_TELEFERICO, SVG_TAXI};
-        VBox[]               cardsV      = new VBox[4];
-        VehiculoTransporte[] seleccionV  = {null};
+        VehiculoTransporte[] opciones   = {new Tren(), new Metro(), new Teleferico(), new Taxi()};
+        String[]             svgsV      = {SVG_TREN, SVG_METRO, SVG_TELEFERICO, SVG_TAXI};
+        VBox[]               cardsV     = new VBox[4];
+        VehiculoTransporte[] seleccionV = {null};
 
         HBox rowV1 = new HBox(10); rowV1.setAlignment(Pos.CENTER);
         HBox rowV2 = new HBox(10); rowV2.setAlignment(Pos.CENTER);
 
-        // label de impacto con wrap activado pa' que nunca se corte
         Label lblImpacto = new Label("Selecciona un modo de transporte");
         lblImpacto.setWrapText(true);
         lblImpacto.setMaxWidth(ANCHO_BODY);
-        lblImpacto.setStyle(
-                "-fx-text-fill: #4a3a6a; -fx-font-family: 'Segoe UI'; -fx-font-size: 11;"
-        );
+        lblImpacto.setStyle("-fx-text-fill: #4a3a6a; -fx-font-family: 'Segoe UI'; -fx-font-size: 11;");
 
         for (int i = 0; i < 4; i++) {
-            final int             idx = i;
+            final int              idx = i;
             final VehiculoTransporte v = opciones[i];
             VBox card = crearCardVehiculo(v.getNombre(), svgsV[i], v.getColorHex());
             cardsV[i] = card;
@@ -282,17 +276,13 @@ public class PanelVisualizacion extends StackPane {
                 String textoImpacto;
                 if (condiciones.esTormentaConTeleferico(v)) {
                     textoImpacto = "Servicio suspendido — tormenta activa.";
-                    lblImpacto.setStyle(
-                            "-fx-text-fill: #e07070; -fx-font-family: 'Segoe UI'; -fx-font-size: 11;"
-                    );
+                    lblImpacto.setStyle("-fx-text-fill: #e07070; -fx-font-family: 'Segoe UI'; -fx-font-size: 11;");
                 } else {
-                    double factor   = condiciones.getFactorTotal(v);
-                    int    pct      = (int) Math.round((factor - 1.0) * 100);
-                    textoImpacto    = v.getDescripcionImpacto() +
+                    double factor = condiciones.getFactorTotal(v);
+                    int    pct    = (int) Math.round((factor - 1.0) * 100);
+                    textoImpacto  = v.getDescripcionImpacto() +
                             (pct > 0 ? "   (+~" + pct + "% al tiempo estimado)" : "");
-                    lblImpacto.setStyle(
-                            "-fx-text-fill: #6a5a8a; -fx-font-family: 'Segoe UI'; -fx-font-size: 11;"
-                    );
+                    lblImpacto.setStyle("-fx-text-fill: #6a5a8a; -fx-font-family: 'Segoe UI'; -fx-font-size: 11;");
                 }
                 lblImpacto.setText(textoImpacto);
             });
@@ -301,7 +291,6 @@ public class PanelVisualizacion extends StackPane {
             else       rowV2.getChildren().add(card);
         }
 
-        // --- criterio
         Label lblSecCriterio = crearLabelSeccion("CRITERIO DE OPTIMIZACIÓN");
 
         String[][] cDatos = {
@@ -310,8 +299,8 @@ public class PanelVisualizacion extends StackPane {
                 {"Costo",       "COSTO",       "#2a1e08", "#d4a060"},
                 {"Transbordos", "TRANSBORDOS", "#1c1030", "#b080e0"}
         };
-        String[] criterioSel  = {null};
-        Button[] botonesC     = new Button[4];
+        String[] criterioSel = {null};
+        Button[] botonesC    = new Button[4];
 
         HBox rowC1 = new HBox(10); rowC1.setAlignment(Pos.CENTER);
         HBox rowC2 = new HBox(10); rowC2.setAlignment(Pos.CENTER);
@@ -337,7 +326,6 @@ public class PanelVisualizacion extends StackPane {
             else       rowC2.getChildren().add(btn);
         }
 
-        // footer
         Label lblError = new Label("");
         lblError.setWrapText(true);
         lblError.setMaxWidth(ANCHO_BODY);
@@ -436,12 +424,15 @@ public class PanelVisualizacion extends StackPane {
         }
 
         String resultadoFinal = resultadoBase + bloque;
-        ultimoResultado    = resultadoFinal;
-        ultimoOrigen       = idOrigen;
-        ultimoDestino      = idDestino;
-        ultimoCriterio     = criterio;
-        ultimoVehiculo     = vehiculo;
-        ultimasCondiciones = condiciones;
+
+        // guardamos todo pa' poder reabrirlo después
+        ultimoResultado        = resultadoFinal;
+        ultimoOrigen           = idOrigen;
+        ultimoDestino          = idDestino;
+        ultimoCriterio         = criterio;
+        ultimoVehiculo         = vehiculo;
+        ultimasCondiciones     = condiciones;
+        ultimaFueAlternativa   = false; // volvemos al estado principal
         btnVerUltimoResultado.setVisible(true);
 
         cancelarSeleccion();
@@ -499,7 +490,6 @@ public class PanelVisualizacion extends StackPane {
                         "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.95), 32, 0, 0, 8);"
         );
 
-        // cabecera
         VBox resHeader = new VBox(6);
         resHeader.setStyle(
                 "-fx-background-color: #120d22; -fx-background-radius: 11 11 0 0; -fx-padding: 14 18 12 18;"
@@ -515,14 +505,13 @@ public class PanelVisualizacion extends StackPane {
         HBox chipsRow = new HBox(8);
         chipsRow.setAlignment(Pos.CENTER_LEFT);
         chipsRow.getChildren().addAll(
-                crearChip(vehiculo.getNombre(),                                 vehiculo.getColorHex()),
-                crearChip(condiciones.getClima().getDescripcion(),              condiciones.getClima().getColorHex()),
-                crearChip(condiciones.getDescripcionHorario(),                  condiciones.getColorHorario()),
-                crearChip(criterio.charAt(0) + criterio.substring(1).toLowerCase(), "#4a3a6a")
+                crearChip(vehiculo.getNombre(),                                      vehiculo.getColorHex()),
+                crearChip(condiciones.getClima().getDescripcion(),                   condiciones.getClima().getColorHex()),
+                crearChip(condiciones.getDescripcionHorario(),                       condiciones.getColorHorario()),
+                crearChip(criterio.charAt(0) + criterio.substring(1).toLowerCase(),  "#4a3a6a")
         );
         resHeader.getChildren().addAll(lblResRuta, chipsRow);
 
-        // área de texto
         TextArea txtRes = new TextArea(resultado);
         txtRes.setEditable(false);
         txtRes.setWrapText(true);
@@ -533,13 +522,11 @@ public class PanelVisualizacion extends StackPane {
                         "-fx-border-color: transparent; -fx-background-radius: 0; -fx-padding: 14 16 14 16;"
         );
 
-        // footer con los dos botones
         VBox resFooter = new VBox(8);
         resFooter.setStyle(
                 "-fx-background-color: #120d22; -fx-background-radius: 0 0 11 11; -fx-padding: 10 16 14 16;"
         );
 
-        // botón ruta alternativa
         Button btnAlternativa = new Button("Ver Ruta Alternativa");
         btnAlternativa.setMaxWidth(Double.MAX_VALUE);
         btnAlternativa.setStyle(
@@ -588,9 +575,9 @@ public class PanelVisualizacion extends StackPane {
     */
     private void calcularYMostrarAlternativa(String idOrigen, String idDestino, String criterio,
                                              VehiculoTransporte vehiculo, SimuladorCondiciones condiciones) {
-        CriterioOptimizacion enumCriterio = CriterioOptimizacion.valueOf(criterio);
-        CalculadorRuta calc  = new CalculadorRuta();
-        GrafoTransporte grafo = AdaptadorVisual.getInstance().getBackend();
+        CriterioOptimizacion enumCriterio  = CriterioOptimizacion.valueOf(criterio);
+        CalculadorRuta       calc          = new CalculadorRuta();
+        GrafoTransporte      grafo         = AdaptadorVisual.getInstance().getBackend();
 
         List<String> caminoAlternativo = calc.calcularRutaAlternativa(grafo, idOrigen, idDestino, enumCriterio);
 
@@ -603,10 +590,8 @@ public class PanelVisualizacion extends StackPane {
             return;
         }
 
-        // resaltar en azul/púrpura pa' distinguirla de la ruta principal
         resaltarRutaAlternativa(caminoAlternativo);
 
-        // construir el texto del resultado alternativo
         StringBuilder sb = new StringBuilder();
         sb.append("=== Ruta Alternativa (").append(criterio).append(") ===\n\n");
 
@@ -636,7 +621,6 @@ public class PanelVisualizacion extends StackPane {
         sb.append("• Costo total: $").append(totalCosto).append("\n");
         sb.append("• Tramos: ").append(caminoAlternativo.size() - 1).append("\n");
 
-        // aplicar factor de condiciones al tiempo de la alternativa
         double factorTotal    = condiciones.getFactorTotal(vehiculo);
         double tiempoAjustado = totalTiempo * factorTotal;
         int    pct            = (int) Math.round((factorTotal - 1.0) * 100);
@@ -651,6 +635,10 @@ public class PanelVisualizacion extends StackPane {
         } else {
             sb.append("Sin impacto adicional al tiempo estimado.\n");
         }
+
+        // guardamos la alternativa y marcamos que fue la última que el user vio
+        ultimoResultadoAlternativa = sb.toString();
+        ultimaFueAlternativa       = true;
 
         mostrarResultadoAlternativa(sb.toString(), idOrigen, idDestino, criterio, vehiculo, condiciones);
     }
@@ -700,10 +688,10 @@ public class PanelVisualizacion extends StackPane {
         HBox chipsAlt = new HBox(8);
         chipsAlt.setAlignment(Pos.CENTER_LEFT);
         chipsAlt.getChildren().addAll(
-                crearChip("Ruta Alternativa",                                      "#7888e8"),
-                crearChip(vehiculo.getNombre(),                                     vehiculo.getColorHex()),
-                crearChip(condiciones.getClima().getDescripcion(),                  condiciones.getClima().getColorHex()),
-                crearChip(criterio.charAt(0) + criterio.substring(1).toLowerCase(), "#4a3a6a")
+                crearChip("Ruta Alternativa",                                       "#7888e8"),
+                crearChip(vehiculo.getNombre(),                                      vehiculo.getColorHex()),
+                crearChip(condiciones.getClima().getDescripcion(),                   condiciones.getClima().getColorHex()),
+                crearChip(criterio.charAt(0) + criterio.substring(1).toLowerCase(),  "#4a3a6a")
         );
         altHeader.getChildren().addAll(lblAltTitulo, chipsAlt);
 
@@ -722,7 +710,6 @@ public class PanelVisualizacion extends StackPane {
                 "-fx-background-color: #10101e; -fx-background-radius: 0 0 11 11; -fx-padding: 10 16 14 16;"
         );
 
-        // botón pa' volver a ver la ruta principal
         Button btnVerPrincipal = new Button("Ver Ruta Principal");
         btnVerPrincipal.setMaxWidth(Double.MAX_VALUE);
         btnVerPrincipal.setStyle(
@@ -741,9 +728,10 @@ public class PanelVisualizacion extends StackPane {
         );
 
         btnCerrarAlt.setOnAction(e -> altStage.close());
+
         btnVerPrincipal.setOnAction(e -> {
             altStage.close();
-            // recalcular y mostrar la ruta principal de nuevo
+            ultimaFueAlternativa = false; // el usuario regresa a la principal
             calcularYMostrar(idOrigen, idDestino, criterio, vehiculo, condiciones);
         });
 
@@ -816,11 +804,8 @@ public class PanelVisualizacion extends StackPane {
             card.getChildren().add(dot);
         }
 
-        Label lblValor = new Label(valor);
-        lblValor.setStyle(
-                "-fx-text-fill: #d4c0a0; -fx-font-family: 'Segoe UI'; " +
-                        "-fx-font-size: 12; -fx-font-weight: BOLD;"
-        );
+        Label lblValor    = new Label(valor);
+        lblValor.setStyle("-fx-text-fill: #d4c0a0; -fx-font-family: 'Segoe UI'; -fx-font-size: 12; -fx-font-weight: BOLD;");
         Label lblEtiqueta = new Label(etiqueta);
         lblEtiqueta.setStyle("-fx-text-fill: #3a2a5a; -fx-font-family: 'Segoe UI'; -fx-font-size: 9;");
         card.getChildren().addAll(lblValor, lblEtiqueta);
@@ -835,10 +820,7 @@ public class PanelVisualizacion extends StackPane {
         icono.setScaleY(0.95);
 
         Label lbl = new Label(nombre);
-        lbl.setStyle(
-                "-fx-text-fill: #7a6a8a; -fx-font-family: 'Segoe UI'; " +
-                        "-fx-font-size: 12; -fx-font-weight: BOLD;"
-        );
+        lbl.setStyle("-fx-text-fill: #7a6a8a; -fx-font-family: 'Segoe UI'; -fx-font-size: 12; -fx-font-weight: BOLD;");
 
         VBox card = new VBox(8);
         card.setAlignment(Pos.CENTER);

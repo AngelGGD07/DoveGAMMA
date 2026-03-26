@@ -102,7 +102,7 @@ public class CalculadorRuta {
         List<String> rutaAlternativa = calcular(grafo, idInicio, idFinal, criterio);
 
         // 5. Restauramos la calle para no dañar el grafo original de forma permanente
-        grafo.agregarRuta(nodoA, nodoB, rutaABloquear.getTiempo(), rutaABloquear.getCosto(), rutaABloquear.getDistancia(), rutaABloquear.isTransbordo());
+        grafo.agregarRuta(nodoA, nodoB, rutaABloquear.getTiempo(), rutaABloquear.getCosto(), rutaABloquear.getDistancia(), rutaABloquear.getTransbordo());
 
         // 6. Devolvemos el Plan B
         return rutaAlternativa;

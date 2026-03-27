@@ -1,14 +1,16 @@
-/* Quitar el borde azul de selección (focus ring) en toda la app */
+/* quitar el borde azul de selección en todo */
 * {
     -fx-focus-color: transparent;
     -fx-faint-focus-color: transparent;
 }
 
+/* =========================================
+   GRAFO
+   ========================================= */
 .graph {
     -fx-background-color: transparent;
 }
 
-/* Nodos (Paradas) con efecto 3D y sombra (Cubrimos clases por defecto y custom) */
 .graph-vertex, .vertex {
     -fx-fill: linear-gradient(to bottom right, #ffae42, #e67e22);
     -fx-stroke: #ffffff;
@@ -28,7 +30,6 @@
     -fx-font-weight: bold;
 }
 
-/* Líneas (Rutas) */
 .graph-edge, .edge {
     -fx-stroke: #ffa500;
     -fx-stroke-width: 3;
@@ -41,7 +42,7 @@
     -fx-font-weight: bold;
 }
 
-/* Ruta encontrada (Dijkstra) */
+/* ruta encontrada */
 .vertex-resaltado {
     -fx-fill: linear-gradient(to bottom right, #ff6b33, #cc3700);
     -fx-stroke: #ffffff;
@@ -55,7 +56,32 @@
     -fx-effect: dropshadow(gaussian, #ff4500, 10, 0.6, 0, 0);
 }
 
+/* origen seleccionado */
+.vertex-origen {
+    -fx-fill: linear-gradient(to bottom right, #33dd77, #1a7a40);
+    -fx-stroke: #ffffff;
+    -fx-stroke-width: 3;
+    -fx-effect: dropshadow(gaussian, rgba(50,220,100,0.8), 20, 0.65, 0, 0);
+    -fx-cursor: hand;
+}
 
+/* ruta alternativa — azul pa' diferenciarla */
+.vertex-alternativa {
+    -fx-fill: linear-gradient(to bottom right, #5588ff, #2233bb);
+    -fx-stroke: #ffffff;
+    -fx-stroke-width: 3;
+    -fx-effect: dropshadow(gaussian, #4466ff, 20, 0.7, 0, 0);
+}
+.edge-alternativa {
+    -fx-stroke: #5588ff;
+    -fx-stroke-width: 6;
+    -fx-opacity: 1.0;
+    -fx-effect: dropshadow(gaussian, #4466ff, 10, 0.6, 0, 0);
+}
+
+/* =========================================
+   TABS
+   ========================================= */
 .tab-pane {
     -fx-background-color: #0e0b1a;
 }
@@ -92,7 +118,9 @@
     -fx-border-color: transparent;
 }
 
-
+/* =========================================
+   TABLAS — fuerza el tema oscuro completo
+   ========================================= */
 .table-view {
     -fx-background-color: #0e0b1a;
     -fx-border-color: #3a1a50;
@@ -100,7 +128,13 @@
     -fx-background-radius: 8;
     -fx-selection-bar: #31184a;
     -fx-selection-bar-non-focused: #2a1540;
+    -fx-table-cell-border-color: transparent;
 }
+.table-view:focused {
+    -fx-background-color: #0e0b1a;
+}
+
+/* header */
 .table-view .column-header-background {
     -fx-background-color: #1a0f2a;
     -fx-background-radius: 8 8 0 0;
@@ -123,6 +157,11 @@
     -fx-border-color: #2a1040;
     -fx-border-width: 0 0 1 0;
 }
+.table-view .corner {
+    -fx-background-color: #1a0f2a;
+}
+
+/* filas */
 .table-row-cell {
     -fx-background-color: #0e0b1a;
     -fx-border-color: transparent transparent #1a0f2a transparent;
@@ -148,7 +187,17 @@
     -fx-font-size: 11px;
     -fx-padding: 4 10 4 10;
     -fx-border-color: transparent;
+    -fx-background-color: transparent;
 }
+
+/* zona vacía debajo de las filas */
+.table-view .virtual-flow .scroll-bar {
+    -fx-background-color: transparent;
+}
+.table-view .virtual-flow .clipped-container {
+    -fx-background-color: #0e0b1a;
+}
+
 .table-view .placeholder .label {
     -fx-text-fill: #4a3a6a;
     -fx-font-style: italic;
@@ -156,7 +205,7 @@
     -fx-font-size: 13px;
 }
 
-/* Scrollbar Modernizada (Estilo Web/MacOS) validada para JavaFX */
+/* scrollbars de las tablas */
 .table-view .scroll-bar:vertical,
 .table-view .scroll-bar:horizontal {
     -fx-background-color: transparent;
@@ -175,8 +224,6 @@
     -fx-background-color: transparent;
     -fx-border-color: transparent;
 }
-
-/* Ocultar las flechas de desplazamiento limpiamente */
 .table-view .scroll-bar .increment-button,
 .table-view .scroll-bar .decrement-button {
     -fx-background-color: transparent;
@@ -187,34 +234,55 @@
     -fx-background-color: transparent;
     -fx-padding: 0;
 }
-/* Nodo seleccionado como ORIGEN (primer click del usuario) */
-.vertex-origen {
-    -fx-fill: linear-gradient(to bottom right, #33dd77, #1a7a40);
-    -fx-stroke: #ffffff;
-    -fx-stroke-width: 3;
-    -fx-effect: dropshadow(gaussian, rgba(50, 220, 100, 0.8), 20, 0.65, 0, 0);
-    -fx-cursor: hand;
+
+/* =========================================
+   SCROLL PANE (el del grafo y otros)
+   ========================================= */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+.scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+.scroll-pane > .scroll-bar:vertical .thumb,
+.scroll-pane > .scroll-bar:horizontal .thumb {
+    -fx-background-color: #4a2a60;
+    -fx-background-radius: 6;
+}
+.scroll-pane > .scroll-bar:vertical .track,
+.scroll-pane > .scroll-bar:horizontal .track {
+    -fx-background-color: transparent;
 }
 
-/* Nodo seleccionado como ORIGEN (primer click) */
-.vertex-origen {
-    -fx-fill: linear-gradient(to bottom right, #33dd77, #1a7a40);
-    -fx-stroke: #ffffff;
-    -fx-stroke-width: 3;
-    -fx-effect: dropshadow(gaussian, rgba(50,220,100,0.8), 20, 0.65, 0, 0);
-    -fx-cursor: hand;
+/* =========================================
+   TEXT AREA (el de detalles de parada)
+   ========================================= */
+.text-area {
+    -fx-control-inner-background: #0d0820;
+    -fx-background-color: #0d0820;
+    -fx-text-fill: #e8c9a8;
+    -fx-font-family: "Consolas";
+    -fx-font-size: 11px;
+}
+.text-area .content {
+    -fx-background-color: #0d0820;
+}
+.text-area .scroll-pane {
+    -fx-background-color: #0d0820;
 }
 
-/* Ruta ALTERNATIVA (azul/índigo, distinta de la principal naranja) */
-.vertex-alternativa {
-    -fx-fill: linear-gradient(to bottom right, #5588ff, #2233bb);
-    -fx-stroke: #ffffff;
-    -fx-stroke-width: 3;
-    -fx-effect: dropshadow(gaussian, #4466ff, 20, 0.7, 0, 0);
+/* =========================================
+   TEXT FIELD
+   ========================================= */
+.text-field {
+    -fx-background-color: #1e1030;
+    -fx-text-fill: #e8c9a8;
+    -fx-prompt-text-fill: #4a3a5a;
+    -fx-border-color: #3a1a50;
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
 }
-.edge-alternativa {
-    -fx-stroke: #5588ff;
-    -fx-stroke-width: 6;
-    -fx-opacity: 1.0;
-    -fx-effect: dropshadow(gaussian, #4466ff, 10, 0.6, 0, 0);
+.text-field:focused {
+    -fx-border-color: #7a3a8a;
 }

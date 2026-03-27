@@ -83,6 +83,7 @@
                          VBox.vgrow="ALWAYS"
                          style="-fx-background-color: #0e0b1a;">
 
+                    <!-- ========== TAB PARADAS ========== -->
                     <Tab text="Paradas">
                         <VBox style="-fx-background-color: #0e0b1a; -fx-padding: 8 8 4 8;"
                               VBox.vgrow="ALWAYS" spacing="8">
@@ -241,6 +242,7 @@
                         </VBox>
                     </Tab>
 
+                    <!-- ========== TAB RUTAS ========== -->
                     <Tab text="Rutas">
                         <VBox style="-fx-background-color: #0e0b1a; -fx-padding: 8 8 4 8;"
                               VBox.vgrow="ALWAYS" spacing="8">
@@ -281,6 +283,7 @@
                                 </Button>
                             </HBox>
 
+                            <!-- FORM AGREGAR RUTA -->
                             <VBox fx:id="formAgregarRuta" spacing="6" visible="false" managed="false"
                                   style="-fx-background-color: #0d0820; -fx-border-color: #2a1a40;
                                          -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 10;">
@@ -325,14 +328,14 @@
                                                           -fx-prompt-text-fill: #4a3a5a; -fx-background-radius: 5;
                                                           -fx-border-color: #3a1a50; -fx-border-radius: 5; -fx-padding: 6;"/>
                                     </VBox>
-                                </HBox>
-                                <HBox spacing="6" alignment="CENTER_LEFT">
-                                    <Label text="Transbordos:"
-                                           style="-fx-text-fill: #9a7a5a; -fx-font-size: 10; -fx-font-family: 'Segoe UI';"/>
-                                    <TextField fx:id="txtTransbordoRuta" promptText="0" prefWidth="70"
-                                               style="-fx-background-color: #1e1030; -fx-text-fill: #e8c9a8;
-                                                      -fx-prompt-text-fill: #4a3a5a; -fx-background-radius: 5;
-                                                      -fx-border-color: #3a1a50; -fx-border-radius: 5; -fx-padding: 6;"/>
+                                    <!-- Antes era un CheckBox, ahora es un numero -->
+                                    <VBox HBox.hgrow="ALWAYS" spacing="3">
+                                        <Label text="Transbordos:" style="-fx-text-fill: #9a7a5a; -fx-font-size: 10;"/>
+                                        <TextField fx:id="txtTransbordoRuta" promptText="0"
+                                                   style="-fx-background-color: #1e1030; -fx-text-fill: #e8c9a8;
+                                                          -fx-prompt-text-fill: #4a3a5a; -fx-background-radius: 5;
+                                                          -fx-border-color: #3a1a50; -fx-border-radius: 5; -fx-padding: 6;"/>
+                                    </VBox>
                                 </HBox>
                                 <HBox spacing="6">
                                     <Button text="Confirmar" onAction="#agregarRuta"
@@ -348,6 +351,7 @@
                                 </HBox>
                             </VBox>
 
+                            <!-- FORM MODIFICAR RUTA -->
                             <VBox fx:id="formModRuta" spacing="6" visible="false" managed="false"
                                   style="-fx-background-color: #0d0820; -fx-border-color: #3a1a50;
                                          -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 10;">
@@ -392,14 +396,14 @@
                                                           -fx-prompt-text-fill: #4a3a5a; -fx-background-radius: 5;
                                                           -fx-border-color: #3a1a50; -fx-border-radius: 5; -fx-padding: 6;"/>
                                     </VBox>
-                                </HBox>
-                                <HBox spacing="6" alignment="CENTER_LEFT">
-                                    <Label text="Transbordos:"
-                                           style="-fx-text-fill: #9a7a5a; -fx-font-size: 10; -fx-font-family: 'Segoe UI';"/>
-                                    <TextField fx:id="txtModTransbordoRuta" promptText="0" prefWidth="70"
-                                               style="-fx-background-color: #1e1030; -fx-text-fill: #e8c9a8;
-                                                      -fx-prompt-text-fill: #4a3a5a; -fx-background-radius: 5;
-                                                      -fx-border-color: #3a1a50; -fx-border-radius: 5; -fx-padding: 6;"/>
+                                    <!-- Antes era un CheckBox -->
+                                    <VBox HBox.hgrow="ALWAYS" spacing="3">
+                                        <Label text="Transbordos:" style="-fx-text-fill: #9a7a5a; -fx-font-size: 10;"/>
+                                        <TextField fx:id="txtModTransbordoRuta" promptText="0"
+                                                   style="-fx-background-color: #1e1030; -fx-text-fill: #e8c9a8;
+                                                          -fx-prompt-text-fill: #4a3a5a; -fx-background-radius: 5;
+                                                          -fx-border-color: #3a1a50; -fx-border-radius: 5; -fx-padding: 6;"/>
+                                    </VBox>
                                 </HBox>
                                 <HBox spacing="6">
                                     <Button text="Guardar" onAction="#modificarRuta"

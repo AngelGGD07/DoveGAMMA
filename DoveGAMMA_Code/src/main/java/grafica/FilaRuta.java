@@ -10,7 +10,7 @@ public class FilaRuta {
     private StringProperty tiempo;
     private StringProperty distancia;
     private StringProperty costo;
-    private StringProperty transbordo;
+    private StringProperty transbordo; // ya no es boolean, es la cantidad
 
     public FilaRuta(String origen, String destino,
                     double tiempo, double distancia, double costo,
@@ -30,10 +30,10 @@ public class FilaRuta {
     public StringProperty costoProperty()      { return costo; }
     public StringProperty transbordoProperty() { return transbordo; }
 
-    public String getOrigen()     { return origen.get(); }
-    public String getDestino()    { return destino.get(); }
-    public String getTiempo()     { return tiempo.get(); }
-    public String getDistancia()  { return distancia.get(); }
-    public String getCosto()      { return costo.get(); }
-    public int    getTransbordo() { return Integer.parseInt(transbordo.get()); }
+    public String getOrigen()    { return origen.get(); }
+    public String getDestino()   { return destino.get(); }
+    public String getTiempo()    { return tiempo.get(); }
+    public String getDistancia() { return distancia.get(); }
+    public String getCosto()     { return costo.get(); }
+    public int    getTransbordo(){ return Integer.parseInt(transbordo.get()); }
 }

@@ -22,7 +22,7 @@ public class ControladorPrincipal {
             "-fx-text-fill: #e07070; -fx-background-color: #2a0a0a; -fx-background-radius: 6; " +
                     "-fx-padding: 8; -fx-font-size: 11; -fx-font-family: 'Segoe UI';";
 
-    @FXML private TabPane tabPrincipal;
+    @FXML private TabPane  tabPrincipal;
 
     @FXML private TableView<FilaParada>           tablaParadas;
     @FXML private TableColumn<FilaParada, String> colParadaId;
@@ -36,7 +36,7 @@ public class ControladorPrincipal {
     @FXML private TableColumn<FilaRuta, String>   colRutaTiempo;
     @FXML private TableColumn<FilaRuta, String>   colRutaDistancia;
     @FXML private TableColumn<FilaRuta, String>   colRutaCosto;
-    @FXML private TableColumn<FilaRuta, String>   colRutaTransbordo;
+    @FXML private TableColumn<FilaRuta, String>   colRutaTransbordo; // ya es String, no Boolean
 
     @FXML private VBox      formAgregarParada;
     @FXML private TextField txtIdParada;
@@ -54,7 +54,7 @@ public class ControladorPrincipal {
     @FXML private TextField txtTiempoRuta;
     @FXML private TextField txtDistanciaRuta;
     @FXML private TextField txtCostoRuta;
-    @FXML private TextField txtTransbordoRuta;
+    @FXML private TextField txtTransbordoRuta;    // antes era CheckBox
 
     @FXML private VBox      formModRuta;
     @FXML private TextField txtModOrigenRuta;
@@ -62,7 +62,7 @@ public class ControladorPrincipal {
     @FXML private TextField txtModTiempoRuta;
     @FXML private TextField txtModDistanciaRuta;
     @FXML private TextField txtModCostoRuta;
-    @FXML private TextField txtModTransbordoRuta;
+    @FXML private TextField txtModTransbordoRuta; // antes era CheckBox
 
     @FXML private Label     lblMensaje;
 
@@ -73,9 +73,9 @@ public class ControladorPrincipal {
 
     @FXML private Button    btnTogglePanel;
 
-    @FXML private VBox  panelDetallesParada;
-    @FXML private Label lblDetalleParadaTitulo;
-    @FXML private TextArea txtDetallesRutasParada;
+    @FXML private VBox      panelDetallesParada;
+    @FXML private Label     lblDetalleParadaTitulo;
+    @FXML private TextArea  txtDetallesRutasParada;
 
     private final ObservableList<FilaParada> listaParadas = FXCollections.observableArrayList();
     private final ObservableList<FilaRuta>   listaRutas   = FXCollections.observableArrayList();
@@ -113,6 +113,27 @@ public class ControladorPrincipal {
         colRutaDistancia.setCellValueFactory(data -> data.getValue().distanciaProperty());
         colRutaCosto.setCellValueFactory(data -> data.getValue().costoProperty());
         colRutaTransbordo.setCellValueFactory(data -> data.getValue().transbordoProperty());
+
+        // badge morado si tiene transbordos, texto apagado si es 0
+        colRutaTransbordo.setCellFactory(col -> new TableCell<FilaRuta, String>() {
+            @Override
+            protected void updateItem(String valor, boolean vacio) {
+                super.updateItem(valor, vacio);
+                if (vacio || valor == null) { setGraphic(null); setText(null); return; }
+                int cant = Integer.parseInt(valor);
+                if (cant > 0) {
+                    Label badge = new Label(valor);
+                    badge.setStyle("-fx-background-color: #3a1a50; -fx-text-fill: #b080e0; " +
+                            "-fx-background-radius: 4; -fx-padding: 2 10 2 10; -fx-font-size: 10; -fx-font-weight: BOLD;");
+                    setGraphic(badge);
+                    setText(null);
+                } else {
+                    setText("0");
+                    setStyle("-fx-text-fill: #4a3a6a;");
+                    setGraphic(null);
+                }
+            }
+        });
         tablaRutas.setItems(listaRutas);
 
         tablaParadas.getSelectionModel().selectedItemProperty().addListener((obs, oldSel, newSel) -> {
@@ -142,10 +163,8 @@ public class ControladorPrincipal {
     @FXML
     private void togglePanelListados() {
         boolean mostrandoListados = panelListados.isVisible();
-
         panelListados.setVisible(!mostrandoListados);
         panelGrafo.setVisible(mostrandoListados);
-
         btnTogglePanel.setText(mostrandoListados ? "Mostrar Listados" : "Mostrar Grafo");
     }
 
@@ -165,10 +184,7 @@ public class ControladorPrincipal {
     @FXML
     private void toggleFormModParada() {
         FilaParada fila = tablaParadas.getSelectionModel().getSelectedItem();
-        if (fila == null) {
-            mostrarError("Selecciona una parada de la tabla primero.");
-            return;
-        }
+        if (fila == null) { mostrarError("Selecciona una parada de la tabla primero."); return; }
 
         txtModIdParada.setText(fila.getId());
         txtModNombreParada.setText(fila.getNombre());
@@ -210,10 +226,7 @@ public class ControladorPrincipal {
     @FXML
     private void toggleFormModRuta() {
         FilaRuta fila = tablaRutas.getSelectionModel().getSelectedItem();
-        if (fila == null) {
-            mostrarError("Selecciona una ruta de la tabla primero.");
-            return;
-        }
+        if (fila == null) { mostrarError("Selecciona una ruta de la tabla primero."); return; }
 
         txtModOrigenRuta.setText(fila.getOrigen());
         txtModDestinoRuta.setText(fila.getDestino());
@@ -251,22 +264,15 @@ public class ControladorPrincipal {
         String valX   = txtXParada.getText().trim();
         String valY   = txtYParada.getText().trim();
 
-        if (camposVacios(id, nombre, valX, valY)) {
-            mostrarError("Todos los campos son obligatorios.");
-            return;
-        }
+        if (camposVacios(id, nombre, valX, valY)) { mostrarError("Todos los campos son obligatorios."); return; }
 
         try {
             double x = Double.parseDouble(valX);
             double y = Double.parseDouble(valY);
 
-            if (x < 0 || y < 0) {
-                mostrarError("X e Y deben ser positivos.");
-                return;
-            }
+            if (x < 0 || y < 0) { mostrarError("X e Y deben ser positivos."); return; }
 
             boolean ok = AdaptadorVisual.getInstance().agregarParada(id, nombre, x, y);
-
             if (ok) {
                 refrescarTablaParadas();
                 limpiarCampos(txtIdParada, txtNombreParada, txtXParada, txtYParada);
@@ -276,7 +282,6 @@ public class ControladorPrincipal {
             } else {
                 mostrarError("Ya existe una parada con ese ID.");
             }
-
         } catch (NumberFormatException e) {
             mostrarError("X e Y deben ser números válidos.");
         }
@@ -287,18 +292,10 @@ public class ControladorPrincipal {
         String id          = txtModIdParada.getText().trim();
         String nuevoNombre = txtModNombreParada.getText().trim();
 
-        if (camposVacios(id, nuevoNombre)) {
-            mostrarError("El nombre no puede estar vacío.");
-            return;
-        }
-
-        if (nuevoNombre.length() < 2) {
-            mostrarError("El nombre debe tener al menos 2 caracteres.");
-            return;
-        }
+        if (camposVacios(id, nuevoNombre)) { mostrarError("El nombre no puede estar vacío."); return; }
+        if (nuevoNombre.length() < 2)       { mostrarError("El nombre debe tener al menos 2 caracteres."); return; }
 
         boolean ok = AdaptadorVisual.getInstance().modificarNombreParada(id, nuevoNombre);
-
         if (ok) {
             refrescarTablaParadas();
             formModParada.setVisible(false);
@@ -313,10 +310,7 @@ public class ControladorPrincipal {
     @FXML
     private void eliminarParadaSeleccionada() {
         FilaParada fila = tablaParadas.getSelectionModel().getSelectedItem();
-        if (fila == null) {
-            mostrarError("Selecciona una parada de la tabla primero.");
-            return;
-        }
+        if (fila == null) { mostrarError("Selecciona una parada de la tabla primero."); return; }
 
         Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
         confirmacion.setTitle("Confirmar eliminación");
@@ -338,6 +332,12 @@ public class ControladorPrincipal {
         });
     }
 
+    /*
+       Función: agregarRuta
+       Argumentos: ninguno (lee los TextField del form)
+       Objetivo: Validar los campos y agregar una ruta nueva al grafo
+       Retorno: void
+    */
     @FXML
     private void agregarRuta() {
         String origen    = txtOrigenRuta.getText().trim();
@@ -347,31 +347,23 @@ public class ControladorPrincipal {
         String valCosto  = txtCostoRuta.getText().trim();
         String valTrans  = txtTransbordoRuta.getText().trim();
 
-        if (camposVacios(origen, destino, valTiempo, valDist, valCosto, valTrans)) {
+        if (camposVacios(origen, destino, valTiempo, valDist, valCosto)) {
             mostrarError("Todos los campos son obligatorios.");
             return;
         }
-
-        if (origen.equals(destino)) {
-            mostrarError("Origen y destino no pueden ser iguales.");
-            return;
-        }
+        if (origen.equals(destino)) { mostrarError("Origen y destino no pueden ser iguales."); return; }
 
         try {
-            double tiempo     = Double.parseDouble(valTiempo);
-            double distancia  = Double.parseDouble(valDist);
-            double costo      = Double.parseDouble(valCosto);
-            int    transbordo = Integer.parseInt(valTrans);
+            double tiempo      = Double.parseDouble(valTiempo);
+            double distancia   = Double.parseDouble(valDist);
+            double costo       = Double.parseDouble(valCosto);
+            int    transbordo  = camposVacios(valTrans) ? 0 : Integer.parseInt(valTrans);
 
             if (tiempo <= 0 || distancia <= 0 || costo <= 0) {
                 mostrarError("Tiempo, distancia y costo deben ser mayores que 0.");
                 return;
             }
-
-            if (transbordo < 0) {
-                mostrarError("Los transbordos no pueden ser negativos.");
-                return;
-            }
+            if (transbordo < 0) { mostrarError("Los transbordos no pueden ser negativos."); return; }
 
             boolean ok = AdaptadorVisual.getInstance()
                     .agregarRutaConTransbordo(origen, destino, tiempo, distancia, costo, transbordo);
@@ -388,10 +380,16 @@ public class ControladorPrincipal {
             }
 
         } catch (NumberFormatException e) {
-            mostrarError("Revisa que los valores sean números válidos.");
+            mostrarError("Verifica que todos los valores numéricos sean válidos.");
         }
     }
 
+    /*
+       Función: modificarRuta
+       Argumentos: ninguno (lee los TextField del form de modificación)
+       Objetivo: Validar y actualizar los datos de una ruta existente
+       Retorno: void
+    */
     @FXML
     private void modificarRuta() {
         String origen    = txtModOrigenRuta.getText().trim();
@@ -401,7 +399,7 @@ public class ControladorPrincipal {
         String valCosto  = txtModCostoRuta.getText().trim();
         String valTrans  = txtModTransbordoRuta.getText().trim();
 
-        if (camposVacios(origen, destino, valTiempo, valDist, valCosto, valTrans)) {
+        if (camposVacios(origen, destino, valTiempo, valDist, valCosto)) {
             mostrarError("Todos los campos son obligatorios.");
             return;
         }
@@ -410,17 +408,13 @@ public class ControladorPrincipal {
             double tiempo     = Double.parseDouble(valTiempo);
             double distancia  = Double.parseDouble(valDist);
             double costo      = Double.parseDouble(valCosto);
-            int    transbordo = Integer.parseInt(valTrans);
+            int    transbordo = camposVacios(valTrans) ? 0 : Integer.parseInt(valTrans);
 
             if (tiempo <= 0 || distancia <= 0 || costo <= 0) {
                 mostrarError("Los valores deben ser mayores que 0.");
                 return;
             }
-
-            if (transbordo < 0) {
-                mostrarError("Los transbordos no pueden ser negativos.");
-                return;
-            }
+            if (transbordo < 0) { mostrarError("Los transbordos no pueden ser negativos."); return; }
 
             boolean ok = AdaptadorVisual.getInstance()
                     .modificarRutaConTransbordo(origen, destino, tiempo, distancia, costo, transbordo);
@@ -437,17 +431,14 @@ public class ControladorPrincipal {
             }
 
         } catch (NumberFormatException e) {
-            mostrarError("Revisa que los valores sean números válidos.");
+            mostrarError("Verifica que todos los valores numéricos sean válidos.");
         }
     }
 
     @FXML
     private void eliminarRutaSeleccionada() {
         FilaRuta fila = tablaRutas.getSelectionModel().getSelectedItem();
-        if (fila == null) {
-            mostrarError("Selecciona una ruta de la tabla primero.");
-            return;
-        }
+        if (fila == null) { mostrarError("Selecciona una ruta de la tabla primero."); return; }
 
         Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
         confirmacion.setTitle("Confirmar eliminación");
@@ -497,19 +488,23 @@ public class ControladorPrincipal {
         }
     }
 
+    /*
+       Función: refrescarTablaRutas
+       Argumentos: ninguno
+       Objetivo: Reconstruir la lista de rutas leyendo directo del grafo
+       Retorno: void
+    */
     private void refrescarTablaRutas() {
         listaRutas.clear();
-        AdaptadorVisual ada   = AdaptadorVisual.getInstance();
-        GrafoTransporte grafo = ada.getBackend();
+        GrafoTransporte grafo = AdaptadorVisual.getInstance().getBackend();
 
         for (String idParada : grafo.obtenerIdsParadas()) {
             for (Ruta ruta : grafo.obtenerVecinos(idParada)) {
-                String idArista   = idParada + "-" + ruta.getIdDestino();
-                int    transbordo = ada.getCantidadTransbordo(idArista);
+                // transbordo viene directo del objeto Ruta, ya no necesita Set aparte
                 listaRutas.add(new FilaRuta(
                         idParada, ruta.getIdDestino(),
                         ruta.getTiempo(), ruta.getDistancia(), ruta.getCosto(),
-                        transbordo
+                        ruta.getTransbordo()
                 ));
             }
         }
@@ -530,7 +525,8 @@ public class ControladorPrincipal {
 
             java.sql.ResultSet rsRutas = db.cargarRutas();
             while (rsRutas.next()) {
-                AdaptadorVisual.getInstance().agregarRuta(
+                // getInt en vez de getBoolean
+                AdaptadorVisual.getInstance().agregarRutaConTransbordo(
                         rsRutas.getString("origen"),
                         rsRutas.getString("destino"),
                         rsRutas.getDouble("tiempo"),
@@ -568,9 +564,7 @@ public class ControladorPrincipal {
     }
 
     private boolean camposVacios(String... campos) {
-        for (String c : campos) {
-            if (c == null || c.isEmpty()) return true;
-        }
+        for (String c : campos) { if (c == null || c.isEmpty()) return true; }
         return false;
     }
 

@@ -22,6 +22,10 @@ public class MainApp extends Application {
             Parent root = FXMLLoader.load(fxmlLocation);
             Scene scene = new Scene(root, 1000, 700);
 
+            // Sin esto las tablas se quedaban blancas — el CSS nunca llegaba al scene
+            URL css = getClass().getResource("/smartgraph.css");
+            if (css != null) scene.getStylesheets().add(css.toExternalForm());
+
             try {
                 Image icon = new Image(getClass().getResourceAsStream("/icon.png"));
                 primaryStage.getIcons().add(icon);

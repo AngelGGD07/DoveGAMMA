@@ -5,6 +5,9 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.Node;
+import javafx.scene.paint.Color;
+import javafx.stage.StageStyle;
 
 import logica.GrafoTransporte;
 import logica.Ruta;
@@ -36,7 +39,7 @@ public class ControladorPrincipal {
     @FXML private TableColumn<FilaRuta, String>   colRutaTiempo;
     @FXML private TableColumn<FilaRuta, String>   colRutaDistancia;
     @FXML private TableColumn<FilaRuta, String>   colRutaCosto;
-    @FXML private TableColumn<FilaRuta, String>   colRutaTransbordo; // ya es String, no Boolean
+    @FXML private TableColumn<FilaRuta, String>   colRutaTransbordo;
 
     @FXML private VBox      formAgregarParada;
     @FXML private TextField txtIdParada;
@@ -54,7 +57,7 @@ public class ControladorPrincipal {
     @FXML private TextField txtTiempoRuta;
     @FXML private TextField txtDistanciaRuta;
     @FXML private TextField txtCostoRuta;
-    @FXML private TextField txtTransbordoRuta;    // antes era CheckBox
+    @FXML private TextField txtTransbordoRuta;
 
     @FXML private VBox      formModRuta;
     @FXML private TextField txtModOrigenRuta;
@@ -62,7 +65,7 @@ public class ControladorPrincipal {
     @FXML private TextField txtModTiempoRuta;
     @FXML private TextField txtModDistanciaRuta;
     @FXML private TextField txtModCostoRuta;
-    @FXML private TextField txtModTransbordoRuta; // antes era CheckBox
+    @FXML private TextField txtModTransbordoRuta;
 
     @FXML private Label     lblMensaje;
 
@@ -114,7 +117,6 @@ public class ControladorPrincipal {
         colRutaCosto.setCellValueFactory(data -> data.getValue().costoProperty());
         colRutaTransbordo.setCellValueFactory(data -> data.getValue().transbordoProperty());
 
-        // badge morado si tiene transbordos, texto apagado si es 0
         colRutaTransbordo.setCellFactory(col -> new TableCell<FilaRuta, String>() {
             @Override
             protected void updateItem(String valor, boolean vacio) {
@@ -307,6 +309,71 @@ public class ControladorPrincipal {
         }
     }
 
+    // =========================================================================================
+    // INYECCIÓN DE ESTILO A LAS ALERTAS DE CONFIRMACIÓN
+    // =========================================================================================
+    private void estilizarAlerta(Alert alerta) {
+        // Hacemos que la ventana sea transparente para quitar los bordes blancos del OS
+        alerta.initStyle(StageStyle.TRANSPARENT);
+        alerta.setGraphic(null); // Quita el icono genérico de pregunta
+
+        DialogPane dialogPane = alerta.getDialogPane();
+        dialogPane.getScene().setFill(Color.TRANSPARENT);
+
+        // Estilo principal del fondo y bordes
+        dialogPane.setStyle(
+                "-fx-background-color: #0c0918; " +
+                        "-fx-border-color: #2a1a40; -fx-border-width: 1; " +
+                        "-fx-border-radius: 12; -fx-background-radius: 12; " +
+                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.95), 24, 0, 0, 6);"
+        );
+
+        // Obliga a JavaFX a procesar el CSS interno antes de modificar sus nodos
+        dialogPane.applyCss();
+
+        // Títulos
+        for (Node node : dialogPane.lookupAll(".label")) {
+            node.setStyle("-fx-text-fill: #d4a574; -fx-font-family: 'Segoe UI'; -fx-font-size: 14; -fx-font-weight: BOLD;");
+        }
+
+        // Subtítulo / Contenido (color un poco más tenue)
+        Node contentLabel = dialogPane.lookup(".content.label");
+        if (contentLabel != null) {
+            contentLabel.setStyle("-fx-text-fill: #a0a8d8; -fx-font-family: 'Segoe UI'; -fx-font-size: 12; -fx-font-weight: NORMAL;");
+        }
+
+        // Secciones del alert (Para que el color no se corte en los bordes)
+        Node header = dialogPane.lookup(".header-panel");
+        if (header != null) {
+            header.setStyle("-fx-background-color: #120d22; -fx-background-radius: 11 11 0 0;");
+        }
+
+        Node buttonBar = dialogPane.lookup(".button-bar");
+        if (buttonBar != null) {
+            buttonBar.setStyle("-fx-background-color: #120d22; -fx-background-radius: 0 0 11 11;");
+        }
+
+        // Botón Aceptar / OK
+        Node btnOk = dialogPane.lookupButton(ButtonType.OK);
+        if (btnOk != null) {
+            btnOk.setStyle(
+                    "-fx-background-color: #a65d48; -fx-text-fill: #e8c9a8; " +
+                            "-fx-background-radius: 6; -fx-cursor: hand; -fx-font-weight: BOLD; " +
+                            "-fx-padding: 6 18 6 18;"
+            );
+        }
+
+        // Botón Cancelar
+        Node btnCancel = dialogPane.lookupButton(ButtonType.CANCEL);
+        if (btnCancel != null) {
+            btnCancel.setStyle(
+                    "-fx-background-color: transparent; -fx-text-fill: #7888e8; " +
+                            "-fx-border-color: #2a2a50; -fx-border-radius: 6; -fx-border-width: 1; " +
+                            "-fx-background-radius: 6; -fx-cursor: hand; -fx-padding: 6 18 6 18;"
+            );
+        }
+    }
+
     @FXML
     private void eliminarParadaSeleccionada() {
         FilaParada fila = tablaParadas.getSelectionModel().getSelectedItem();
@@ -316,6 +383,8 @@ public class ControladorPrincipal {
         confirmacion.setTitle("Confirmar eliminación");
         confirmacion.setHeaderText("¿Eliminar la parada \"" + fila.getNombre() + "\"?");
         confirmacion.setContentText("Se eliminarán también todas las rutas conectadas. No se puede deshacer.");
+
+        estilizarAlerta(confirmacion); // <--- Aplicamos la estética
 
         confirmacion.showAndWait().ifPresent(tipo -> {
             if (tipo == ButtonType.OK) {
@@ -332,12 +401,6 @@ public class ControladorPrincipal {
         });
     }
 
-    /*
-       Función: agregarRuta
-       Argumentos: ninguno (lee los TextField del form)
-       Objetivo: Validar los campos y agregar una ruta nueva al grafo
-       Retorno: void
-    */
     @FXML
     private void agregarRuta() {
         String origen    = txtOrigenRuta.getText().trim();
@@ -384,12 +447,6 @@ public class ControladorPrincipal {
         }
     }
 
-    /*
-       Función: modificarRuta
-       Argumentos: ninguno (lee los TextField del form de modificación)
-       Objetivo: Validar y actualizar los datos de una ruta existente
-       Retorno: void
-    */
     @FXML
     private void modificarRuta() {
         String origen    = txtModOrigenRuta.getText().trim();
@@ -445,6 +502,8 @@ public class ControladorPrincipal {
         confirmacion.setHeaderText("¿Eliminar ruta " + fila.getOrigen() + " → " + fila.getDestino() + "?");
         confirmacion.setContentText("Esta acción no se puede deshacer.");
 
+        estilizarAlerta(confirmacion); // <--- Aplicamos la estética
+
         confirmacion.showAndWait().ifPresent(tipo -> {
             if (tipo == ButtonType.OK) {
                 boolean ok = AdaptadorVisual.getInstance()
@@ -467,6 +526,8 @@ public class ControladorPrincipal {
         confirmacion.setHeaderText("¿Limpiar todo el grafo?");
         confirmacion.setContentText("Se eliminarán todas las paradas y rutas de la sesión.");
 
+        estilizarAlerta(confirmacion); // <--- Aplicamos la estética
+
         confirmacion.showAndWait().ifPresent(tipo -> {
             if (tipo == ButtonType.OK) {
                 AdaptadorVisual.getInstance().limpiarTodo();
@@ -488,19 +549,12 @@ public class ControladorPrincipal {
         }
     }
 
-    /*
-       Función: refrescarTablaRutas
-       Argumentos: ninguno
-       Objetivo: Reconstruir la lista de rutas leyendo directo del grafo
-       Retorno: void
-    */
     private void refrescarTablaRutas() {
         listaRutas.clear();
         GrafoTransporte grafo = AdaptadorVisual.getInstance().getBackend();
 
         for (String idParada : grafo.obtenerIdsParadas()) {
             for (Ruta ruta : grafo.obtenerVecinos(idParada)) {
-                // transbordo viene directo del objeto Ruta, ya no necesita Set aparte
                 listaRutas.add(new FilaRuta(
                         idParada, ruta.getIdDestino(),
                         ruta.getTiempo(), ruta.getDistancia(), ruta.getCosto(),
@@ -525,7 +579,6 @@ public class ControladorPrincipal {
 
             java.sql.ResultSet rsRutas = db.cargarRutas();
             while (rsRutas.next()) {
-                // getInt en vez de getBoolean
                 AdaptadorVisual.getInstance().agregarRutaConTransbordo(
                         rsRutas.getString("origen"),
                         rsRutas.getString("destino"),

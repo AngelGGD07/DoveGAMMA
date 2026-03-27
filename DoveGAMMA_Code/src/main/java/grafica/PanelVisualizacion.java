@@ -183,7 +183,7 @@ public class PanelVisualizacion extends StackPane {
         Scene escena = new Scene(root);
         escena.setFill(Color.TRANSPARENT);
         s.setScene(escena);
-        centrarStage(s);
+        s.setOnShown(e -> centrarStage(s));
         s.show();
     }
 
@@ -392,7 +392,7 @@ public class PanelVisualizacion extends StackPane {
         Scene escena = new Scene(root);
         escena.setFill(Color.TRANSPARENT);
         menuStage.setScene(escena);
-        centrarStage(menuStage);
+        menuStage.setOnShown(e -> centrarStage(menuStage));
         menuStage.showAndWait();
     }
 
@@ -539,7 +539,7 @@ public class PanelVisualizacion extends StackPane {
         Scene escena = new Scene(root);
         escena.setFill(Color.TRANSPARENT);
         s.setScene(escena);
-        centrarStage(s);
+        s.setOnShown(e -> centrarStage(s));
         s.show();
     }
 

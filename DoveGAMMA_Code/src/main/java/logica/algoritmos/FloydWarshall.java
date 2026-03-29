@@ -8,14 +8,28 @@ import java.util.HashMap;
 import java.util.List;
 
 /*
- * Implementación del algoritmo de Floyd-Warshall.
- * Calcula las distancias más cortas entre todos los pares de paradas.
+ * Clase: FloydWarshall
+ * Objetivo: Implementar el algoritmo de Floyd-Warshall para encontrar el camino
+ * mínimo entre todos los pares de nodos del grafo simultáneamente.
+ * Crea matrices de adyacencia y evalúa atajos a través
+ * de nodos intermedios.
  */
 public class FloydWarshall implements AlgoritmoRuta {
 
+    /*
+       Función: calcularRuta
+       Argumentos: (GrafoTransporte) grafo, (String) idInicio, (String) idFinal,
+                   (CriterioOptimizacion) criterio
+       Objetivo: Transformar el grafo basado en listas a una representación matricial,
+                 ejecutar la relajación de todos los caminos posibles mediante 3 bucles
+                 anidados, y finalmente extraer de la matriz resultante el camino
+                 específico solicitado por el usuario.
+       Retorno: (List<String>): Lista de paradas desde el inicio hasta el fin,
+                o una lista vacía si no hay conexión posible.
+    */
     @Override
     public List<String> calcularRuta(GrafoTransporte grafo, String idInicio, String idFinal, CriterioOptim.CriterioOptimizacion criterio) {
-        // 1. Obtener todas las paradas y mapearlas a índices numéricos para la matriz
+        // Obtener todas las paradas y mapearlas a índices numéricos para la matriz
         List<String> paradas = new ArrayList<>(grafo.obtenerIdsParadas());
         int cantidadNodos = paradas.size();
 
@@ -29,11 +43,11 @@ public class FloydWarshall implements AlgoritmoRuta {
             indicePorId.put(paradas.get(i), i);
         }
 
-        // 2. Crear las matrices de distancias (dist) y de reconstrucción de camino (next)
+        // Crear las matrices de distancias (dist) y de reconstrucción de camino (next)
         double[][] dist = new double[cantidadNodos][cantidadNodos];
         int[][] next = new int[cantidadNodos][cantidadNodos];
 
-        // Inicializamos las matrices con "Infinito" y -1
+        // Inicializamos las matrices con Infinito y -1
         for (int i = 0; i < cantidadNodos; i++) {
             for (int j = 0; j < cantidadNodos; j++) {
                 if (i == j) {
@@ -45,17 +59,15 @@ public class FloydWarshall implements AlgoritmoRuta {
             }
         }
 
-        // 3. Llenar la matriz con las rutas que ya existen directamente en el grafo
+        //  Llenar la matriz con las rutas que ya existen directamente en el grafo
         for (Ruta ruta : grafo.obtenerTodasLasRutas()) {
             int origenIdx = indicePorId.get(ruta.getIdOrigen());
             int destinoIdx = indicePorId.get(ruta.getIdDestino());
 
-            // Usamos el metodo heredado de la interfaz
             dist[origenIdx][destinoIdx] = determinarPeso(ruta, criterio);
             next[origenIdx][destinoIdx] = destinoIdx;
         }
 
-        // 4. El corazón de Floyd-Warshall: Los 3 bucles anidados
         for (int k = 0; k < cantidadNodos; k++) {
             for (int i = 0; i < cantidadNodos; i++) {
                 for (int j = 0; j < cantidadNodos; j++) {
@@ -70,16 +82,15 @@ public class FloydWarshall implements AlgoritmoRuta {
             }
         }
 
-        // 5. Extraer el camino específico que el usuario pidió (idInicio a idFinal)
+        // Extraer el camino específico que el usuario pidió (idInicio a idFinal)
         int startIdx = indicePorId.get(idInicio);
         int endIdx = indicePorId.get(idFinal);
 
-        // Si sigue siendo -1, significa que no existe ninguna ruta que conecte esos dos puntos
         if (next[startIdx][endIdx] == -1) {
             return new ArrayList<>();
         }
 
-        // Reconstruimos el camino saltando de nodo en nodo
+        // Reconstruimos el camino
         List<String> caminoFinal = new ArrayList<>();
         caminoFinal.add(idInicio);
         while (startIdx != endIdx) {

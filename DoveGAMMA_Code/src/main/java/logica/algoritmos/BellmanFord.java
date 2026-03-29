@@ -9,11 +9,27 @@ import java.util.List;
 import java.util.Set;
 
 /*
- * Implementación del algoritmo de Bellman-Ford.
- * Capaz de calcular la ruta óptima incluso con pesos negativos (ej. descuentos).
+ * Clase: BellmanFord
+ * Objetivo: Implementar el algoritmo de ruta más corta de Bellman-Ford.
+ * A diferencia de Dijkstra, este algoritmo es capaz de procesar grafos que
+ * contienen aristas con pesos negativos.
  */
 public class BellmanFord implements AlgoritmoRuta {
 
+    /*
+       Función: calcularRuta
+       Argumentos: (GrafoTransporte) grafo: red de transporte completa.
+                   (String) idInicio: parada de salida.
+                   (String) idFinal: parada de destino.
+                   (CriterioOptimizacion) criterio: factor a optimizar (el costo)
+       Objetivo: Calcular la ruta de menor costo. Funciona mediante la relajación
+                 de todas las aristas del grafo repetidas (V - 1) veces, asegurando
+                 que se encuentre el costo mínimo absoluto. Posteriormente, realiza
+                 una iteración final para detectar ciclos de peso negativo que
+                 invalidadarían cualquier resultado.
+       Retorno: (List<String>): Lista ordenada de paradas del camino óptimo,
+                o lista vacía si hay un ciclo negativo o no existe conexión.
+    */
     @Override
     public List<String> calcularRuta(GrafoTransporte grafo, String idInicio, String idFinal, CriterioOptim.CriterioOptimizacion criterio) {
         HashMap<String, Double> distanciasMinimas = new HashMap<>();
@@ -25,11 +41,10 @@ public class BellmanFord implements AlgoritmoRuta {
             return new ArrayList<>();
         }
 
-      //Inicializamos todas las paradas con distancia "Infinito"
+      //Inicializamos todas las paradas
         for (String idParada : todasLasParadas) {
             distanciasMinimas.put(idParada, Double.MAX_VALUE);
         }
-        // El punto de partida tiene distancia 0
         distanciasMinimas.put(idInicio, 0.0);
 
         List<Ruta> todasLasRutas = grafo.obtenerTodasLasRutas();
@@ -44,7 +59,7 @@ public class BellmanFord implements AlgoritmoRuta {
                 // Usamos el metodo heredado de la interfaz
                 double peso = determinarPeso(ruta, criterio);
 
-                // Si conocemos cómo llegar al origen, y el salto al destino mejora la distancia...
+
                 if (distanciasMinimas.get(origen) != Double.MAX_VALUE &&
                         distanciasMinimas.get(origen) + peso < distanciasMinimas.get(destino)) {
 
@@ -54,7 +69,7 @@ public class BellmanFord implements AlgoritmoRuta {
             }
         }
 
-        // 3. Verificación de ciclos negativos (El superpoder de Bellman-Ford)
+        // Verificación de ciclos negativos
         // Hacemos una iteración extra. Si aún podemos mejorar un camino, hay un bucle infinito.
         for (Ruta ruta : todasLasRutas) {
             String origen = ruta.getIdOrigen();
@@ -69,12 +84,12 @@ public class BellmanFord implements AlgoritmoRuta {
             }
         }
 
-        // Si el destino sigue en infinito, significa que está desconectado y no hay camino posible
+        // Si el destino sigue en infinito quiere decir que está desconectado
         if (distanciasMinimas.get(idFinal) == null || distanciasMinimas.get(idFinal) == Double.MAX_VALUE) {
             return new ArrayList<>();
         }
 
-        // 4. Reconstruimos el camino hacia atrás usando el metodo heredado
+        // Reconstruimos el camino hacia atrás usando el metodo heredado
         return reconstruirCamino(idFinal, paradasPrevias);
     }
 }

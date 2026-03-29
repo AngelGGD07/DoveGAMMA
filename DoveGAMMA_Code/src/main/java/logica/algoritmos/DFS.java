@@ -5,9 +5,10 @@ import logica.Ruta;
 import java.util.*;
 
 /*
- * Búsqueda en Profundidad (DFS).
- * Explora un camino hasta el final antes de retroceder.
- * No garantiza la ruta más corta, pero sirve para evaluar conectividad.
+ * Clase: DFS
+ * Objetivo: Explorar el grafo sumergiéndose lo más profundo posible a lo largo
+ * de cada rama antes de retroceder (backtracking). Utiliza una estructura LIFO
+ * en lugar de una Cola.
  */
 public class DFS implements AlgoritmoRuta {
 

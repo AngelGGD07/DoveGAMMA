@@ -1,5 +1,9 @@
 package logica;
-
+/*
+ * Clase: Parada
+ * Objetivo: Representar un nodo (vértice) dentro de la red de transporte (Grafo).
+ * Representa una estación física o parada de de transporte en el
+ * mundo real. Sirve como los puntos de conexión (origen y destino) para las rutas. */
 public class Parada {
     private String codigo;
     private String nombre;

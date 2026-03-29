@@ -1,5 +1,11 @@
 package logica.transporte;
 
+/*
+ * Clase: VehiculoTransporte
+ * Objetivo: Servir como clase base para todos los modos
+ * de transporte del sistema (Metro, Taxi, Tren, Teleférico). Define los
+ * atributos comunes, mediante polimorfismo, para que el SimuladorCondiciones
+ * pueda calcular las penalizaciones de tiempo sin importar qué vehículo se elija.*/
 public abstract class VehiculoTransporte {
 
     protected String nombre;

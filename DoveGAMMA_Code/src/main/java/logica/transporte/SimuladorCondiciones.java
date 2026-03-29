@@ -2,7 +2,12 @@ package logica.transporte;
 
 import java.time.LocalTime;
 import java.util.Random;
-
+/*
+ * Clase: SimuladorCondiciones
+ * Objetivo: Añadir una capa de complejidad y realismo dinámico a la red de transporte.
+ * Simula variaciones ambientales (clima) y temporales (tráfico/hora pico) que alteran
+ * matemáticamente los pesos de las aristas del grafo en tiempo real.
+ */
 public class SimuladorCondiciones {
 
     public enum Clima {
@@ -28,6 +33,12 @@ public class SimuladorCondiciones {
 
     private final Clima climaActual;
 
+    /*
+       Función: SimuladorCondiciones (Constructor)
+       Argumentos: ninguno
+       Objetivo: Inicializar el simulador generando un clima pseudoaleatorio.
+                 Utiliza una semilla matemática basada en el reloj del sistema.
+    */
     public SimuladorCondiciones() {
         // seed por minuto → el clima cambia cada minuto, no cada segundo
         long semilla = System.currentTimeMillis() / 60000;
@@ -55,6 +66,13 @@ public class SimuladorCondiciones {
         return manana || tarde;
     }
 
+    /*
+       Función: getDescripcionHorario
+       Argumentos: ninguno
+       Objetivo: Analizar la hora del sistema y devolver una descripción textual
+                 del estado del tráfico general para la interfaz de usuario.
+       Retorno: (String): "Hora pico", "Noche tranquila" o "Flujo normal".
+    */
     public String getDescripcionHorario() {
         if (esHoraPico()) return "Hora pico";
         LocalTime ahora = LocalTime.now();

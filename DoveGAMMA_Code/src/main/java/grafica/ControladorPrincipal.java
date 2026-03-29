@@ -83,6 +83,14 @@ public class ControladorPrincipal {
     private final ObservableList<FilaParada> listaParadas = FXCollections.observableArrayList();
     private final ObservableList<FilaRuta>   listaRutas   = FXCollections.observableArrayList();
 
+    /*
+       Función: initialize
+       Argumentos: ninguno
+       Objetivo: Se encarga de inicializar el lienzo
+                 del grafo, enlazar las celdas de las tablas y disparar la carga
+                 inicial de los datos persistidos en MySQL.
+       Retorno: void
+    */
     @FXML
     public void initialize() {
         inicializarVisualizacionGrafo();
@@ -90,6 +98,13 @@ public class ControladorPrincipal {
         cargarDatosDesdeBD();
     }
 
+    /*
+       Función: inicializarVisualizacionGrafo
+       Argumentos: ninguno
+       Objetivo: Obtener la instancia gráfica del grafo desde el
+                 AdaptadorVisual y anclarla al contenedor de la interfaz.
+       Retorno: void
+    */
     private void inicializarVisualizacionGrafo() {
         AdaptadorVisual.getInstance().inicializarPanel();
         PanelVisualizacion panel = AdaptadorVisual.getInstance().getVisualizationPanel();
@@ -103,6 +118,13 @@ public class ControladorPrincipal {
         panel.iniciarVisualizacion();
     }
 
+    /*
+       Función: configurarTablas
+       Argumentos: ninguno
+       Objetivo: Enlazar las columnas de las TableView con las propiedades internas de
+                 las clases FilaParada y FilaRuta.
+       Retorno: void
+    */
     private void configurarTablas() {
         colParadaId.setCellValueFactory(data -> data.getValue().idProperty());
         colParadaNombre.setCellValueFactory(data -> data.getValue().nombreProperty());
@@ -259,6 +281,12 @@ public class ControladorPrincipal {
         ocultarMensaje();
     }
 
+    /*
+       Función: agregarParada
+       Argumentos: ninguno
+       Objetivo: Capturar y agregar los datos ingresados por el usuario.
+       Retorno: void
+    */
     @FXML
     private void agregarParada() {
         String id     = txtIdParada.getText().trim();
@@ -289,6 +317,13 @@ public class ControladorPrincipal {
         }
     }
 
+    /*
+       Función: modificarParada
+       Argumentos: ninguno
+       Objetivo: Capturar el nuevo nombre ingresado por el usuario y actualizar
+       la parada.
+       Retorno: void
+    */
     @FXML
     private void modificarParada() {
         String id          = txtModIdParada.getText().trim();
@@ -374,6 +409,12 @@ public class ControladorPrincipal {
         }
     }
 
+    /*
+       Función: eliminarParadaSeleccionada
+       Argumentos: ninguno
+       Objetivo: Eliminar una parada y las rutas de esta.
+       Retorno: void
+    */
     @FXML
     private void eliminarParadaSeleccionada() {
         FilaParada fila = tablaParadas.getSelectionModel().getSelectedItem();
@@ -401,6 +442,12 @@ public class ControladorPrincipal {
         });
     }
 
+    /*
+       Función: agregarRuta
+       Argumentos: ninguno
+       Objetivo: Capturar los pesos y atributos para la creación de una arista.
+       Retorno: void
+    */
     @FXML
     private void agregarRuta() {
         String origen    = txtOrigenRuta.getText().trim();
@@ -448,6 +495,13 @@ public class ControladorPrincipal {
     }
 
     @FXML
+    /*
+       Función: modificarRuta
+       Argumentos: ninguno
+       Objetivo: Recolectar y añadir los nuevos pesos (tiempo, distancia, costo,
+                 transbordos) ingresados en el formulario de edición de rutas.
+       Retorno: void
+    */
     private void modificarRuta() {
         String origen    = txtModOrigenRuta.getText().trim();
         String destino   = txtModDestinoRuta.getText().trim();
@@ -492,6 +546,12 @@ public class ControladorPrincipal {
         }
     }
 
+    /*
+       Función: eliminarRutaSeleccionada
+       Argumentos: ninguno
+       Objetivo: Obtener la arista (ruta) seleccionada en la tabla y eliminarla.
+       Retorno: void
+    */
     @FXML
     private void eliminarRutaSeleccionada() {
         FilaRuta fila = tablaRutas.getSelectionModel().getSelectedItem();
@@ -564,6 +624,14 @@ public class ControladorPrincipal {
         }
     }
 
+    /*
+       Función: cargarDatosDesdeBD
+       Argumentos: ninguno
+       Objetivo: Consultar el gestor de persistencia MySQL e inyectar todas las paradas
+                 y rutas guardadas previamente en el grafo visual y en las tablas de
+                 la interfaz gráfica.
+       Retorno: void
+    */
     private void cargarDatosDesdeBD() {
         GestorDB db = AdaptadorVisual.getInstance().getDatabaseManager();
         try {

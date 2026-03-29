@@ -53,6 +53,12 @@ public class AdaptadorVisual {
         return coordenadasParadas.getOrDefault(id, new double[]{0.0, 0.0});
     }
 
+    /*
+       Función: agregarParada
+       Argumentos: (String) id, (String) nombre, (double) x, (double) y
+       Objetivo: Añadir un nuevo vertice y dibujarlo en smartgraph.
+       Retorno: (boolean): true si se insertó en todas las capas, false si el ID ya existía.
+    */
     public boolean agregarParada(String id, String nombre, double x, double y) {
         if (nombresParadas.containsKey(id)) return false;
 
@@ -72,6 +78,12 @@ public class AdaptadorVisual {
         return false;
     }
 
+    /*
+       Función: modificarNombreParada
+       Argumentos: (String) id, (String) nuevoNombre
+       Objetivo: Actualizar el nombre de una parada.
+       Retorno: (boolean): true si se modificó correctamente, false si no existe.
+    */
     public boolean modificarNombreParada(String id, String nuevoNombre) {
         if (!nombresParadas.containsKey(id)) return false;
         logicaGrafo.modificarParada(id, nuevoNombre, 0, 0);
@@ -79,6 +91,12 @@ public class AdaptadorVisual {
         return true;
     }
 
+    /*
+       Función: eliminarParada
+       Argumentos: (String) id
+       Objetivo: Eliminar un nodo (parada) del grafo, la interfaz y de la BD.
+       Retorno: (boolean): true si la operación fue exitosa.
+    */
     public boolean eliminarParada(String id) {
         if (!nombresParadas.containsKey(id)) return false;
 
@@ -142,6 +160,12 @@ public class AdaptadorVisual {
         return false;
     }
 
+    /*
+    Función: eliminarRuta
+    Argumentos: (String) origen, (String) destino
+    Objetivo: Eliminar una ruta de la parte logica, de SmartGraph y de la BD.
+    Retorno: (boolean): true si se eliminó correctamente.
+            */
     public boolean eliminarRuta(String origen, String destino) {
         if (logicaGrafo.eliminarRuta(origen, destino)) {
             String idArista = origen + "-" + destino;
@@ -158,6 +182,13 @@ public class AdaptadorVisual {
         return false;
     }
 
+    /*
+       Función: calcularRuta
+       Argumentos: (String) idInicio, (String) idFin, (String) criterio
+       Objetivo: Delegar la búsqueda matemática al CalculadorRuta e itera sobre los tramos
+                 resultantes para sumar los totales (tiempo, distancia, costo).
+       Retorno: (String): Texto formateado con el desglose de la ruta óptima.
+    */
     public String calcularRuta(String idInicio, String idFin, String criterio) {
         CalculadorRuta calculador = new CalculadorRuta();
         CriterioOptimizacion enumCriterio = CriterioOptimizacion.valueOf(criterio.toUpperCase());
@@ -204,22 +235,6 @@ public class AdaptadorVisual {
 
     public String getStopName(String id) {
         return nombresParadas.getOrDefault(id, id);
-    }
-
-    public String getEdgeDataAsString(String idArista) {
-        return getDetallesRuta(idArista);
-    }
-
-    public String getDetallesRuta(String idArista) {
-        String[] partes = idArista.split("-");
-        if (partes.length == 2) {
-            for (Ruta r : logicaGrafo.obtenerVecinos(partes[0])) {
-                if (r.getIdDestino().equals(partes[1])) {
-                    return r.getTiempo() + " min | " + r.getDistancia() + " km | $" + r.getCosto();
-                }
-            }
-        }
-        return "";
     }
 
     public void limpiarTodo() {

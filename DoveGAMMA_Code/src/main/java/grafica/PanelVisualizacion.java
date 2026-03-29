@@ -851,9 +851,30 @@ public class PanelVisualizacion extends StackPane {
     // Métodos públicos
     // =========================================================
 
+    /*
+       Función: iniciarVisualizacion
+       Argumentos: ninguno
+       Objetivo: Enviar la orden a SmartGraph para que comience a calcular el
+                 layout automático.
+       Retorno: void
+    */
     public void iniciarVisualizacion() { Platform.runLater(() -> graphView.init()); }
+
+    /*
+       Función: actualizarGrafico
+       Argumentos: ninguno
+       Objetivo: Refrescar el panel visual.
+       Retorno: void
+    */
     public void actualizarGrafico()    { Platform.runLater(() -> graphView.update()); }
 
+    /*
+       Función: fijarCoordenadasNodo
+       Argumentos: (String) idNodo, (double) x, (double) y
+       Objetivo: Forzar la posición de una parada en coordenadas específicas de
+                 la pantalla.
+       Retorno: void
+    */
     public void fijarCoordenadasNodo(String idNodo, double x, double y) {
         Platform.runLater(() -> {
             SmartStylableNode nodo = graphView.getStylableVertex(idNodo);
@@ -862,6 +883,12 @@ public class PanelVisualizacion extends StackPane {
         });
     }
 
+    /*
+       Función: resaltarRuta
+       Argumentos: (List<String>) idsParadas: Lista en orden del camino a iluminar.
+       Objetivo: Limpiar colores previos y resaltar la ruta.
+       Retorno: void
+    */
     public void resaltarRuta(List<String> idsParadas) {
         Platform.runLater(() -> {
             limpiarEstilosGrafo();
@@ -900,6 +927,12 @@ public class PanelVisualizacion extends StackPane {
         });
     }
 
+    /*
+       Función: limpiarEstilosGrafo
+       Argumentos: ninguno
+       Objetivo: Restaurar todos los nodos y aristas a su apariencia original.
+       Retorno: void
+    */
     private void limpiarEstilosGrafo() {
         grafoBase.vertices().forEach(v -> {
             SmartStylableNode n = graphView.getStylableVertex(v.element());
@@ -911,5 +944,4 @@ public class PanelVisualizacion extends StackPane {
         });
     }
 
-    public void clearAll() {}
 }

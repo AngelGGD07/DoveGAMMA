@@ -63,10 +63,7 @@ public class CalculadorRuta {
        Función: calcularRutaAlternativa
        Argumentos: (GrafoTransporte) grafo, (String) idInicio, (String) idFinal,
                    (CriterioOptimizacion) criterio
-       Objetivo: Generar un Plan B para el usuario. Lo logra calculando la ruta óptima
-                 original, bloqueando temporalmente el primer tramo (eliminando la arista),
-                 forzando un recálculo por otro camino, y finalmente restaurando el grafo
-                 a su estado original.
+       Objetivo: Generar un Plan B para el usuario.
        Retorno: (List<String>): Lista con las paradas de la ruta alternativa, o vacía si no hay opciones.
     */
     public List<String> calcularRutaAlternativa(GrafoTransporte grafo, String idInicio, String idFinal, CriterioOptimizacion criterio) {

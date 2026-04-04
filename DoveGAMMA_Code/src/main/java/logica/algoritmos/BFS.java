@@ -18,9 +18,7 @@ public class BFS implements AlgoritmoRuta {
                    (String) idFinal: parada de llegada.
                    (CriterioOptimizacion) criterio: factor de optimización (Transbordos).
        Objetivo: Ejecutar el recorrido en anchura. Utiliza una Cola para encolar
-                 a los vecinos inmediatos nivel por nivel. Almacena los nodos visitados
-                 para no procesarlos dos veces y un mapa de paradas previas para
-                 rastrear la ruta más corta al finalizar.
+                 a los vecinos inmediatos nivel por nivel.
        Retorno: (List<String>): Lista de paradas que componen el camino con menos
                 transbordos, o una lista vacía si no existe conexión.
     */

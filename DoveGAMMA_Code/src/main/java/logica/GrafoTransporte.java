@@ -168,25 +168,5 @@ public class GrafoTransporte {
         }
         return todas;
     }
-    /*
-       Función: existeArista
-       Argumentos: (String) idOrigen: el identificador de la parada de salida,
-                   (String) idDestino: el identificador de la parada de llegada
-       Objetivo: Verificar si existe una conexión directa (ruta) entre dos paradas específicas dentro del grafo
-       Retorno: (boolean): true si la ruta directa existe, false en caso contrario
-    */
-    public boolean existeArista(String idOrigen, String idDestino) {
-        // 1. Si el origen no existe, la arista tampoco
-        if (!listasAdyacencia.containsKey(idOrigen)) {
-            return false;
-        }
 
-        // 2. Recorremos los vecinos buscando el destino
-        for (Ruta ruta : listasAdyacencia.get(idOrigen)) {
-            if (ruta.getIdDestino().equals(idDestino)) {
-                return true;
-            }
-        }
-        return false;
-    }
 }

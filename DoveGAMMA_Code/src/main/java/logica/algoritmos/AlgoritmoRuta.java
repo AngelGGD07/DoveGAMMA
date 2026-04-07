@@ -8,9 +8,9 @@ import java.util.HashMap;
 import java.util.List;
 
 /*
- * Interfaz: AlgoritmoRuta
- * Objetivo: Definir el diseño que los algoritmos de busqueda
- * deben seguir.
+ Interfaz: AlgoritmoRuta
+ Objetivo: Definir el diseño que los algoritmos de busqueda
+ deben seguir.
  */
 public interface AlgoritmoRuta {
     /*

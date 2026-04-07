@@ -5,9 +5,9 @@ import logica.Ruta;
 import java.util.*;
 
 /*
- * Clase: BFS
- * Objetivo: Explorar el grafo por niveles de proximidad.
- * A diferencia de Dijkstra, BFS asume que todas las aristas tienen el mismo peso.
+ Clase: BFS
+ Objetivo: Explorar el grafo por niveles de proximidad.
+ A diferencia de Dijkstra, BFS asume que todas las aristas tienen el mismo peso.
  */
 public class BFS implements AlgoritmoRuta {
 

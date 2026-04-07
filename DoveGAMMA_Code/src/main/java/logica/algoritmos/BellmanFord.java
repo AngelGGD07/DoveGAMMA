@@ -9,10 +9,10 @@ import java.util.List;
 import java.util.Set;
 
 /*
- * Clase: BellmanFord
- * Objetivo: Implementar el algoritmo de ruta más corta de Bellman-Ford.
- * A diferencia de Dijkstra, este algoritmo es capaz de procesar grafos que
- * contienen aristas con pesos negativos.
+ Clase: BellmanFord
+ Objetivo: Implementar el algoritmo de ruta más corta de Bellman-Ford.
+ A diferencia de Dijkstra, este algoritmo es capaz de procesar grafos que
+ contienen aristas con pesos negativos.
  */
 public class BellmanFord implements AlgoritmoRuta {
 

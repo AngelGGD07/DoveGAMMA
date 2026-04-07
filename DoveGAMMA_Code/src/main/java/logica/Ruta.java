@@ -1,12 +1,12 @@
 package logica;
 /*
- * Clase: Ruta
- * Objetivo: Representar una conexión directa (arista o tramo) entre dos paradas (nodos)
- * dentro de la red de transporte (Grafo).
- * Actúa como el contenedor de los "pesos" para este
- * trayecto específico. Estos datos son los que usan los algoritmos de
- * búsqueda (Dijkstra, BFS, Bellman-Ford) para calcular las rutas óptimas.
- * */
+ Clase: Ruta
+ Objetivo: Representar una conexión directa (arista o tramo) entre dos paradas (nodos)
+ dentro de la red de transporte (Grafo).
+ Actúa como el contenedor de los "pesos" para este
+ trayecto específico. Estos datos son los que usan los algoritmos de
+ búsqueda (Dijkstra, BFS, Bellman-Ford) para calcular las rutas óptimas.
+  */
 public class Ruta {
     private String idOrigen;
     private String idDestino;

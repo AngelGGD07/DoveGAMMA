@@ -3,11 +3,11 @@ package logica.persistencia;
 import java.sql.*;
 
 /*
- * Clase: GestorDB
- * Objetivo: Manejar la capa de persistencia de datos del sistema conectando la
- * aplicación Java con una base de datos relacional (MySQL) mediante JDBC.
- * Garantiza que las paradas y rutas creadas por el usuario no se pierdan
- * al cerrar la aplicación.
+ Clase: GestorDB
+ Objetivo: Manejar la capa de persistencia de datos del sistema conectando la
+ aplicación Java con una base de datos relacional (MySQL) mediante JDBC.
+ Garantiza que las paradas y rutas creadas por el usuario no se pierdan
+ al cerrar la aplicación.
  */
 public class GestorDB {
 

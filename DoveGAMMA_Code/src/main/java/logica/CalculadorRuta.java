@@ -10,9 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /*
- * Clase: CalculadorRuta
- * Objetivo: Administra los diferentes algoritmos de búsqueda y delega el cálculo matemático
- * basándose en el criterio seleccionado por el usuario.
+ Clase: CalculadorRuta
+ Objetivo: Administra los diferentes algoritmos de búsqueda y delega el cálculo matemático
+ basándose en el criterio seleccionado por el usuario.
  */
 public class CalculadorRuta {
 
@@ -87,7 +87,7 @@ public class CalculadorRuta {
         }
         if (rutaABloquear == null) return new ArrayList<>();
 
-        // ¡Bloqueamos la calle temporalmente!
+        // Bloqueamos la calle temporalmente
         grafo.eliminarRuta(nodoA, nodoB);
 
         // Recalculamos forzando al algoritmo a buscar el "Plan B"

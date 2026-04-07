@@ -2,10 +2,10 @@ package logica;
 
 import java.util.*;
 /*
- * Clase: GrafoTransporte
- * Objetivo: Actuar como el núcleo estructural del sistema.
- * Implementa la estructura de datos de Grafo Dirigido utilizando Listas de Adyacencia
- * (mediante HashMaps) para optimizar el consumo de memoria en redes de transporte.
+ Clase: GrafoTransporte
+ Objetivo: Actuar como el núcleo estructural del sistema.
+ Implementa la estructura de datos de Grafo Dirigido utilizando Listas de Adyacencia
+ (mediante HashMaps) para optimizar el consumo de memoria en redes de transporte.
  */
 public class GrafoTransporte {
     private HashMap<String, Parada> mapaParadas;

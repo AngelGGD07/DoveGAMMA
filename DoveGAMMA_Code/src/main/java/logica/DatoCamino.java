@@ -1,13 +1,13 @@
 package logica;
 
 /*
- * Clase: DatoCamino
- * Objetivo: Estructura auxiliar utilizada por algoritmos
- * de búsqueda (como Dijkstra) para gestionar los nodos en una
- * PriorityQueue. Empaqueta el identificador de un nodo junto con el costo necesario
- * para llegar a él.
- * Implementa Comparable para permitir que la PriorityQueue ordene los nodos
- * automáticamente de menor a mayor peso.
+ Clase: DatoCamino
+ Objetivo: Estructura auxiliar utilizada por algoritmos
+ de búsqueda (como Dijkstra) para gestionar los nodos en una
+ PriorityQueue. Empaqueta el identificador de un nodo junto con el costo necesario
+ para llegar a él.
+ Implementa Comparable para permitir que la PriorityQueue ordene los nodos
+ automáticamente de menor a mayor peso.
  */
 public class DatoCamino implements Comparable<DatoCamino> {
     String idParada;

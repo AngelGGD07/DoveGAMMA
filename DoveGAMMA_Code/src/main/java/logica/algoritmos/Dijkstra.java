@@ -10,10 +10,10 @@ import java.util.Set;
 import java.util.ArrayList;
 
 /*
- * Clase: Dijkstra
- * Objetivo: Implementar el algoritmo de Dijkstra para encontrar la ruta más corta
- * en grafos con pesos no negativos. Es el algoritmo principal para optimizar
- * TIEMPO y DISTANCIA.
+ Clase: Dijkstra
+ Objetivo: Implementar el algoritmo de Dijkstra para encontrar la ruta más corta
+ en grafos con pesos no negativos. Es el algoritmo principal para optimizar
+ TIEMPO y DISTANCIA.
  */
 public class Dijkstra implements AlgoritmoRuta{
     /*
